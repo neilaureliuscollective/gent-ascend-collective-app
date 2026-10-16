@@ -538,9 +538,9 @@ describe('live globe renderer', () => {
       }),
       { moving: false },
     );
-    for (let i = 0; i < 220; i += 1) globe.paintStatic();
-    expect(globe.metrics().paintSamples.length).toBeLessThanOrEqual(180);
-    expect(globe.metrics().paints).toBeGreaterThan(180);
+    for (let i = 0; i < 1100; i += 1) globe.paintStatic();
+    expect(globe.metrics().paintSamples.length).toBeLessThanOrEqual(1024);
+    expect(globe.metrics().paints).toBeGreaterThan(1024);
     globe.dispose();
   });
 

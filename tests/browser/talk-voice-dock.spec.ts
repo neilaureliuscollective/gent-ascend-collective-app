@@ -453,8 +453,13 @@ test('combined voice dock, selected work and attachment keep reading space', asy
       path: `test-results/talk-voice-dock-${viewport.name}-expanded.png`,
       fullPage: true,
     });
-    await page.keyboard.press('Escape');
+    if (viewport.name === 'fold') {
+      await dialog.getByRole('button', { name: 'Minimize voice', exact: true }).click();
+    } else {
+      await page.keyboard.press('Escape');
+    }
     await expect(dock).toBeVisible();
+    await expect(dock.getByRole('button', { name: 'Expand voice', exact: true })).toBeFocused();
     await expect(input).toHaveValue(caret.value);
     await expect(page.locator('.talk-selection-summary-text')).toContainText(
       'Lifestyle product world',

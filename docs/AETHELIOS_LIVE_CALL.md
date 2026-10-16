@@ -57,7 +57,13 @@ Rotation is timestamp-based at `stamp - last >= 33` (~30fps). Sphere lighting an
 
 `docs/evidence/live-call-globe/before/` is the first-pass fixture at `e11a82b`. `emerald-before/` is the dock-complete globe at `84e694aa` (gray desert patches). `emerald-after/` is this elevation at the same initial rotation `0.35` and reduced-motion Still, plus `frame-timing.json` and `emerald-motion.webm`. Root files are the current production-priority captures. `live-voice-*` uses the real LiveSurface with a fake transport. The webm is a labeled fake-transport tour, not a live OpenAI voice call. Capture waits for `data-earth` / `data-emblem` loaded-or-fallback state instead of sleeping. Emulated 884×690 is not physical Fold testing.
 
-Headless Chromium 153 on this cloud VM (Linux x86_64, not a physical phone or Fold), 390×844 listening fixture, 300px buffer: **29.99 rendered fps** over 2.5s (75 paints), **p50 paint 6.3ms / p95 6.4ms**. Target was ~30fps with proposed floors of 28 fps and p95 < 12ms. Hiding the page paints once to settle then `looping: false`. The prior renderer at `84e694aa` allocated ImageData and computed `liveGlobeSphereCoords(rotation)` plus lighting every pixel; this pass caches those. Pixel budget remains 480.
+Headless Chromium 153 on this cloud VM (Linux 6.12.94+ x86_64, 4× Xeon, 16 GB, not a physical phone or Fold):
+
+- 2.5s 390×844 / 300px buffer: **29.99 fps**, p50 6.3ms / p95 6.4ms (insufficient as sustained proof).
+- 30s 390×844 / 300px buffer: **30.00 fps** (901 paints), p50 6.3ms / p95 6.7ms / max 9.8ms.
+- 30s emulated Fold 884×690 / 262px buffer: **29.98 fps** (900 paints), p50 4.8ms / p95 5.8ms / max 8.6ms.
+
+Target floors: 28 fps and p95 < 12ms. Typing, mute, speak, interrupt, short-keyboard resize (buffer 160), Still (`looping: false`), hidden-page (`looping: false`; 3 settle paints in 500ms), and Escape-to-compact were exercised on the fake-transport Talk surface. `noUncheckedIndexedAccess` reads packed `lon0[i]` only after an undefined-guard; the cache is densely filled for `0..count-1`, so the skip does not invent a meridian. The prior renderer at `84e694aa` was not remounted for a 30s same-environment baseline. Pixel budget remains 480. Receipt: `docs/evidence/live-call-globe/frame-timing-30s.json`.
 
 ## Out of scope
 

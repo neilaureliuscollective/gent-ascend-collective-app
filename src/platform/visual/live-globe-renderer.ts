@@ -292,7 +292,7 @@ export function mountLiveGlobe(
   let earth: ImageData | null = null;
   let emblem: HTMLCanvasElement | null = null;
   let frameBuffer: ImageData | null = null;
-  const paintTimes = new Float64Array(180);
+  const paintTimes = new Float64Array(1024);
   let paintTimeIndex = 0;
   let paintTimeCount = 0;
   let sphere: {
@@ -415,7 +415,10 @@ export function mountLiveGlobe(
     const tau = Math.PI * 2;
     const cache = sphere;
     for (let i = 0; i < cache.count; i++) {
-      let lon = cache.lon0[i] + rotation;
+      // Packed 0..count-1 are written in buildSphere. Skip rather than invent a meridian.
+      const lon0 = cache.lon0[i];
+      if (lon0 === undefined) continue;
+      let lon = lon0 + rotation;
       lon = ((((lon + Math.PI) % tau) + tau) % tau) - Math.PI;
       const [red, green, blue] = earth ? sample(earth, lon, cache.lat[i] ?? 0) : ([24, 38, 32] as const);
       const nz = cache.nz[i] ?? 0;
