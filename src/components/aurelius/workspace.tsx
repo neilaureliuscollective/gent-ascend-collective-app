@@ -1615,6 +1615,7 @@ export function AureliusWorkspace({
           />
           <TalkPresence
             operation={loading ? observedOperation('talk-load', 'loading') : operation}
+            microphone={liveBusy ? (liveState.muted ? 'muted' : 'active') : 'off'}
             state={
               busy
                 ? 'working'
@@ -2318,24 +2319,18 @@ export function AureliusWorkspace({
                   selected,
                 );
                 const selectedWork = resolved.item;
-                return selectedWork || resolved.reason ? (
-                  <p
-                    className="talk-selection-chip"
-                    aria-live="polite"
-                    title={
-                      resolved.reason
-                        ? resolved.reason
-                        : selectedWork
-                          ? `Changing this: ${selectionChipLabel(selectedWork)}`
-                          : undefined
-                    }
-                  >
-                    {resolved.reason
-                      ? resolved.reason
-                      : selectedWork
-                        ? `Changing this: ${selectionChipLabel(selectedWork)}`
-                        : null}
-                  </p>
+                const chip = resolved.reason
+                  ? resolved.reason
+                  : selectedWork
+                    ? `Changing this: ${selectionChipLabel(selectedWork)}`
+                    : '';
+                return chip ? (
+                  <details className="talk-selection-chip">
+                    <summary aria-live="polite">
+                      <span className="talk-selection-summary-text">{chip}</span>
+                    </summary>
+                    <p className="talk-selection-full">{chip}</p>
+                  </details>
                 ) : null;
               })()}
               <TalkInput

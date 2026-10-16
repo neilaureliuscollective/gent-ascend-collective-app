@@ -368,9 +368,17 @@ function LiveSurface({ controller }: { controller: LiveController }) {
     mode: state.mode,
     transcript,
     canClose: !active && !state.cleanupPending,
+    docked,
   };
   const openTranscript = () => {
     setTranscript(true);
+    if (state.mode === 'immersive') {
+      requestAnimationFrame(() => {
+        transcriptLog.current?.focus();
+        transcriptLog.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      });
+      return;
+    }
     if (docked && requestTalkTranscriptFocus()) return;
     requestAnimationFrame(() => {
       transcriptLog.current?.focus();
@@ -448,7 +456,7 @@ function LiveSurface({ controller }: { controller: LiveController }) {
           </h3>
           <IntelligenceActivity operation={liveJobMotionOperation(job)} />
           <p>{job.task}</p>
-          {job.status === 'approval' && active && (
+          {job.status === 'approval' && active && includeCreation && (
             <>
               <button
                 type="button"
@@ -584,36 +592,39 @@ function LiveSurface({ controller }: { controller: LiveController }) {
                   />
                   {identity}
                 </div>
-                <LiveCallControls model={controlModel} density="dock" {...controlHandlers}>
-                  {detailsPanel(dockDetailsOpen, setDockDetailsOpen, false)}
-                </LiveCallControls>
+                <LiveCallControls model={controlModel} density="dock" {...controlHandlers} />
               </div>
-              {alerts}
-              {approvalJobs.length > 0 && active && (
-                <div className="live-dock-approvals" role="status">
-                  {approvalJobs.map((job) => (
-                    <p key={job.id}>
-                      {job.task}{' '}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void controller.reviewJob(job.id, true);
-                        }}
-                      >
-                        Approve this task
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void controller.reviewJob(job.id, false);
-                        }}
-                      >
-                        Decline
-                      </button>
-                    </p>
-                  ))}
-                </div>
-              )}
+              <div className="live-dock-recovery">
+                {alerts}
+                {approvalJobs.length > 0 && active && (
+                  <div className="live-dock-approvals" role="status">
+                    {approvalJobs.map((job) => (
+                      <div key={job.id}>
+                        <p className="live-dock-approval-task">{job.task}</p>
+                        <div className="live-dock-approval-actions">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void controller.reviewJob(job.id, true);
+                            }}
+                          >
+                            Approve this task
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void controller.reviewJob(job.id, false);
+                            }}
+                          >
+                            Decline
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {detailsPanel(dockDetailsOpen, setDockDetailsOpen, false)}
               {!docked && transcript ? liveLog : null}
             </section>
           );

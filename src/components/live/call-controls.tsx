@@ -10,6 +10,7 @@ export type LiveCallControlModel = {
   mode: 'immersive' | 'compact';
   transcript: boolean;
   canClose: boolean;
+  docked?: boolean;
 };
 
 function MicIcon({ off }: { off?: boolean }) {
@@ -194,7 +195,11 @@ export function LiveCallControls({
   );
   const transcript = (
     <CallAction
-      name="Open conversation transcript"
+      name={
+        model.mode === 'immersive' || !model.docked
+          ? 'Open live transcript'
+          : 'Open conversation transcript'
+      }
       caption="Transcript"
       density={density}
       onClick={onTranscript}

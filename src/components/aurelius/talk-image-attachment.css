@@ -6,7 +6,14 @@
   margin-block: 0;
   color: var(--aether-text);
 }
-.talk-image-actions,
+.talk-image-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  min-width: 0;
+  max-width: 100%;
+}
 .talk-image-preview {
   display: flex;
   align-items: center;
@@ -15,48 +22,26 @@
   min-width: 0;
 }
 .talk-image-actions > button {
+  flex: none;
   min-height: 44px;
+  min-width: 44px;
+  max-width: 100%;
   padding-block: 0.25rem;
 }
 .talk-image-preview {
-  flex: 1;
+  flex: 1 1 0;
   min-width: 0;
-  max-width: 10rem;
-  flex-wrap: nowrap;
+  max-width: 100%;
   overflow: hidden;
 }
 .talk-image-preview span {
-  min-width: 0;
+  flex: 1 1 3rem;
+  min-width: 3rem;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.75rem;
-}
-@media (max-width: 380px) {
-  .talk-image-actions {
-    flex-wrap: wrap;
-  }
-}
-.talk-page[data-keyboard='open']:has(.talk-voice-dock:not(:empty)) .talk-image-actions {
-  flex-wrap: nowrap;
-}
-.talk-page[data-keyboard='open']:has(.talk-voice-dock:not(:empty))
-  .composer-controls:has(> .talk-image-attachment) {
-  flex-wrap: nowrap;
-}
-.talk-page
-  .talk-image-attachment[data-expanded='true']
-  .talk-image-actions
-  > button[aria-label='Add image'] {
-  display: none;
-}
-.talk-page .talk-image-attachment[data-expanded='true'] .talk-image-preview {
-  max-width: min(14rem, 42vw);
-}
-.talk-page[data-keyboard='open']:has(.talk-voice-dock:not(:empty))
-  .talk-image-actions
-  > .talk-image-studio {
-  display: none;
 }
 .talk-image-preview img {
   object-fit: contain;
@@ -71,21 +56,33 @@
   overflow-wrap: anywhere;
   font-size: 0.75rem;
 }
+.talk-image-details {
+  flex: 1 1 7rem;
+  min-width: 7rem;
+  max-width: min(12rem, 100%);
+  overflow: hidden;
+}
 .talk-image-details summary {
   cursor: pointer;
   display: flex;
   align-items: center;
   min-height: 44px;
-  width: fit-content;
-}
-.talk-image-details {
-  flex: 1;
-  min-width: 2rem;
-  max-width: 10rem;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 .talk-image-details summary::after {
   content: '▾';
+  flex: none;
   margin-left: 0.25rem;
+}
+.talk-image-filename {
+  margin: 0 0 0.5rem;
+  overflow-wrap: anywhere;
+}
+.talk-image-details:not([open]) .talk-image-explanation {
+  display: none;
 }
 .talk-image-explanation {
   position: absolute;
@@ -100,6 +97,23 @@
   box-shadow: 0 0.25rem 1rem color-mix(in srgb, var(--aether-optical-shadow) 35%, transparent);
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+.talk-page .talk-image-explanation {
+  position: static;
+  inset: auto;
+  width: auto;
+  max-height: min(6rem, 12dvh);
+  margin-top: 0.25rem;
+  box-shadow: none;
+}
+.talk-page[data-keyboard='open'] .talk-image-explanation {
+  position: absolute;
+  inset-inline: 0;
+  bottom: calc(100% + 0.5rem);
+  width: auto;
+  max-height: min(16dvh, 6rem);
+  margin-top: 0;
+  box-shadow: 0 0.25rem 1rem color-mix(in srgb, var(--aether-optical-shadow) 35%, transparent);
 }
 .talk-image-explanation p {
   margin-block: 0 0.5rem;
@@ -116,12 +130,12 @@
 }
 .talk-page .composer-controls:has(> .talk-image-attachment) > .quiet-label {
   flex: 1;
+  min-width: 0;
 }
 .talk-page .composer-controls > .talk-image-attachment[data-expanded='true'] {
   flex: 1 1 12rem;
   min-width: 0;
   max-width: 100%;
-  flex-basis: min(100%, 18rem);
 }
 .talk-page .composer-controls:has(> .talk-image-attachment[data-expanded='true']) > .quiet-label {
   flex: 1 1 6rem;

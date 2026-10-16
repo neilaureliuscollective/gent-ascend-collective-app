@@ -11,9 +11,11 @@ import type { PresenceState } from '@/platform/visual/presence-state';
 export function TalkPresence({
   state,
   operation,
+  microphone = 'off',
 }: {
   state: PresenceState;
   operation?: IntelligenceOperation;
+  microphone?: 'off' | 'active' | 'muted';
 }) {
   const { moving } = useAppearance();
   const snapshot =
@@ -47,7 +49,13 @@ export function TalkPresence({
           ) : (
             <IntelligenceStatus operation={snapshot} announce={false} />
           )}
-          <p className="quiet-label">Your conversation stays in place. Microphone off.</p>
+          <p className="quiet-label">
+            {microphone === 'active'
+              ? 'Your conversation stays in place. Voice is active in the dock.'
+              : microphone === 'muted'
+                ? 'Your conversation stays in place. Microphone muted; the session stays connected.'
+                : 'Your conversation stays in place. Microphone off.'}
+          </p>
         </div>
       </TalkDrawer>
     </span>

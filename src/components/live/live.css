@@ -220,12 +220,32 @@
   bottom: auto;
   max-width: none;
   margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'chrome summary'
+    'recovery recovery';
+  max-height: 100%;
+  overflow: visible;
+}
+.live-compact.is-docked .live-dock-chrome {
+  grid-area: chrome;
+}
+.live-compact.is-docked .live-dock-recovery {
+  grid-area: recovery;
+}
+.live-compact.is-docked .live-dock-details {
+  grid-area: summary;
+  position: relative;
+  z-index: 6;
+  align-self: start;
 }
 .live-dock-chrome {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.45rem 0.65rem;
+  flex: none;
 }
 .live-dock-actions {
   display: flex;
@@ -272,13 +292,46 @@
     inset 0 1px #ffffff14,
     0 12px 28px -16px #000c;
 }
-.live-compact.is-docked .live-dock-details[open] {
-  flex-basis: 100%;
+.live-dock-recovery {
+  flex: none;
 }
-.live-compact.is-docked .live-dock-details-body,
+.live-dock-recovery button,
+.live-dock-approval-actions button {
+  min-height: 44px;
+  min-width: 44px;
+}
+.live-dock-recovery > [role='alert'] {
+  max-height: min(3.5rem, calc(var(--conversation-height, 100dvh) * 0.1));
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.live-dock-approval-task {
+  margin: 0;
+  max-height: 2.6rem;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.live-dock-approval-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.live-compact:not(.is-docked) .live-dock-details-body,
 .live-call-demo .live-dock-details-body {
   position: static;
   width: auto;
+  max-height: min(16rem, 40dvh);
+}
+.live-compact.is-docked .live-dock-details-body {
+  position: absolute;
+  inset: auto 0 auto auto;
+  bottom: calc(100% + 0.45rem);
+  width: min(22rem, calc(100vw - 1.5rem));
+  max-height: min(12rem, calc(var(--conversation-height, 100dvh) * 0.24));
+}
+.live-compact.is-docked .live-dock-details-body .live-job p {
+  max-height: 2.6rem;
+  overflow: auto;
 }
 .live-dock-approvals {
   display: grid;
@@ -286,7 +339,9 @@
   font-size: 0.85rem;
 }
 .live-compact > [role='alert'],
-.live-compact > .live-dock-approvals {
+.live-compact > .live-dock-approvals,
+.live-dock-recovery > [role='alert'],
+.live-dock-recovery > .live-dock-approvals {
   margin: 0.35rem 0 0;
 }
 @media (max-width: 560px) {
@@ -297,14 +352,30 @@
   .live-compact .live-dock-details {
     margin-left: 0;
   }
+  .live-compact.is-docked {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'chrome'
+      'summary'
+      'recovery';
+  }
+}
+.talk-page[data-keyboard='open'] .live-compact.is-docked {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'chrome summary'
+    'recovery recovery';
 }
 @media (max-width: 560px), (max-height: 500px) {
-  .live-dock-action.live-call-action {
+  .live-dock-action.live-call-action:not([aria-label='Expand voice']):not(
+      [aria-label='Minimize voice']
+    ) {
     width: 44px;
     justify-content: center;
     padding: 0 !important;
   }
-  .live-dock-action .live-call-action-caption {
+  .live-dock-action:not([aria-label='Expand voice']):not([aria-label='Minimize voice'])
+    .live-call-action-caption {
     display: none;
   }
 }
