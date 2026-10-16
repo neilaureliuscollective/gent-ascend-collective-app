@@ -1,6 +1,6 @@
 # Aethelios Live call globe — 2026-10-16
 
-Finishing pass on `cursor/aethelios-live-call-globe-1aa9` after merging main/PR152 (`e85c2f1`). Previous globe head was `4c9f5d55c7a00d4782d89bce280d06192edc8ea6`. Concept image is direction only. No merge, deploy, credential, Cedar, session-duration or hosted SQL change. Talk image attachments and Studio reference handoff from PR152 are preserved.
+Verification pass on `cursor/aethelios-live-call-globe-1aa9` after reviewed head `82cdbc95ce1f8871db59d7ebfbb024f7f020f9fb`. Main/PR152 Talk attachments remain merged. Concept image is direction only. No merge, deploy, credential, Cedar, session-duration or hosted SQL change.
 
 ## Planet
 
@@ -13,6 +13,8 @@ The first-pass 640×320 single-color polygon map is the offline fallback only. T
 The texture is downsampled to 1024×512, graded to restrained emerald land / obsidian water / cooler ice, then lit with directional wrap, terminator depth, a tight specular and a thin atmosphere. It is not a screenshot of the concept image and does not invent geography.
 
 Latitude uses screen-down `y`, so `lat = asin(-ny)`. `tests/live-globe-projection.test.ts` checks that the top of the disk is north and that Greenland/Scandinavia sit above Cape Horn, with Tasmania southern when Australia faces the camera.
+
+Thin straight ticks outside the globe in the `82cdbc9` production/gallery shots were not a map seam. `liveGlobeSphereCoords` previously clamped `nx/ny` and then tested `r2 > 1`, so axis pixels just outside the disk snapped onto the limb and painted a 1-pixel cross. The disk test now rejects unclamped `r2 > 1`. `ticks-before/` holds the reproduced shots; root captures are the after. The emblem and globe crop are unchanged.
 
 ## Emblem
 
@@ -47,7 +49,7 @@ The extra Web Audio monitor is removed. Atmosphere energy reuses `LiveController
 
 ## Motion and polling
 
-`setMotion` and a `prefers-reduced-motion` listener apply Still immediately without remounting. Hidden pages cancel the single rAF loop. `createLiveLevelPoller` reuses `audioLevels()`, takes one sample when Still, pauses while hidden, and drops in-flight results after dispose. No second AudioContext.
+`setMotion` and a `prefers-reduced-motion` listener apply Still immediately without remounting. Hidden pages cancel the single rAF loop. Renderer tests assert ambient rotation and frame-digest change, then no further digest change after Still or reduced motion settle. A host `ResizeObserver` paints once when Still/reduced-motion size is stale (CSS or drawing buffer), then disconnects on dispose; it does not restart the loop. `createLiveLevelPoller` reuses `audioLevels()`, takes one sample when Still, pauses while hidden, and drops in-flight results after dispose. No second AudioContext.
 
 ## Evidence
 

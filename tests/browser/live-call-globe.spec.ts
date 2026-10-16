@@ -309,3 +309,105 @@ test('canvas stays circular in compact and expanded production layouts', async (
   }
   await compact.getByRole('button', { name: 'End session', exact: true }).click();
 });
+
+test('Still resize updates canvas bitmap and displayed size without restarting motion', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const tracks = [{ enabled: true, readyState: 'live', stop() {}, addEventListener() {} }];
+    Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+      value: async () => ({ getTracks: () => tracks, getAudioTracks: () => tracks }),
+    });
+    class PC {
+      localDescription = { sdp: 'v=0' };
+      channel = {
+        readyState: 'open',
+        onmessage: null as ((event: { data: string }) => void) | null,
+        onopen: null as (() => void) | null,
+        onclose: null as (() => void) | null,
+        close() {},
+        send() {},
+      };
+      addTrack() {}
+      async createOffer() {
+        return { type: 'offer', sdp: this.localDescription.sdp };
+      }
+      async setLocalDescription() {}
+      async setRemoteDescription() {
+        this.channel.onopen?.();
+      }
+      createDataChannel() {
+        return this.channel;
+      }
+      close() {}
+      async getStats() {
+        return new Map();
+      }
+    }
+    Object.defineProperty(window, 'RTCPeerConnection', { value: PC });
+  });
+  await page.route('**/api/aethelios/live', (route) =>
+    route.fulfill({
+      json:
+        route.request().method() === 'GET'
+          ? { jobs: [] }
+          : route.request().method() === 'DELETE'
+            ? { ended: true }
+            : {
+                answer: 'v=0\r\na=synthetic-answer',
+                expiresAt: new Date(Date.now() + 120000).toISOString(),
+              },
+    }),
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('http://127.0.0.1:3102/?mode=live-voice');
+  await page.getByRole('button', { name: 'Aethelios Live', exact: true }).click();
+  await page.getByRole('checkbox', { name: /I consent/ }).check();
+  await page.getByRole('button', { name: 'Start voice', exact: true }).click();
+  const compact = page.getByRole('region', { name: 'Persistent Aethelios voice controls' });
+  await expect(compact.locator('.live-call-globe')).toHaveAttribute('data-earth', /ready|fallback/, {
+    timeout: 15000,
+  });
+  await page.getByRole('button', { name: 'Pause ambient motion', exact: true }).click();
+  await expect(compact.locator('.live-call-globe')).toHaveAttribute('data-motion', 'still');
+  await compact.getByRole('button', { name: 'Expand', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
+  const globe = dialog.locator('.live-call-globe');
+  const canvas = globe.locator('.live-globe-canvas');
+  await expect(globe).toHaveAttribute('data-motion', 'still');
+  await expect(globe).toHaveAttribute('data-earth', /ready|fallback/, { timeout: 15000 });
+  await canvas.evaluate((node) => node.setAttribute('data-keep', '1'));
+  const readSize = () =>
+    canvas.evaluate((node) => {
+      const canvasNode = node as HTMLCanvasElement;
+      return {
+        bufferWidth: canvasNode.width,
+        bufferHeight: canvasNode.height,
+        cssWidth: canvasNode.clientWidth,
+        cssHeight: canvasNode.clientHeight,
+      };
+    });
+  const phone = await readSize();
+  expect(phone.bufferWidth).toBe(phone.bufferHeight);
+  expect(Math.abs(phone.cssWidth - phone.cssHeight)).toBeLessThan(2);
+  await page.setViewportSize({ width: 390, height: 420 });
+  await expect
+    .poll(async () => (await readSize()).cssHeight, { timeout: 5000 })
+    .not.toBe(phone.cssHeight);
+  const short = await readSize();
+  expect(short.bufferWidth).toBe(short.bufferHeight);
+  expect(Math.abs(short.cssWidth - short.cssHeight)).toBeLessThan(2);
+  expect(short.cssWidth).toBeLessThan(phone.cssWidth);
+  expect(short.bufferWidth).toBeLessThanOrEqual(phone.bufferWidth);
+  await page.setViewportSize({ width: 844, height: 390 });
+  await expect
+    .poll(async () => (await readSize()).cssWidth, { timeout: 5000 })
+    .not.toBe(short.cssWidth);
+  const landscape = await readSize();
+  expect(landscape.bufferWidth).toBe(landscape.bufferHeight);
+  expect(Math.abs(landscape.cssWidth - landscape.cssHeight)).toBeLessThan(2);
+  await expect(globe).toHaveAttribute('data-motion', 'still');
+  await expect(canvas).toHaveAttribute('data-keep', '1');
+  await page.keyboard.press('Escape');
+  await compact.getByRole('button', { name: 'End session', exact: true }).click();
+});

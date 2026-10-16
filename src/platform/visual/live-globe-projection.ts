@@ -13,10 +13,11 @@ export function liveGlobeMapUv(lon: number, lat: number) {
 
 /** Convert disk coordinates to geographic radians. `ny` is screen-down. */
 export function liveGlobeSphereCoords(nx: number, ny: number, rotation = 0) {
-  const x = clampUnit(nx);
-  const y = clampUnit(ny);
-  const r2 = x * x + y * y;
+  if (!Number.isFinite(nx) || !Number.isFinite(ny)) return null;
+  const r2 = nx * nx + ny * ny;
   if (r2 > 1) return null;
+  const x = nx;
+  const y = ny;
   const nz = Math.sqrt(Math.max(0, 1 - r2));
   const cos = Math.cos(rotation);
   const sin = Math.sin(rotation);

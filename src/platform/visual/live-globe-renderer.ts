@@ -12,6 +12,14 @@ export type LiveGlobeHandle = {
   setEnergy: (inward: number, outward: number, reactive: boolean) => void;
   setMotion: (moving: boolean) => void;
   assets: () => LiveGlobeAssetState;
+  metrics: () => {
+    bufferWidth: number;
+    bufferHeight: number;
+    cssWidth: string;
+    cssHeight: string;
+    looping: boolean;
+    rotation: number;
+  };
   pause: () => void;
   resume: () => void;
   dispose: () => void;
@@ -113,12 +121,12 @@ function gradeEarth(red: number, green: number, blue: number) {
   const ocean = blue > green + 6 && blue > red + 10 && luma < 104;
   if (ocean) {
     const depth = luma / 104;
-    return [5 + depth * 7, 8 + depth * 12, 9 + depth * 10] as const;
+    return [4 + depth * 6, 7 + depth * 11, 8 + depth * 9] as const;
   }
   const ice = luma > 196 && Math.abs(red - green) < 24;
-  if (ice) return [86, 98, 96] as const;
+  if (ice) return [90, 102, 100] as const;
   const relief = luma / 255;
-  return [38 + relief * 70, 72 + relief * 102, 52 + relief * 48] as const;
+  return [42 + relief * 76, 80 + relief * 112, 56 + relief * 52] as const;
 }
 
 function prepareEarth(image: CanvasImageSource, width: number, height: number) {
@@ -210,17 +218,23 @@ export function mountLiveGlobe(
     !reduced &&
     visual.rotate;
 
-  const resize = () => {
+  const measure = () => {
     const box = host.getBoundingClientRect();
     const css = liveGlobeSquareCss(box.width, box.height);
-    const pixels = pixelBudget(css);
+    return { css, pixels: pixelBudget(css) };
+  };
+
+  const resize = () => {
+    const { css, pixels } = measure();
     canvas.style.width = `${css}px`;
     canvas.style.height = `${css}px`;
     canvas.style.aspectRatio = '1';
     if (canvas.width !== pixels || canvas.height !== pixels) {
       canvas.width = pixels;
       canvas.height = pixels;
+      return true;
     }
+    return false;
   };
 
   const paint = (stamp: number) => {
@@ -249,10 +263,10 @@ export function mountLiveGlobe(
           : ([24, 38, 32] as const);
         const nz = sphere.facing;
         const diffuse = Math.max(0, nx * lightX + -ny * lightY + nz * lightZ);
-        const wrap = diffuse * 0.46 + 0.5;
-        const terminator = 0.55 + 0.45 * clamp01((diffuse + 0.18) / 0.55);
-        const spec = Math.pow(diffuse, 26) * (0.055 + outward * 0.04);
-        const fresnel = Math.pow(1 - nz, 3.2);
+        const wrap = diffuse * 0.5 + 0.48;
+        const terminator = 0.58 + 0.42 * clamp01((diffuse + 0.2) / 0.6);
+        const spec = Math.pow(diffuse, 30) * (0.045 + outward * 0.035);
+        const fresnel = Math.pow(1 - nz, 3.4);
         const inhale = kind === 'listening' ? inward * 0.06 * (1 - nz) : 0;
         const glow = fresnel * (8 + outward * 14);
         const index = (y * width + x) * 4;
@@ -299,15 +313,15 @@ export function mountLiveGlobe(
       context.globalCompositeOperation = 'source-over';
     }
     context.restore();
-    const rim = context.createRadialGradient(cx, cy, radius * 0.94, cx, cy, radius * 1.08);
+    const rim = context.createRadialGradient(cx, cy, radius * 0.96, cx, cy, radius * 1.06);
     const rimAlpha =
-      kind === 'error' ? 0.12 : kind === 'ended' ? 0.08 : kind === 'muted' ? 0.1 : 0.18 + outward * 0.1;
+      kind === 'error' ? 0.1 : kind === 'ended' ? 0.07 : kind === 'muted' ? 0.09 : 0.16 + outward * 0.08;
     rim.addColorStop(0, 'rgba(36,91,72,0)');
-    rim.addColorStop(0.72, `rgba(54,137,108,${rimAlpha})`);
+    rim.addColorStop(0.7, `rgba(46,110,86,${rimAlpha})`);
     rim.addColorStop(1, 'rgba(7,11,10,0)');
     context.fillStyle = rim;
     context.beginPath();
-    context.arc(cx, cy, radius * 1.08, 0, Math.PI * 2);
+    context.arc(cx, cy, radius * 1.06, 0, Math.PI * 2);
     context.fill();
     last = stamp;
   };
@@ -358,6 +372,23 @@ export function mountLiveGlobe(
         })
       : null;
   observer?.observe(host);
+  const sizeObserver =
+    typeof ResizeObserver === 'function'
+      ? new ResizeObserver(() => {
+          if (disposed || shouldAnimate()) return;
+          const { css, pixels } = measure();
+          if (
+            canvas.style.width === `${css}px` &&
+            canvas.style.height === `${css}px` &&
+            canvas.width === pixels &&
+            canvas.height === pixels
+          ) {
+            return;
+          }
+          paint(typeof performance !== 'undefined' ? performance.now() : 0);
+        })
+      : null;
+  sizeObserver?.observe(host);
   const onVisibility = () => {
     hidden = document.hidden;
     ensureLoop();
@@ -434,6 +465,14 @@ export function mountLiveGlobe(
       ensureLoop();
     },
     assets: () => ({ ...assetState }),
+    metrics: () => ({
+      bufferWidth: canvas.width,
+      bufferHeight: canvas.height,
+      cssWidth: canvas.style.width,
+      cssHeight: canvas.style.height,
+      looping: frame !== 0,
+      rotation,
+    }),
     pause: () => {
       paused = true;
       ensureLoop();
@@ -447,6 +486,7 @@ export function mountLiveGlobe(
       disposed = true;
       stopLoop();
       observer?.disconnect();
+      sizeObserver?.disconnect();
       document.removeEventListener('visibilitychange', onVisibility);
       media?.removeEventListener?.('change', onMotionPreference);
       canvas.remove();

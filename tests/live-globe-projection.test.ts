@@ -40,6 +40,14 @@ describe('live globe latitude mapping', () => {
     expect(greenland!.ny).toBeLessThan(horn!.ny);
   });
 
+  it('rejects pixels outside the disk so axis ticks do not paint past the limb', () => {
+    expect(liveGlobeSphereCoords(1.25, 0)).toBeNull();
+    expect(liveGlobeSphereCoords(-1.4, 0)).toBeNull();
+    expect(liveGlobeSphereCoords(0, 1.3)).toBeNull();
+    expect(liveGlobeSphereCoords(0, -1.2)).toBeNull();
+    expect(liveGlobeSphereCoords(0.2, -0.2)).toBeTruthy();
+  });
+
   it('places Tasmania in the southern hemisphere when Australia faces the camera', () => {
     const rotation = (liveGlobeLandmarks.tasmania.lon * Math.PI) / 180;
     const tasmania = liveGlobeLandmarkScreen(

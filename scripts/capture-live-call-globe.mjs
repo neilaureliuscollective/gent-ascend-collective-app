@@ -154,6 +154,7 @@ await page.waitForTimeout(2000);
 await speak(page);
 await page.waitForTimeout(2500);
 await page.getByRole('button', { name: 'Stop playback', exact: true }).click();
+await listen(page);
 await page.waitForTimeout(2000);
 await page.getByRole('button', { name: 'Mute microphone', exact: true }).click();
 await page.waitForTimeout(2000);
