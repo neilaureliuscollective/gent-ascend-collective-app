@@ -353,9 +353,9 @@ export function CreationDetail({
       )}
       {(brief || plan) && creation && documentView !== 'Edit' && (
         <article className="talk-document-preview" aria-label="Document preview">
-          <ReactMarkdown components={markdownGuards}>
+          <div className="talk-document-prose"><ReactMarkdown components={markdownGuards}>
             {compileTalkDocument(creation.kind, draft ?? creation.content) ?? ''}
-          </ReactMarkdown>
+          </ReactMarkdown></div>
         </article>
       )}
       </div>
@@ -438,7 +438,7 @@ export function CreationDetail({
                 <div>
                   <dt>Stays in Talk</dt>
                   <dd>
-                    Typeface names, scale, shape, material, surface and border roles, and unprovided image pixels remain in Talk for this historical transfer.
+                    Hero-product demonstration, typeface names, scale, shape, material, surface and border roles, and unprovided image pixels remain in Talk for this historical transfer.
                   </dd>
                 </div>
                 <div>

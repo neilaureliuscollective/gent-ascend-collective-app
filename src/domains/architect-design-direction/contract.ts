@@ -82,7 +82,15 @@ export const designDirectionContentSchema = z
       .optional(),
     compatibleTextImport: z.literal(TEXT_HANDOFF_SCHEMA).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((content, ctx) => {
+    if (content.designSnapshot && content.compatibleTextImport)
+      ctx.addIssue({
+        code: 'custom',
+        path: ['designSnapshot'],
+        message: 'Compatible text imports cannot carry a premium design snapshot.',
+      });
+  });
 
 export type DesignDirectionContent = z.infer<typeof designDirectionContentSchema>;
 

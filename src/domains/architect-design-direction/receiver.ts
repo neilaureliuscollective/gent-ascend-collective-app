@@ -1,4 +1,5 @@
 import 'server-only';
+import { hasVerifiedPremiumAuthority, UNVERIFIED_PREMIUM_DIRECTION } from './premium-authority';
 import { IntelligenceError, intelligenceSession } from '@/domains/intelligence/service';
 import { initialProject } from '@/domains/architect-origin/schema';
 import { originReady } from '@/domains/architect-origin/service';
@@ -176,11 +177,25 @@ export async function receiveDesignDirection(input: unknown): Promise<RetainedDi
   }
 }
 
+/** Also rejects stale contaminated rows retained before the ingress guard existed. */
+function checkedRetainedDirection(row: RetainedDirection | null) {
+  if (
+    row?.receipt.content.designSnapshot &&
+    !hasVerifiedPremiumAuthority({
+      verified: row.verified,
+      sourceKind: row.source_kind,
+      compatibleTextImport: row.receipt.content.compatibleTextImport,
+    })
+  )
+    throw new IntelligenceError(UNVERIFIED_PREMIUM_DIRECTION, 409);
+  return row;
+}
+
 export async function readRetainedDirection(projectId: string) {
   const { person, client } = await intelligenceSession();
   requireSessionReady();
   if (memoryAppStoreAllowed() || process.env.ARCHITECT_APPS_STORE === 'memory') {
-    return designDirectionStore().readProject(person.id, projectId);
+    return checkedRetainedDirection(await designDirectionStore().readProject(person.id, projectId));
   }
   const query = client as unknown as {
     from: (table: string) => {
@@ -200,7 +215,7 @@ export async function readRetainedDirection(projectId: string) {
     .eq('person_id', person.id)
     .maybeSingle();
   if (error) throw new IntelligenceError('Design direction unavailable.', 503);
-  return (data as RetainedDirection | null) ?? null;
+  return checkedRetainedDirection((data as RetainedDirection | null) ?? null);
 }
 
 export { talkSourceAdapterStatus, DESIGN_DIRECTION_SCHEMA };

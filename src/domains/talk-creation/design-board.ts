@@ -105,6 +105,13 @@ export const designBoardContentSchema = z
   })
   .strict()
   .superRefine((value, ctx) => {
+    const premiumOnly = value.directions.some((direction) =>
+      direction.demo.kind !== 'hero-product' ||
+      ['charcoal-glass', 'brushed-metal'].includes(direction.tokens.material) ||
+      [direction.demo.image, ...direction.assets].some((asset) => asset.source !== undefined || asset.versionId !== undefined),
+    );
+    if (premiumOnly && value.rendererVersion !== 'premium/v2')
+      ctx.addIssue({ code: 'custom', path: ['rendererVersion'], message: 'Premium fields require rendererVersion premium/v2.' });
     const ids = value.directions.map((item) => item.id);
     if (new Set(ids).size !== ids.length) {
       ctx.addIssue({

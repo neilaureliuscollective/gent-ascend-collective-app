@@ -438,3 +438,23 @@
 .talk-direction-editor input, .talk-direction-editor select { width: 100%; min-width: 0; min-height: 44px; }
 
 .talk-page .conversation-scroll { overflow-anchor: none; }
+
+.talk-document-preview > ul, .talk-document-preview > ol { width: 100%; box-sizing: border-box; }
+.talk-document-preview ul { list-style: disc outside; }
+.talk-document-preview ol { list-style: decimal outside; }
+.talk-document-preview li::marker { color: #e4c88b; }
+
+.talk-document-preview { container-type: inline-size; }
+.talk-document-prose { width: 100%; max-width: 65ch; margin-inline: auto; }
+.talk-document-prose > * { max-width: none; margin-inline: 0; }
+.talk-document-preview h1 { font-size: clamp(28px, 6cqi, 42px); }
+.talk-design-board { container-name: design-board; container-type: inline-size; }
+@container design-board (max-width: 520px) {
+  .talk-design-hero, .talk-design-hero[data-composition='editorial'] { grid-template-columns: minmax(0,1fr); gap: 20px; }
+  .talk-campaign-art img { max-width: 150px; }
+  .talk-design-directions { flex-wrap: wrap; }
+}
+@container design-board (max-width: 520px) {
+  .talk-design-board .talk-design-hero { padding: 20px; gap: 20px; }
+  .talk-design-board .talk-design-hero h4 { font-size: clamp(26px, 9cqi, 36px); }
+}

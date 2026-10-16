@@ -66,6 +66,8 @@ test('three premium compositions, keyboard selection, revision reload, document 
       : route.fulfill({
           json: {
             direction: {
+              verified: true,
+              source_kind: 'talk-authorized',
               digest: 'a'.repeat(64),
               receipt: {
                 identity: { boardVersion: 2 },
@@ -372,3 +374,53 @@ for (const width of [390, 884])
     );
     await expect(page.getByRole('button', { name: 'Stop reply', exact: true })).not.toBeVisible();
   });
+
+test('unverified or compatible-text premium snapshots cannot appear as a retained design', async ({
+  page,
+}, info) => {
+  const saved = lifestyleLaunchBoard();
+  let flags: { verified?: boolean; source_kind?: string; compatibleTextImport?: string } = {};
+  await page.route('**/api/architect-design-direction?*', (route) =>
+    route.fulfill({
+      json: {
+        direction: {
+          verified: flags.verified,
+          source_kind: flags.source_kind,
+          digest: 'a'.repeat(64),
+          receipt: {
+            identity: { boardVersion: 2 },
+            content: {
+              compatibleTextImport: flags.compatibleTextImport,
+              designSnapshot: { product: saved.product, direction: saved.directions[0] },
+            },
+          },
+        },
+      },
+    }),
+  );
+  for (const value of [
+    {
+      verified: false,
+      source_kind: 'text-import',
+      compatibleTextImport: 'talk-architect-handoff/v1',
+    },
+    { verified: false, source_kind: 'talk-authorized' },
+    { verified: true, source_kind: 'text-import' },
+    {
+      verified: true,
+      source_kind: 'talk-authorized',
+      compatibleTextImport: 'talk-architect-handoff/v1',
+    },
+    {},
+  ]) {
+    flags = value;
+    await page.goto('http://127.0.0.1:3102/premium.html?surface=architect');
+    await expect(page.getByRole('alert')).toContainText('not verified');
+    await expect(page.getByRole('button', { name: 'Review build brief' })).toHaveCount(0);
+    await expect(page.locator('.talk-design-hero')).toHaveCount(0);
+  }
+  await page.screenshot({
+    path: info.outputPath('premium-unverified-blocked.png'),
+    fullPage: true,
+  });
+});

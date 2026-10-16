@@ -302,6 +302,7 @@ export async function proposeArchitectApp(
             schema: direction.receipt.schema,
             identity: direction.receipt.identity,
             designSnapshot: direction.receipt.content.designSnapshot,
+            compatibleTextImport: direction.receipt.content.compatibleTextImport,
             name: direction.receipt.content.name,
             summary: direction.receipt.content.summary,
             digest: direction.digest,

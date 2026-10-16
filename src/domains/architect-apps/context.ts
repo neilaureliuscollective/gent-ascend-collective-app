@@ -1,3 +1,4 @@
+import { hasVerifiedPremiumAuthority, UNVERIFIED_PREMIUM_DIRECTION } from '@/domains/architect-design-direction/premium-authority';
 import type { DesignDirectionContent } from '@/domains/architect-design-direction/contract';
 import { IntelligenceError } from '@/domains/intelligence/service';
 import { APP_DATA_SCHEMA } from './schema';
@@ -89,6 +90,7 @@ export type AppGenerationDirection = {
   schema: string;
   identity?: DesignDirectionContent['identity'];
   designSnapshot?: DesignDirectionContent['designSnapshot'];
+  compatibleTextImport?: string;
   name?: string;
   summary?: string;
   digest?: string;
@@ -126,6 +128,7 @@ export function supportedDirectionForGeneration(direction?: {
   schema?: string;
   identity?: DesignDirectionContent['identity'];
   designSnapshot?: DesignDirectionContent['designSnapshot'];
+  compatibleTextImport?: string;
   name?: string;
   summary?: string;
   digest?: string;
@@ -138,10 +141,13 @@ export function supportedDirectionForGeneration(direction?: {
   assets?: Array<{ id: string; kind: string; provenance: string; href?: string; note?: string }>;
 } | null): AppGenerationDirection {
   if (!direction) return null;
+  if (direction.designSnapshot && !hasVerifiedPremiumAuthority(direction))
+    throw new IntelligenceError(UNVERIFIED_PREMIUM_DIRECTION, 409);
   return {
     schema: direction.schema ?? 'talk-architect-direction/v1',
     identity: direction.identity,
     designSnapshot: direction.designSnapshot,
+    compatibleTextImport: direction.compatibleTextImport,
     name: direction.name,
     summary: direction.summary,
     digest: direction.digest,
@@ -174,13 +180,15 @@ export function buildAppGenerationContext(input: {
   brief?: string;
   direction?: AppGenerationDirection;
 }): AppGenerationContext {
+  if (input.brief && input.brief.length > 2000)
+    throw new IntelligenceError('The generation brief exceeds its 2000-character budget. Shorten the saved audience, constraints, palette or outcome; these requirements were not truncated.', 413);
   return {
     instruction: input.instruction.slice(0, 2000),
     kind: input.kind,
     files: hashedAppFiles(input.files),
     collections: input.collections ?? [],
     bridge: APP_DATA_BRIDGE_CONTRACT,
-    brief: input.brief?.slice(0, 2000),
+    brief: input.brief,
     direction: supportedDirectionForGeneration(input.direction),
   };
 }

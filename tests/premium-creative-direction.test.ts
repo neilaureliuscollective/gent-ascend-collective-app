@@ -58,6 +58,8 @@ describe('premium creative identity', () => {
     const context = supportedDirectionForGeneration({
       ...retained.content,
       digest: retained.digest,
+      verified: true,
+      sourceKind: 'talk-authorized',
     });
     expect(context?.designSnapshot).toEqual(retained.content.designSnapshot);
     expect(context?.identity).toEqual(retained.identity);
@@ -115,4 +117,71 @@ it('distinguishes approval, building, preview and blocked without discarding las
   expect(compactAppStatus({ stage: 'idle', blocked: true, retained: true })).toBe(
     'Blocked · last good preview kept',
   );
+});
+
+it('rejects marker removal for every premium-only field before producing a lossy v1 receipt', () => {
+  const premium = lifestyleLaunchBoard();
+  delete premium.rendererVersion;
+  expect(designBoardContentSchema.safeParse(premium).success).toBe(false);
+  expect(() => produceArchitectDirection({ ...identity, board: premium })).toThrow(
+    /rendererVersion/,
+  );
+  for (const field of ['composition', 'material', 'asset-source', 'asset-version'] as const) {
+    const board = legacyReserveBoard();
+    const direction = board.directions[0]!;
+    if (field === 'composition') direction.demo.kind = 'statement';
+    if (field === 'material') direction.tokens.material = 'charcoal-glass';
+    if (field === 'asset-source') direction.demo.image.source = 'official-crest';
+    if (field === 'asset-version') direction.assets[0]!.versionId = identity.boardId;
+    expect(designBoardContentSchema.safeParse(board).success, field).toBe(false);
+    expect(() => produceArchitectDirection({ ...identity, board }), field).toThrow(
+      /rendererVersion/,
+    );
+  }
+});
+
+it('preserves critical design requirements in the final context despite long valid imported planning sections', async () => {
+  const { buildAppGenerationContext } = await import('@/domains/architect-apps/context');
+  const brief = creationBriefForGeneration({
+    blueprint: {
+      vision: 'Vision '.repeat(400),
+      solution: 'Plan '.repeat(600),
+      milestones: 'Milestone '.repeat(300),
+      audience: 'Founder audience sentinel',
+      requirements: 'No invented packaging; preserve approved logo sentinel',
+      deliverables: 'Palette sentinel #ABCDEF charcoal glass',
+      next: 'Review before building sentinel',
+    },
+  });
+  const context = buildAppGenerationContext({
+    instruction: 'Prepare',
+    kind: 'create',
+    files: [],
+    brief,
+  });
+  expect(context.brief!.length).toBeLessThanOrEqual(2000);
+  for (const value of [
+    'Founder audience sentinel',
+    'preserve approved logo sentinel',
+    'Palette sentinel #ABCDEF',
+    'Review before building sentinel',
+    'Imported plan:',
+    'Milestones:',
+    '[excerpt]',
+  ])
+    expect(context.brief).toContain(value);
+  const oversized = creationBriefForGeneration({
+    blueprint: {
+      requirements: 'Critical requirement '.repeat(200),
+      deliverables: 'Palette #123456',
+    },
+  });
+  expect(() =>
+    buildAppGenerationContext({
+      instruction: 'Prepare',
+      kind: 'create',
+      files: [],
+      brief: oversized,
+    }),
+  ).toThrow(/not truncated/);
 });

@@ -1,5 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
+import {
+  hasVerifiedPremiumAuthority,
+  UNVERIFIED_PREMIUM_DIRECTION,
+} from '@/domains/architect-design-direction/premium-authority';
 import { DirectionCanvas } from '@/components/aurelius/design-board';
 import { designDirectionSchema, type DesignDirection } from '@/domains/talk-creation/design-board';
 
@@ -32,6 +36,14 @@ export function RetainedDesign({
           setError('');
           return;
         }
+        if (
+          !hasVerifiedPremiumAuthority({
+            verified: body.direction.verified,
+            sourceKind: body.direction.source_kind,
+            compatibleTextImport: receipt.content.compatibleTextImport,
+          })
+        )
+          throw new Error(UNVERIFIED_PREMIUM_DIRECTION);
         const direction = designDirectionSchema.parse(saved.direction);
         setSnapshot({
           product: saved.product,
