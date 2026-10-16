@@ -89,7 +89,7 @@ test('Talk elevation names the selected Lifestyle direction above the shared com
   });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(`/app/aethelios?conversation=${conversation}`);
-  await expect(page.getByText(/Changing this: Aethelios Lifestyle launch directions · v4 · A Singular Standard/)).toBeVisible();
+  await expect(page.getByText(/Changing this: Aethelios Lifestyle — launch studies · v4 · A Singular Standard/)).toBeVisible();
   await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
   await expect(page.locator('#talk-voice-dock')).toHaveCount(1);
   await expect(page.getByText('Legacy Reserve')).toHaveCount(0);
@@ -99,7 +99,7 @@ test('Talk elevation names the selected Lifestyle direction above the shared com
     ['desktop', { width: 1440, height: 900 }],
   ] as const) {
     await page.setViewportSize(size);
-    await expect(page.getByText(/Changing this: Aethelios Lifestyle launch directions · v4 · A Singular Standard/)).toBeVisible();
+    await expect(page.getByText(/Changing this: Aethelios Lifestyle — launch studies · v4 · A Singular Standard/)).toBeVisible();
     await page.screenshot({
       path: testInfo.outputPath(`talk-elevation-${name}.png`),
       animations: 'disabled',
@@ -248,7 +248,7 @@ test('Talk keeps a brief Purpose target when a design board is also selected', a
   await page.getByRole('complementary', { name: 'Reviewed work' }).getByRole('button', { name: 'Edit', exact: true }).click();
   await page.getByRole('button', { name: 'Change Purpose' }).click();
   await expect(page.getByText('Changing this: Aethelios Lifestyle launch · v2 · Purpose')).toBeVisible();
-  await expect(page.getByText('Changing this: Aethelios Lifestyle launch directions · v4 · A Singular Standard')).toHaveCount(0);
+  await expect(page.getByText('Changing this: Aethelios Lifestyle — launch studies · v4 · A Singular Standard')).toHaveCount(0);
   await page.getByRole('button', { name: 'New', exact: true }).click();
   await expect(page.getByText('Changing this: Aethelios Lifestyle launch · v2 · Purpose')).toHaveCount(0);
 });
