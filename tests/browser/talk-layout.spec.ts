@@ -60,6 +60,16 @@ for (const width of [320, 360, 390, 412, 768, 1440]) {
     expect(heights.overflow).toBe(false);
     expect(heights.transcript / heights.app).toBeGreaterThan(0.6);
     expect(heights.composer).toBeLessThanOrEqual(112);
+    const addImage = page.getByRole('button', { name: 'Add image', exact: true });
+    const addImageBox = await addImage.boundingBox();
+    expect(addImageBox!.width).toBeGreaterThanOrEqual(44);
+    expect(addImageBox!.height).toBeGreaterThanOrEqual(44);
+    await addImage.click({ trial: true });
+    await test.info().attach('empty-composer-bounds', {
+      body: JSON.stringify({ width, ...heights, addImage: addImageBox }),
+      contentType: 'application/json',
+    });
+    await page.screenshot({ path: `test-results/talk-empty-${width}.png` });
     await page.getByLabel('Message Aethelios', { exact: true }).fill('Keep this company draft');
     await page.getByRole('button', { name: 'Expand writing space', exact: true }).click();
     await page.getByLabel('Expanded message').fill('Keep this company draft and revision');

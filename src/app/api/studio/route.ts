@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     const project = projectInput.safeParse(body);
     if (project.success) {
       const { client, person } = await studioSession();
-      if (project.data.brief?.brand?.logoReferenceId)
+      if (project.data.brief?.brand?.logoReferenceId || project.data.brief?.referenceId)
         throw new IntelligenceError('Create the project before selecting its logo reference.', 422);
       const id = crypto.randomUUID();
       const result = await client
@@ -56,6 +56,17 @@ export async function PATCH(request: Request) {
     if (!input.success) throw new IntelligenceError('Check the project direction.');
     const { client, person } = await studioSession();
     const { projectId, updatedAt, title, creativeType, brief } = input.data;
+    if (brief.referenceId) {
+      const reference = await client
+        .from('ai_studio_references')
+        .select('id')
+        .eq('id', brief.referenceId)
+        .eq('project_id', projectId)
+        .eq('person_id', person.id)
+        .maybeSingle();
+      if (reference.error || !reference.data)
+        throw new IntelligenceError('Choose a reference from this project.', 422);
+    }
     if (brief.brand?.logoReferenceId) {
       const logo = await client
         .from('ai_studio_references')
