@@ -270,6 +270,8 @@ for (const width of [390, 884])
       art.alt = 'Synthetic asynchronous artifact growth';
       art.style.cssText = 'display:block;width:220px;height:220px';
       node.querySelector('[data-turn-id]')!.append(art);
+      // A scroll queued before layout can arrive after the artifact grows.
+      node.dispatchEvent(new Event('scroll'));
     });
     await expect
       .poll(() =>

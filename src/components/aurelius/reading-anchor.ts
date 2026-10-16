@@ -22,7 +22,13 @@ export function useReadingAnchor(
   function remember() {
     const node = root.current;
     if (!node) return followRef.current;
-    if (node.clientWidth !== size.current.width || node.clientHeight !== size.current.height) {
+    if (
+      node.clientWidth !== size.current.width ||
+      node.clientHeight !== size.current.height ||
+      node.scrollHeight !== size.current.scrollHeight
+    ) {
+      // Artifact growth can precede a queued scroll event. Keep the prior anchor
+      // until the observer restores it; capturing now would adopt the shifted row.
       // Reflow can move the bottom without a reading gesture. A deliberate jump far
       // beyond that geometry change still leaves follow mode immediately.
       const reflow =
