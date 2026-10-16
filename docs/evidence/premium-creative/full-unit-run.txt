@@ -1,0 +1,148 @@
+
+> aurelius-collective-app@0.1.0 test
+> vitest run --maxWorkers=2
+
+
+ RUN  v5.0.1 /workspace/gent-ascend-collective-app
+
+ ❯ tests/studio-export-evidence.test.ts (3 tests | 3 failed) 25ms
+   ❯ Studio export evidence (3)
+     × writes inspected PNG, SVG, vector PDF and H.264 film artifacts 16ms
+     × exports a physical label with type, SVG mark and rotation, and a 32s mixed still film 5ms
+     × renders owned moving footage, title cards and non-tone audio 2ms
+ ❯ tests/work-items.test.ts (9 tests | 1 failed) 42ms
+   × names the selected board direction for conversational targeting 29ms
+ ❯ tests/architect-construct-host.test.ts (2 tests | 1 failed) 36923ms
+   × inspects the host isolation runtime and reports pass, fail, or unavailable honestly 29747ms
+stderr | tests/architect-apps-worker-image.test.ts > builds the packaged worker image when Docker is available
+{"image":"aethelios-architect-apps-worker:2026-10-15.1","action":"missing","reason":"Worker image build failed."}
+
+ ❯ tests/architect-apps-worker-image.test.ts (3 tests | 1 failed) 2313ms
+   × builds the packaged worker image when Docker is available 2277ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/architect-apps-worker-image.test.ts > builds the packaged worker image when Docker is available
+AssertionError: Worker image build failed.: expected 'missing' to be 'built' // Object.is equality
+
+Expected: "built"
+Received: "missing"
+
+ ❯ tests/architect-apps-worker-image.test.ts:56:42
+     54|     return;
+     55|   }
+     56|   expect(receipt.action, receipt.reason).toBe('built');
+       |                                          ^
+     57|   expect(receipt.id).toMatch(/^sha256:/);
+     58| }, 180000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/architect-construct-host.test.ts > inspects the host isolation runtime and reports pass, fail, or unavailable honestly
+AssertionError: node:fs:621
+  return binding.open(
+                 ^
+
+Error: EACCES: permission denied, open '/opt/construct-runner.mjs'
+    at Object.openSync (node:fs:621:18)
+    at Object.readFileSync (node:fs:487:35)
+    at getSourceSync (node:internal/modules/esm/load:41:17)
+    at defaultLoadSync (node:internal/modules/esm/load:156:34)
+    at #loadAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:806:12)
+    at #loadSync (node:internal/modules/esm/loader:838:53)
+    at ModuleLoader.load (node:internal/modules/esm/loader:787:26)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:498:31)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:564:36)
+    at afterResolve (node:internal/modules/esm/loader:611:52) {
+  errno: -13,
+  code: 'EACCES',
+  syscall: 'open',
+  path: '/opt/construct-runner.mjs'
+}
+
+Node.js v24.22.0
+ Disposable container did not return a verified result (exit 1). A reachable Docker engine is not a sandbox.: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/architect-construct-host.test.ts:85:83
+     83|   }
+     84|   if (outcome === 'failed') {
+     85|     expect(execution?.sandbox, execution?.blocker ?? 'isolated contain…
+       |                                                                                   ^
+     86|   }
+     87| }, 120000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/studio-export-evidence.test.ts > Studio export evidence > writes inspected PNG, SVG, vector PDF and H.264 film artifacts
+Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
+ ❯ tests/studio-export-evidence.test.ts:25:5
+     23| describe('Studio export evidence', () => {
+     24|   it('writes inspected PNG, SVG, vector PDF and H.264 film artifacts',…
+     25|     await mkdir(out, { recursive: true });
+       |     ^
+     26|     const id = '10000000-0000-4000-8000-000000000001';
+     27|     const document = parseDesignDocument({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/studio-export-evidence.test.ts > Studio export evidence > exports a physical label with type, SVG mark and rotation, and a 32s mixed still film
+Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
+ ❯ tests/studio-export-evidence.test.ts:161:5
+    159|
+    160|   it('exports a physical label with type, SVG mark and rotation, and a…
+    161|     await mkdir(out, { recursive: true });
+       |     ^
+    162|     const id = '10000000-0000-4000-8000-000000000031';
+    163|     const document = parseDesignDocument({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/studio-export-evidence.test.ts > Studio export evidence > renders owned moving footage, title cards and non-tone audio
+Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
+ ❯ tests/studio-export-evidence.test.ts:443:5
+    441|
+    442|   it('renders owned moving footage, title cards and non-tone audio', a…
+    443|     await mkdir(out, { recursive: true });
+       |     ^
+    444|     const dir = await mkdtemp(path.join(tmpdir(), 'studio-moving-'));
+    445|     const run = (args: string[]) =>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/work-items.test.ts > names the selected board direction for conversational targeting
+AssertionError: expected 'Aethelios Lifestyle — launch studies …' to be 'Aethelios Lifestyle launch directions…' // Object.is equality
+
+Expected: "Aethelios Lifestyle launch directions · v4 · Emerald Glass"
+Received: "Aethelios Lifestyle — launch studies · v4 · A Singular Standard"
+
+ ❯ tests/work-items.test.ts:41:41
+     39|   };
+     40|   const selected = describeSelectedWork(workspace);
+     41|   expect(selectionChipLabel(selected!)).toBe('Aethelios Lifestyle — la…
+       |                                         ^
+     42| });
+     43|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  4 failed | 224 passed | 1 skipped (229)
+      Tests  6 failed | 1344 passed | 1 skipped (1351)
+   Start at  23:51:22
+   Duration  329.27s (tests 65%, import 27%, transform 7%, worker 1%)
+
+     Import  645 modules were evaluated 1621 times · 129.51s total, 27% of tracked time
+             ~32.48s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice

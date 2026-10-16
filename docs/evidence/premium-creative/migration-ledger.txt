@@ -1,0 +1,10 @@
+
+> aurelius-collective-app@0.1.0 db:ledger
+> node scripts/check-migration-ledger.mjs
+
+Verified 37 Gent Ascend-owned migration files against the recorded hosted ledger snapshot; five Reserve-owned migrations are tracked in the shared database separately.
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice

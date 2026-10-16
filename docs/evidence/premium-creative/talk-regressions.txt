@@ -1,0 +1,32 @@
+[WebServer] (node:14565) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:14578) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:14595) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 11 tests using 2 workers
+
+(node:14615) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:14614) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3100". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+  ✓   1 tests/browser/talk-interaction-recovery.spec.ts:38:3 › Latest message stays above short and grown composers at 390x844 (33.6s)
+  ✓   3 tests/browser/talk-interaction-recovery.spec.ts:38:3 › Latest message stays above short and grown composers at 390x420 (8.9s)
+  ✓   2 tests/browser/talk-design-board.spec.ts:55:1 › renders three interactive Legacy Reserve directions and updates the sample without a paid call (42.5s)
+  ✓   4 tests/browser/talk-interaction-recovery.spec.ts:38:3 › Latest message stays above short and grown composers at 1440x900 (16.9s)
+  ✓   5 tests/browser/talk-interaction-recovery.spec.ts:74:1 › queued drawer close respects a newer keyboard focus target in forced colors (22.4s)
+  ✓   6 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 320px (11.4s)
+  ✓   8 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 390px (18.9s)
+  ✓   7 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 360px (21.7s)
+  ✓  10 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 768px (16.7s)
+  ✓   9 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 412px (18.6s)
+  ✓  11 tests/browser/talk-layout.spec.ts:25:3 › Talk reserves space for messages and preserves editor drafts at 1440px (9.5s)
+
+  11 passed (2.2m)
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice
