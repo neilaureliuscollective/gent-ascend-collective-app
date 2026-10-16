@@ -356,6 +356,9 @@ test('real premium saved revision transfers with exact durable authority, origin
   expect(
     (await owner.from('architect_app_jobs').select('id').eq('project_id', projectId)).data,
   ).toHaveLength(0);
+  expect(
+    (await owner.from('architect_app_jobs').select('id').eq('project_id', updatedProject)).data,
+  ).toHaveLength(0);
   const other = await browser.newContext();
   const foreignPage = await other.newPage();
   await signIn(foreignPage, 'member@aurelius.test');
@@ -373,14 +376,19 @@ test('real premium saved revision transfers with exact durable authority, origin
     ).status,
   ).toBeGreaterThanOrEqual(400);
   await other.close();
+  // Preserve the existing no-direct-table-write permission boundary.
   expect(
     (
       await owner
         .from('ai_conversations')
         .update({ archived_at: new Date().toISOString() })
         .eq('id', conversationId)
-    ).error,
-  ).toBeNull();
+    ).error?.code,
+  ).toBe('42501');
+  expect(
+    (await api(page, '/api/aurelius', 'PATCH', { id: conversationId, title: null, archived: true }))
+      .status,
+  ).toBe(200);
   expect((await api(page, `/api/architect-design-direction?project=${projectId}`)).status).toBe(
     409,
   );
@@ -394,9 +402,14 @@ test('real premium saved revision transfers with exact durable authority, origin
     ).data?.receipt,
   ).toEqual(expected);
   expect(
-    (await owner.from('ai_conversations').update({ archived_at: null }).eq('id', conversationId))
-      .error,
-  ).toBeNull();
+    (
+      await api(page, '/api/aurelius', 'PATCH', {
+        id: conversationId,
+        title: null,
+        archived: false,
+      })
+    ).status,
+  ).toBe(200);
   expect((await api(page, `/api/architect-design-direction?project=${projectId}`)).status).toBe(
     200,
   );
