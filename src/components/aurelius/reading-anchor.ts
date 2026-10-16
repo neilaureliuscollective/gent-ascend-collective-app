@@ -14,19 +14,19 @@ function capture(node: HTMLDivElement, following: boolean): Anchor {
 /** Keep the same saved message/offset through width and keyboard reflow while reading history. */
 export function useReadingAnchor(
   root: RefObject<HTMLDivElement | null>,
-  follow: RefObject<boolean>,
+  followRef: RefObject<boolean>,
   ready: boolean,
 ) {
   const anchor = useRef<Anchor>(null);
   const size = useRef({ width: 0, height: 0 });
   function remember() {
     const node = root.current;
-    if (!node) return follow.current;
+    if (!node) return followRef.current;
     if (node.clientWidth !== size.current.width || node.clientHeight !== size.current.height)
-      return follow.current;
-    follow.current = node.scrollHeight - node.scrollTop - node.clientHeight < 24;
-    anchor.current = capture(node, follow.current);
-    return follow.current;
+      return followRef.current;
+    followRef.current = node.scrollHeight - node.scrollTop - node.clientHeight < 24;
+    anchor.current = capture(node, followRef.current);
+    return followRef.current;
   }
   useEffect(() => {
     const node = root.current;
@@ -37,16 +37,16 @@ export function useReadingAnchor(
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         const saved = anchor.current;
-        if (!follow.current && saved) {
+        if (!followRef.current && saved) {
           const row = [...node.querySelectorAll<HTMLElement>('[data-turn-id]')].find(
             (item) => item.dataset.turnId === saved.id,
           );
           if (row)
             node.scrollTop +=
               row.getBoundingClientRect().top - node.getBoundingClientRect().top - saved.offset;
-        } else if (follow.current) node.scrollTop = node.scrollHeight;
+        } else if (followRef.current) node.scrollTop = node.scrollHeight;
         size.current = { width: node.clientWidth, height: node.clientHeight };
-        anchor.current = capture(node, follow.current);
+        anchor.current = capture(node, followRef.current);
       });
     };
     const observer = new ResizeObserver(restore);
@@ -65,6 +65,6 @@ export function useReadingAnchor(
       mutations.disconnect();
       cancelAnimationFrame(frame);
     };
-  }, [root, follow, ready]);
+  }, [root, followRef, ready]);
   return remember;
 }
