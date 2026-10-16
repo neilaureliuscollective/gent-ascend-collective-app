@@ -55,6 +55,8 @@ export function compactAppStatus(input: {
   uncertain?: boolean;
   recovered?: boolean;
   recoveredRevision?: number;
+  awaitingApproval?: boolean;
+  blocked?: boolean;
 }) {
   if (input.stage === 'preparing' || input.stage === 'building' || input.stage === 'checking') return 'Building';
   if (input.stage === 'saving') return 'Saving';
@@ -63,6 +65,8 @@ export function compactAppStatus(input: {
   if (input.stage === 'failed') return 'Failed';
   if (input.stage === 'cancelled' && input.retained) return 'Cancelled · last good preview kept';
   if (input.stage === 'cancelled') return 'Cancelled';
+  if (input.awaitingApproval) return input.retained ? 'Awaiting approval · last good preview kept' : 'Awaiting approval';
+  if (input.blocked) return input.retained ? 'Blocked · last good preview kept' : 'Blocked';
   if (input.stage === 'preview-ready') return 'Preview ready';
   if (input.stage === 'saved') return 'Saved';
   if (input.recovered)

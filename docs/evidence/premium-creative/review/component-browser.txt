@@ -1,0 +1,18 @@
+[WebServer] (node:18460) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 4 tests using 1 worker
+
+(node:18480) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/browser/premium-creative.spec.ts:5:1 › three premium compositions, keyboard selection, revision reload, document Preview and received design (37.5s)
+  ✓  2 tests/browser/premium-creative.spec.ts:119:3 › Talk accepted send, failed draft recovery and asynchronous reading anchor at 390 (25.3s)
+  ✓  3 tests/browser/premium-creative.spec.ts:119:3 › Talk accepted send, failed draft recovery and asynchronous reading anchor at 884 (28.2s)
+  ✓  4 tests/browser/premium-creative.spec.ts:378:1 › unverified or compatible-text premium snapshots cannot appear as a retained design (14.1s)
+
+  4 passed (1.9m)
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice

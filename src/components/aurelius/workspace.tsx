@@ -1952,12 +1952,11 @@ export function AureliusWorkspace({
           <div
             className="conversation-scroll"
             ref={scroll}
+            onWheel={(event) => { if (event.deltaY < 0) follow.current = false; }}
             onScroll={() => {
               const el = scroll.current;
               if (el) {
-                follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-                setAwayFromLatest(!follow.current);
-                rememberReadingPosition();
+                setAwayFromLatest(!rememberReadingPosition());
               }
             }}
             aria-label="Conversation messages"
@@ -2217,9 +2216,13 @@ export function AureliusWorkspace({
                 onClick={() => {
                   follow.current = true;
                   setAwayFromLatest(false);
-                  scroll.current?.scrollTo({
-                    top: scroll.current.scrollHeight,
-                    behavior: 'instant',
+                  requestAnimationFrame(() => {
+                    // Hiding this control changes transcript height. Jump after that reflow.
+                    follow.current = true;
+                    scroll.current?.scrollTo({
+                      top: scroll.current.scrollHeight,
+                      behavior: 'instant',
+                    });
                   });
                 }}
               >

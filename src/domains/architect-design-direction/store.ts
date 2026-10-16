@@ -1,3 +1,4 @@
+import { hasVerifiedPremiumAuthority, UNVERIFIED_PREMIUM_DIRECTION } from './premium-authority';
 import type { DesignDirectionReceipt } from './contract';
 
 export class DesignDirectionStoreError extends Error {
@@ -40,6 +41,8 @@ export class MemoryDesignDirectionStore implements DesignDirectionStore {
   rows = new Map<string, RetainedDirection>();
 
   async retain(input: Parameters<DesignDirectionStore['retain']>[0]) {
+    if (input.receipt.content.designSnapshot && !hasVerifiedPremiumAuthority({ verified: input.verified, sourceKind: input.sourceKind, compatibleTextImport: input.receipt.content.compatibleTextImport }))
+      throw new DesignDirectionStoreError(UNVERIFIED_PREMIUM_DIRECTION);
     const existing = this.rows.get(input.requestId);
     if (existing) {
       if (

@@ -61,9 +61,10 @@ for (const width of [344, 390, 720, 768, 1440]) {
     await input(page).focus();
     await page.setViewportSize({ width, height: 420 });
     await expect(input(page)).toBeFocused();
-    expect(
-      await input(page).evaluate((el) => el.getBoundingClientRect().height),
-    ).toBeLessThanOrEqual(102);
+    // Viewport resize is applied on the next animation frame; focus can already be stable.
+    await expect
+      .poll(() => input(page).evaluate((el) => el.getBoundingClientRect().height))
+      .toBeLessThanOrEqual(102);
     await page.setViewportSize({ width, height: 844 });
     await expect(input(page)).toHaveValue('Detailed multiline thought\n'.repeat(80));
     await page.screenshot({ path: `test-results/fluid-composer-${width}.png`, fullPage: true });

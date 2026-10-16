@@ -316,6 +316,7 @@ test('refining a brief writes a new version that survives reload', async ({ page
   await page.goto(`/app/aethelios?conversation=${conversation}`);
   await page.getByRole('button', { name: 'Open', exact: true }).first().click();
   const panel = page.getByRole('complementary', { name: 'Reviewed work' });
+  await panel.getByRole('button', { name: 'Edit', exact: true }).click();
   await panel.getByLabel('Purpose').fill('A quieter luxury brand for private founders.');
   await panel.getByRole('button', { name: 'Save new version', exact: true }).click();
   await expect(page.getByText('New version saved.')).toBeVisible();

@@ -38,7 +38,7 @@ it('names the selected board direction for conversational targeting', () => {
     attachmentProjectId: null,
   };
   const selected = describeSelectedWork(workspace);
-  expect(selectionChipLabel(selected!)).toBe('Aethelios Lifestyle launch directions · v4 · Emerald Glass');
+  expect(selectionChipLabel(selected!)).toBe('Aethelios Lifestyle — launch studies · v4 · A Singular Standard');
 });
 
 it('exports a Lifestyle launch brief as Markdown, not a JSON blob', () => {

@@ -1,0 +1,2150 @@
+
+ RUN  v5.0.1 /tmp/gent-pr154-before-trust
+
+ ❯ tests/premium-snapshot-authority.test.ts (17 tests | 16 failed) 302ms
+   × rejects the mixed receipt schema even when the client digest matches 64ms
+   × rejects mixed receipts at direct source resolution before the Talk adapter 33ms
+   × rejects mixed receipts at direct domain receive before any retention or project binding 40ms
+   × rejects the forged combination through the actual POST route before binding or retention 16ms
+   × blocks contaminated stored premium receipts at read/API consumption (false, text-import) 13ms
+   × blocks contaminated stored premium receipts at read/API consumption (false, talk-authorized) 10ms
+   × blocks contaminated stored premium receipts at read/API consumption (true, text-import) 28ms
+   × blocks contaminated stored premium receipts at read/API consumption (true, talk-authorized) 11ms
+   × blocks contaminated snapshot generation, including direct context entry (false, text-import) 6ms
+   × blocks contaminated snapshot generation, including direct context entry (false, talk-authorized) 4ms
+   × blocks contaminated snapshot generation, including direct context entry (true, text-import) 4ms
+   × blocks contaminated snapshot generation, including direct context entry (true, talk-authorized) 3ms
+   × also rejects an unverified snapshot without the text compatibility flag (false, text-import) 10ms
+   × also rejects an unverified snapshot without the text compatibility flag (false, talk-authorized) 40ms
+   × also rejects an unverified snapshot without the text compatibility flag (true, text-import) 4ms
+   × rejects an unverified adapter result and a direct memory-store write before persistence 3ms
+ ❯ tests/premium-creative-direction.test.ts (8 tests | 2 failed) 143ms
+   × rejects marker removal for every premium-only field before producing a lossy v1 receipt 19ms
+   × preserves critical design requirements in the final context despite long valid imported planning sections 16ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/premium-creative-direction.test.ts > rejects marker removal for every premium-only field before producing a lossy v1 receipt
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/premium-creative-direction.test.ts:125:63
+    123|   const premium = lifestyleLaunchBoard();
+    124|   delete premium.rendererVersion;
+    125|   expect(designBoardContentSchema.safeParse(premium).success).toBe(fal…
+       |                                                               ^
+    126|   expect(() => produceArchitectDirection({ ...identity, board: premium…
+    127|     /rendererVersion/,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+
+ FAIL  tests/premium-creative-direction.test.ts > preserves critical design requirements in the final context despite long valid imported planning sections
+AssertionError: expected 'Vision Vision Vision Vision Vision Vi…' to contain 'Founder audience sentinel'
+
+Expected: "Founder audience sentinel"
+Received: "Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Vision Visio"
+
+ ❯ tests/premium-creative-direction.test.ts:172:27
+    170|     '[excerpt]',
+    171|   ])
+    172|     expect(context.brief).toContain(value);
+       |                           ^
+    173|   const oversized = creationBriefForGeneration({
+    174|     blueprint: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+
+ FAIL  tests/premium-snapshot-authority.test.ts > rejects the mixed receipt schema even when the client digest matches
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/premium-snapshot-authority.test.ts:107:75
+    105| });
+    106| it('rejects the mixed receipt schema even when the client digest match…
+    107|   expect(designDirectionReceiptSchema.safeParse(forgedReceipt()).succe…
+       |                                                                           ^
+    108| });
+    109| it('rejects mixed receipts at direct source resolution before the Talk…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+
+ FAIL  tests/premium-snapshot-authority.test.ts > rejects mixed receipts at direct source resolution before the Talk adapter
+AssertionError: promise resolved "{ kind: 'text-import', …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "digest": "35135c2e679b8a9b9135bf157ab54824b17b487ba8a69d52da80b7ec87aa2be4",
++   "kind": "text-import",
++   "note": "Compatible talk-architect-handoff/v1 text import. This is not verification of a Talk design board.",
++   "receipt": {
++     "content": {
++       "assets": [
++         {
++           "id": "c11a502b-d859-51a1-94c1-80c55c1acee7",
++           "kind": "image",
++           "note": "Approved Aethelios emblem · referenced · brand-identity",
++           "provenance": "talk",
++         },
++       ],
++       "colors": [
++         {
++           "role": "canvas",
++           "value": "#080B0C",
++         },
++         {
++           "role": "ink",
++           "value": "#F6F0E4",
++         },
++         {
++           "role": "accent",
++           "value": "#51DBAB",
++         },
++         {
++           "role": "reserve",
++           "value": "#DAB66C",
++         },
++         {
++           "role": "muted",
++           "value": "#C1CEC8",
++         },
++       ],
++       "compatibleTextImport": "talk-architect-handoff/v1",
++       "copy": {
++         "approved": [
++           "The Human Ascendance",
++           "Aethelios Lifestyle — proposed launch campaign.",
++         ],
++         "title": "A considered daily ritual.",
++       },
++       "demo": {
++         "kind": "none",
++         "labelled": true,
++         "note": "Exact creative retained in designSnapshot. This receipt does not commission a build.",
++       },
++       "designSnapshot": {
++         "direction": {
++           "assets": [
++             {
++               "id": "crest",
++               "kind": "referenced",
++               "label": "Approved Aethelios emblem",
++               "provenance": "brand-identity",
++               "referenced": true,
++               "source": "official-crest",
++             },
++           ],
++           "copy": {
++             "disclaimer": "Proposed copy. Not an approved claim or live merchandising offer.",
++             "headline": "A considered daily ritual.",
++             "proof": "Aethelios Lifestyle — proposed launch campaign.",
++             "subhead": "The Human Ascendance",
++           },
++           "demo": {
++             "cta": "Review the line",
++             "headline": "A considered daily ritual.",
++             "image": {
++               "id": "campaign-photo",
++               "kind": "placeholder",
++               "label": "Product photography not supplied",
++               "provenance": "not-supplied",
++               "referenced": false,
++             },
++             "kind": "split-campaign",
++             "productLabel": "Product photography not supplied",
++             "supporting": "Considered essentials. Deliberate choices. A daily expression of the person you are becoming.",
++           },
++           "id": "direction-b",
++           "name": "Luminous Precision",
++           "tokens": {
++             "colors": [
++               {
++                 "hex": "#080B0C",
++                 "name": "Obsidian",
++                 "role": "background",
++               },
++               {
++                 "hex": "#151D20",
++                 "name": "Charcoal glass",
++                 "role": "surface",
++               },
++               {
++                 "hex": "#F6F0E4",
++                 "name": "Warm ivory",
++                 "role": "text",
++               },
++               {
++                 "hex": "#51DBAB",
++                 "name": "Luminous emerald",
++                 "role": "accent",
++               },
++               {
++                 "hex": "#DAB66C",
++                 "name": "Restrained gold",
++                 "role": "highlight",
++               },
++               {
++                 "hex": "#C1CEC8",
++                 "name": "Silver sage",
++                 "role": "muted",
++               },
++               {
++                 "hex": "#657773",
++                 "name": "Glass edge",
++                 "role": "border",
++               },
++             ],
++             "material": "charcoal-glass",
++             "shape": "soft",
++             "spacing": "balanced",
++             "typography": {
++               "body": "Inter",
++               "display": "Sora",
++               "scale": "measured",
++             },
++           },
++         },
++         "product": "Aethelios Lifestyle",
++         "rendererVersion": "premium/v2",
++       },
++       "identity": {
++         "boardId": "50000000-0000-4000-8000-000000000031",
++         "boardVersion": 2,
++         "conversationId": "30000000-0000-4000-8000-000000000031",
++         "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++       },
++       "layout": [
++         "split",
++         "board",
++       ],
++       "name": "Luminous Precision",
++       "schema": "talk-architect-direction/v1",
++       "summary": "Aethelios Lifestyle: A considered daily ritual.",
++       "typography": [
++         "display",
++         "body",
++       ],
++     },
++     "digest": "35135c2e679b8a9b9135bf157ab54824b17b487ba8a69d52da80b7ec87aa2be4",
++     "identity": {
++       "boardId": "50000000-0000-4000-8000-000000000031",
++       "boardVersion": 2,
++       "conversationId": "30000000-0000-4000-8000-000000000031",
++       "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++     },
++     "schema": "talk-architect-direction/v1",
++     "sourceRecords": [
++       {
++         "id": "30000000-0000-4000-8000-000000000031",
++         "kind": "conversation",
++       },
++       {
++         "id": "50000000-0000-4000-8000-000000000031",
++         "kind": "board",
++         "revision": 2,
++       },
++       {
++         "id": "f8575979-8ade-575c-8f22-bc3521c12532",
++         "kind": "direction",
++         "revision": 2,
++       },
++     ],
++   },
+  }
+
+ ❯ tests/premium-snapshot-authority.test.ts:112:4
+    110|   await expect(
+    111|     resolveAuthorizedTalkSource({ personId: state.owner, receipt: forg…
+    112|   ).rejects.toThrow(/text imports cannot carry/i);
+       |    ^
+    113|   expect(state.writes).not.toHaveBeenCalled();
+    114| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+
+ FAIL  tests/premium-snapshot-authority.test.ts > rejects mixed receipts at direct domain receive before any retention or project binding
+AssertionError: promise resolved "{ …(10) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "created_at": "2026-10-16T00:56:08.402Z",
++   "digest": "35135c2e679b8a9b9135bf157ab54824b17b487ba8a69d52da80b7ec87aa2be4",
++   "person_id": "00000000-0000-4000-8000-000000000001",
++   "project_id": "00000000-0000-4000-8000-000000000111",
++   "receipt": {
++     "content": {
++       "assets": [
++         {
++           "id": "c11a502b-d859-51a1-94c1-80c55c1acee7",
++           "kind": "image",
++           "note": "Approved Aethelios emblem · referenced · brand-identity",
++           "provenance": "talk",
++         },
++       ],
++       "colors": [
++         {
++           "role": "canvas",
++           "value": "#080B0C",
++         },
++         {
++           "role": "ink",
++           "value": "#F6F0E4",
++         },
++         {
++           "role": "accent",
++           "value": "#51DBAB",
++         },
++         {
++           "role": "reserve",
++           "value": "#DAB66C",
++         },
++         {
++           "role": "muted",
++           "value": "#C1CEC8",
++         },
++       ],
++       "compatibleTextImport": "talk-architect-handoff/v1",
++       "copy": {
++         "approved": [
++           "The Human Ascendance",
++           "Aethelios Lifestyle — proposed launch campaign.",
++         ],
++         "title": "A considered daily ritual.",
++       },
++       "demo": {
++         "kind": "none",
++         "labelled": true,
++         "note": "Exact creative retained in designSnapshot. This receipt does not commission a build.",
++       },
++       "designSnapshot": {
++         "direction": {
++           "assets": [
++             {
++               "id": "crest",
++               "kind": "referenced",
++               "label": "Approved Aethelios emblem",
++               "provenance": "brand-identity",
++               "referenced": true,
++               "source": "official-crest",
++             },
++           ],
++           "copy": {
++             "disclaimer": "Proposed copy. Not an approved claim or live merchandising offer.",
++             "headline": "A considered daily ritual.",
++             "proof": "Aethelios Lifestyle — proposed launch campaign.",
++             "subhead": "The Human Ascendance",
++           },
++           "demo": {
++             "cta": "Review the line",
++             "headline": "A considered daily ritual.",
++             "image": {
++               "id": "campaign-photo",
++               "kind": "placeholder",
++               "label": "Product photography not supplied",
++               "provenance": "not-supplied",
++               "referenced": false,
++             },
++             "kind": "split-campaign",
++             "productLabel": "Product photography not supplied",
++             "supporting": "Considered essentials. Deliberate choices. A daily expression of the person you are becoming.",
++           },
++           "id": "direction-b",
++           "name": "Luminous Precision",
++           "tokens": {
++             "colors": [
++               {
++                 "hex": "#080B0C",
++                 "name": "Obsidian",
++                 "role": "background",
++               },
++               {
++                 "hex": "#151D20",
++                 "name": "Charcoal glass",
++                 "role": "surface",
++               },
++               {
++                 "hex": "#F6F0E4",
++                 "name": "Warm ivory",
++                 "role": "text",
++               },
++               {
++                 "hex": "#51DBAB",
++                 "name": "Luminous emerald",
++                 "role": "accent",
++               },
++               {
++                 "hex": "#DAB66C",
++                 "name": "Restrained gold",
++                 "role": "highlight",
++               },
++               {
++                 "hex": "#C1CEC8",
++                 "name": "Silver sage",
++                 "role": "muted",
++               },
++               {
++                 "hex": "#657773",
++                 "name": "Glass edge",
++                 "role": "border",
++               },
++             ],
++             "material": "charcoal-glass",
++             "shape": "soft",
++             "spacing": "balanced",
++             "typography": {
++               "body": "Inter",
++               "display": "Sora",
++               "scale": "measured",
++             },
++           },
++         },
++         "product": "Aethelios Lifestyle",
++         "rendererVersion": "premium/v2",
++       },
++       "identity": {
++         "boardId": "50000000-0000-4000-8000-000000000031",
++         "boardVersion": 2,
++         "conversationId": "30000000-0000-4000-8000-000000000031",
++         "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++       },
++       "layout": [
++         "split",
++         "board",
++       ],
++       "name": "Luminous Precision",
++       "schema": "talk-architect-direction/v1",
++       "summary": "Aethelios Lifestyle: A considered daily ritual.",
++       "typography": [
++         "display",
++         "body",
++       ],
++     },
++     "digest": "35135c2e679b8a9b9135bf157ab54824b17b487ba8a69d52da80b7ec87aa2be4",
++     "identity": {
++       "boardId": "50000000-0000-4000-8000-000000000031",
++       "boardVersion": 2,
++       "conversationId": "30000000-0000-4000-8000-000000000031",
++       "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++     },
++     "schema": "talk-architect-direction/v1",
++     "sourceRecords": [
++       {
++         "id": "30000000-0000-4000-8000-000000000031",
++         "kind": "conversation",
++       },
++       {
++         "id": "50000000-0000-4000-8000-000000000031",
++         "kind": "board",
++         "revision": 2,
++       },
++       {
++         "id": "f8575979-8ade-575c-8f22-bc3521c12532",
++         "kind": "direction",
++         "revision": 2,
++       },
++     ],
++   },
++   "request_id": "00000000-0000-4000-8000-000000000301",
++   "revision": 1,
++   "source_kind": "text-import",
++   "started": false,
++   "verified": false,
+  }
+
+ ❯ tests/premium-snapshot-authority.test.ts:116:50
+    114| });
+    115| it('rejects mixed receipts at direct domain receive before any retenti…
+    116|   await expect(receiveDesignDirection(command())).rejects.toThrow();
+       |                                                  ^
+    117|   expect((designDirectionStore() as MemoryDesignDirectionStore).rows.s…
+    118|   expect(state.writes).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+
+ FAIL  tests/premium-snapshot-authority.test.ts > rejects the forged combination through the actual POST route before binding or retention
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ tests/premium-snapshot-authority.test.ts:132:27
+    130|     }),
+    131|   );
+    132|   expect(response.status).toBe(400);
+       |                           ^
+    133|   expect((designDirectionStore() as MemoryDesignDirectionStore).rows.s…
+    134|   expect(state.writes).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+
+ FAIL  tests/premium-snapshot-authority.test.ts > blocks contaminated stored premium receipts at read/API consumption (false, text-import)
+AssertionError: promise resolved "{ …(10) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "created_at": "2026-10-16",
++   "digest": "35135c2e679b8a9b9135bf157ab54824b17b487ba8a69d52da80b7ec87aa2be4",
++   "person_id": "00000000-0000-4000-8000-000000000001",
++   "project_id": "00000000-0000-4000-8000-000000000111",
++   "receipt": {
++     "content": {
++       "assets": [
++         {
++           "id": "c11a502b-d859-51a1-94c1-80c55c1acee7",
++           "kind": "image",
++           "note": "Approved Aethelios emblem · referenced · brand-identity",
++           "provenance": "talk",
++         },
++       ],
++       "colors": [
++         {
++           "role": "canvas",
++           "value": "#080B0C",
++         },
++         {
++           "role": "ink",
++           "value": "#F6F0E4",
++         },
++         {
++           "role": "accent",
++           "value": "#51DBAB",
++         },
++         {
++           "role": "reserve",
++           "value": "#DAB66C",
++         },
++         {
++           "role": "muted",
++           "value": "#C1CEC8",
++         },
++       ],
++       "compatibleTextImport": "talk-architect-handoff/v1",
++       "copy": {
++         "approved": [
++           "The Human Ascendance",
++           "Aethelios Lifestyle — proposed launch campaign.",
++         ],
++         "title": "A considered daily ritual.",
++       },
++       "demo": {
++         "kind": "none",
++         "labelled": true,
++         "note": "Exact creative retained in designSnapshot. This receipt does not commission a build.",
++       },
++       "designSnapshot": {
++         "direction": {
++           "assets": [
++             {
++               "id": "crest",
++               "kind": "referenced",
++               "label": "Approved Aethelios emblem",
++               "provenance": "brand-identity",
++               "referenced": true,
++               "source": "official-crest",
++             },
++           ],
++           "copy": {
++             "disclaimer": "Proposed copy. Not an approved claim or live merchandising offer.",
++             "headline": "A considered daily ritual.",
++             "proof": "Aethelios Lifestyle — proposed launch campaign.",
++             "subhead": "The Human Ascendance",
++           },
++           "demo": {
++             "cta": "Review the line",
++             "headline": "A considered daily ritual.",
++             "image": {
++               "id": "campaign-photo",
++               "kind": "placeholder",
++               "label": "Product photography not supplied",
++               "provenance": "not-supplied",
++               "referenced": false,
++             },
++             "kind": "split-campaign",
++             "productLabel": "Product photography not supplied",
++             "supporting": "Considered essentials. Deliberate choices. A daily expression of the person you are becoming.",
++           },
++           "id": "direction-b",
++           "name": "Luminous Precision",
++           "tokens": {
++             "colors": [
++               {
++                 "hex": "#080B0C",
++                 "name": "Obsidian",
++                 "role": "background",
++               },
++               {
++                 "hex": "#151D20",
++                 "name": "Charcoal glass",
++                 "role": "surface",
++               },
++               {
++                 "hex": "#F6F0E4",
++                 "name": "Warm ivory",
++                 "role": "text",
++               },
++               {
++                 "hex": "#51DBAB",
++                 "name": "Luminous emerald",
++                 "role": "accent",
++               },
++               {
++                 "hex": "#DAB66C",
++                 "name": "Restrained gold",
++                 "role": "highlight",
++               },
++               {
++                 "hex": "#C1CEC8",
++                 "name": "Silver sage",
++                 "role": "muted",
++               },
++               {
++                 "hex": "#657773",
++                 "name": "Glass edge",
++                 "role": "border",
++               },
++             ],
++             "material": "charcoal-glass",
++             "shape": "soft",
++             "spacing": "balanced",
++             "typography": {
++               "body": "Inter",
++               "display": "Sora",
++               "scale": "measured",
++             },
++           },
++         },
++         "product": "Aethelios Lifestyle",
++         "rendererVersion": "premium/v2",
++       },
++       "identity": {
++         "boardId": "50000000-0000-4000-8000-000000000031",
++         "boardVersion": 2,
++         "conversationId": "30000000-0000-4000-8000-000000000031",
++         "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++       },
++       "layout": [
++         "split",
++         "board",
++       ],
++       "name": "Luminous Precision",
++       "schema": "talk-architect-direction/v1",
++       "summary": "Aethelios Lifestyle: A considered daily ritual.",
++       "typography": [
++         "display",
++         "body",
++       ],
++     },
++     "digest": "35135c2e679b8a9b9135bf157ab54824b17b487ba8a69d52da80b7ec87aa2be4",
++     "identity": {
++       "boardId": "50000000-0000-4000-8000-000000000031",
++       "boardVersion": 2,
++       "conversationId": "30000000-0000-4000-8000-000000000031",
++       "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++     },
++     "schema": "talk-architect-direction/v1",
++     "sourceRecords": [
++       {
++         "id": "30000000-0000-4000-8000-000000000031",
++         "kind": "conversation",
++       },
++       {
++         "id": "50000000-0000-4000-8000-000000000031",
++         "kind": "board",
++         "revision": 2,
++       },
++       {
++         "id": "f8575979-8ade-575c-8f22-bc3521c12532",
++         "kind": "direction",
++         "revision": 2,
++       },
++     ],
++   },
++   "request_id": "00000000-0000-4000-8000-000000000301",
++   "revision": 1,
++   "source_kind": "text-import",
++   "started": false,
++   "verified": false,
+  }
+
+ ❯ tests/premium-snapshot-authority.test.ts:146:55
+    144|     const row = staleRow(verified, kind);
+    145|     (designDirectionStore() as MemoryDesignDirectionStore).rows.set(ro…
+    146|     await expect(readRetainedDirection(state.project)).rejects.toThrow…
+       |                                                       ^
+    147|     const response = await GET(
+    148|       new Request(`http://localhost/api/architect-design-direction?pro…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+
+ FAIL  tests/premium-snapshot-authority.test.ts > blocks contaminated stored premium receipts at read/API consumption (false, talk-authorized)
+AssertionError: promise resolved "{ …(10) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "created_at": "2026-10-16",
++   "digest": "35135c2e679b8a9b9135bf157ab54824b17b487ba8a69d52da80b7ec87aa2be4",
++   "person_id": "00000000-0000-4000-8000-000000000001",
++   "project_id": "00000000-0000-4000-8000-000000000111",
++   "receipt": {
++     "content": {
++       "assets": [
++         {
++           "id": "c11a502b-d859-51a1-94c1-80c55c1acee7",
++           "kind": "image",
++           "note": "Approved Aethelios emblem · referenced · brand-identity",
++           "provenance": "talk",
++         },
++       ],
++       "colors": [
++         {
++           "role": "canvas",
++           "value": "#080B0C",
++         },
++         {
++           "role": "ink",
++           "value": "#F6F0E4",
++         },
++         {
++           "role": "accent",
++           "value": "#51DBAB",
++         },
++         {
++           "role": "reserve",
++           "value": "#DAB66C",
++         },
++         {
++           "role": "muted",
++           "value": "#C1CEC8",
++         },
++       ],
++       "compatibleTextImport": "talk-architect-handoff/v1",
++       "copy": {
++         "approved": [
++           "The Human Ascendance",
++           "Aethelios Lifestyle — proposed launch campaign.",
++         ],
++         "title": "A considered daily ritual.",
++       },
++       "demo": {
++         "kind": "none",
++         "labelled": true,
++         "note": "Exact creative retained in designSnapshot. This receipt does not commission a build.",
++       },
++       "designSnapshot": {
++         "direction": {
++           "assets": [
++             {
++               "id": "crest",
++               "kind": "referenced",
++               "label": "Approved Aethelios emblem",
++               "provenance": "brand-identity",
++               "referenced": true,
++               "source": "official-crest",
++             },
++           ],
++           "copy": {
++             "disclaimer": "Proposed copy. Not an approved claim or live merchandising offer.",
++             "headline": "A considered daily ritual.",
++             "proof": "Aethelios Lifestyle — proposed launch campaign.",
++             "subhead": "The Human Ascendance",
++           },
++           "demo": {
++             "cta": "Review the line",
++             "headline": "A considered daily ritual.",
++             "image": {
++               "id": "campaign-photo",
++               "kind": "placeholder",
++               "label": "Product photography not supplied",
++               "provenance": "not-supplied",
++               "referenced": false,
++             },
++             "kind": "split-campaign",
++             "productLabel": "Product photography not supplied",
++             "supporting": "Considered essentials. Deliberate choices. A daily expression of the person you are becoming.",
++           },
++           "id": "direction-b",
++           "name": "Luminous Precision",
++           "tokens": {
++             "colors": [
++               {
++                 "hex": "#080B0C",
++                 "name": "Obsidian",
++                 "role": "background",
++               },
++               {
++                 "hex": "#151D20",
++                 "name": "Charcoal glass",
++                 "role": "surface",
++               },
++               {
++                 "hex": "#F6F0E4",
++                 "name": "Warm ivory",
++                 "role": "text",
++               },
++               {
++                 "hex": "#51DBAB",
++                 "name": "Luminous emerald",
++                 "role": "accent",
++               },
++               {
++                 "hex": "#DAB66C",
++                 "name": "Restrained gold",
++                 "role": "highlight",
++               },
++               {
++                 "hex": "#C1CEC8",
++                 "name": "Silver sage",
++                 "role": "muted",
++               },
++               {
++                 "hex": "#657773",
++                 "name": "Glass edge",
++                 "role": "border",
++               },
++             ],
++             "material": "charcoal-glass",
++             "shape": "soft",
++             "spacing": "balanced",
++             "typography": {
++               "body": "Inter",
++               "display": "Sora",
++               "scale": "measured",
++             },
++           },
++         },
++         "product": "Aethelios Lifestyle",
++         "rendererVersion": "premium/v2",
++       },
++       "identity": {
++         "boardId": "50000000-0000-4000-8000-000000000031",
++         "boardVersion": 2,
++         "conversationId": "30000000-0000-4000-8000-000000000031",
++         "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++       },
++       "layout": [
++         "split",
++         "board",
++       ],
++       "name": "Luminous Precision",
++       "schema": "talk-architect-direction/v1",
++       "summary": "Aethelios Lifestyle: A considered daily ritual.",
++       "typography": [
++         "display",
++         "body",
++       ],
++     },
++     "digest": "35135c2e679b8a9b9135bf157ab54824b17b487ba8a69d52da80b7ec87aa2be4",
++     "identity": {
++       "boardId": "50000000-0000-4000-8000-000000000031",
++       "boardVersion": 2,
++       "conversationId": "30000000-0000-4000-8000-000000000031",
++       "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++     },
++     "schema": "talk-architect-direction/v1",
++     "sourceRecords": [
++       {
++         "id": "30000000-0000-4000-8000-000000000031",
++         "kind": "conversation",
++       },
++       {
++         "id": "50000000-0000-4000-8000-000000000031",
++         "kind": "board",
++         "revision": 2,
++       },
++       {
++         "id": "f8575979-8ade-575c-8f22-bc3521c12532",
++         "kind": "direction",
++         "revision": 2,
++       },
++     ],
++   },
++   "request_id": "00000000-0000-4000-8000-000000000301",
++   "revision": 1,
++   "source_kind": "talk-authorized",
++   "started": false,
++   "verified": false,
+  }
+
+ ❯ tests/premium-snapshot-authority.test.ts:146:55
+    144|     const row = staleRow(verified, kind);
+    145|     (designDirectionStore() as MemoryDesignDirectionStore).rows.set(ro…
+    146|     await expect(readRetainedDirection(state.project)).rejects.toThrow…
+       |                                                       ^
+    147|     const response = await GET(
+    148|       new Request(`http://localhost/api/architect-design-direction?pro…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/18]⎯
+
+ FAIL  tests/premium-snapshot-authority.test.ts > blocks contaminated stored premium receipts at read/API consumption (true, text-import)
+AssertionError: promise resolved "{ …(10) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "created_at": "2026-10-16",
++   "digest": "35135c2e679b8a9b9135bf157ab54824b17b487ba8a69d52da80b7ec87aa2be4",
++   "person_id": "00000000-0000-4000-8000-000000000001",
++   "project_id": "00000000-0000-4000-8000-000000000111",
++   "receipt": {
++     "content": {
++       "assets": [
++         {
++           "id": "c11a502b-d859-51a1-94c1-80c55c1acee7",
++           "kind": "image",
++           "note": "Approved Aethelios emblem · referenced · brand-identity",
++           "provenance": "talk",
++         },
++       ],
++       "colors": [
++         {
++           "role": "canvas",
++           "value": "#080B0C",
++         },
++         {
++           "role": "ink",
++           "value": "#F6F0E4",
++         },
++         {
++           "role": "accent",
++           "value": "#51DBAB",
++         },
++         {
++           "role": "reserve",
++           "value": "#DAB66C",
++         },
++         {
++           "role": "muted",
++           "value": "#C1CEC8",
++         },
++       ],
++       "compatibleTextImport": "talk-architect-handoff/v1",
++       "copy": {
++         "approved": [
++           "The Human Ascendance",
++           "Aethelios Lifestyle — proposed launch campaign.",
++         ],
++         "title": "A considered daily ritual.",
++       },
++       "demo": {
++         "kind": "none",
++         "labelled": true,
++         "note": "Exact creative retained in designSnapshot. This receipt does not commission a build.",
++       },
++       "designSnapshot": {
++         "direction": {
++           "assets": [
++             {
++               "id": "crest",
++               "kind": "referenced",
++               "label": "Approved Aethelios emblem",
++               "provenance": "brand-identity",
++               "referenced": true,
++               "source": "official-crest",
++             },
++           ],
++           "copy": {
++             "disclaimer": "Proposed copy. Not an approved claim or live merchandising offer.",
++             "headline": "A considered daily ritual.",
++             "proof": "Aethelios Lifestyle — proposed launch campaign.",
++             "subhead": "The Human Ascendance",
++           },
++           "demo": {
++             "cta": "Review the line",
++             "headline": "A considered daily ritual.",
++             "image": {
++               "id": "campaign-photo",
++               "kind": "placeholder",
++               "label": "Product photography not supplied",
++               "provenance": "not-supplied",
++               "referenced": false,
++             },
++             "kind": "split-campaign",
++             "productLabel": "Product photography not supplied",
++             "supporting": "Considered essentials. Deliberate choices. A daily expression of the person you are becoming.",
++           },
++           "id": "direction-b",
++           "name": "Luminous Precision",
++           "tokens": {
++             "colors": [
++               {
++                 "hex": "#080B0C",
++                 "name": "Obsidian",
++                 "role": "background",
++               },
++               {
++                 "hex": "#151D20",
++                 "name": "Charcoal glass",
++                 "role": "surface",
++               },
++               {
++                 "hex": "#F6F0E4",
++                 "name": "Warm ivory",
++                 "role": "text",
++               },
++               {
++                 "hex": "#51DBAB",
++                 "name": "Luminous emerald",
++                 "role": "accent",
++               },
++               {
++                 "hex": "#DAB66C",
++                 "name": "Restrained gold",
++                 "role": "highlight",
++               },
++               {
++                 "hex": "#C1CEC8",
++                 "name": "Silver sage",
++                 "role": "muted",
++               },
++               {
++                 "hex": "#657773",
++                 "name": "Glass edge",
++                 "role": "border",
++               },
++             ],
++             "material": "charcoal-glass",
++             "shape": "soft",
++             "spacing": "balanced",
++             "typography": {
++               "body": "Inter",
++               "display": "Sora",
++               "scale": "measured",
++             },
++           },
++         },
++         "product": "Aethelios Lifestyle",
++         "rendererVersion": "premium/v2",
++       },
++       "identity": {
++         "boardId": "50000000-0000-4000-8000-000000000031",
++         "boardVersion": 2,
++         "conversationId": "30000000-0000-4000-8000-000000000031",
++         "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++       },
++       "layout": [
++         "split",
++         "board",
++       ],
++       "name": "Luminous Precision",
++       "schema": "talk-architect-direction/v1",
++       "summary": "Aethelios Lifestyle: A considered daily ritual.",
++       "typography": [
++         "display",
++         "body",
++       ],
++     },
++     "digest": "35135c2e679b8a9b9135bf157ab54824b17b487ba8a69d52da80b7ec87aa2be4",
++     "identity": {
++       "boardId": "50000000-0000-4000-8000-000000000031",
++       "boardVersion": 2,
++       "conversationId": "30000000-0000-4000-8000-000000000031",
++       "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++     },
++     "schema": "talk-architect-direction/v1",
++     "sourceRecords": [
++       {
++         "id": "30000000-0000-4000-8000-000000000031",
++         "kind": "conversation",
++       },
++       {
++         "id": "50000000-0000-4000-8000-000000000031",
++         "kind": "board",
++         "revision": 2,
++       },
++       {
++         "id": "f8575979-8ade-575c-8f22-bc3521c12532",
++         "kind": "direction",
++         "revision": 2,
++       },
++     ],
++   },
++   "request_id": "00000000-0000-4000-8000-000000000301",
++   "revision": 1,
++   "source_kind": "text-import",
++   "started": false,
++   "verified": true,
+  }
+
+ ❯ tests/premium-snapshot-authority.test.ts:146:55
+    144|     const row = staleRow(verified, kind);
+    145|     (designDirectionStore() as MemoryDesignDirectionStore).rows.set(ro…
+    146|     await expect(readRetainedDirection(state.project)).rejects.toThrow…
+       |                                                       ^
+    147|     const response = await GET(
+    148|       new Request(`http://localhost/api/architect-design-direction?pro…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/18]⎯
+
+ FAIL  tests/premium-snapshot-authority.test.ts > blocks contaminated stored premium receipts at read/API consumption (true, talk-authorized)
+AssertionError: promise resolved "{ …(10) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "created_at": "2026-10-16",
++   "digest": "35135c2e679b8a9b9135bf157ab54824b17b487ba8a69d52da80b7ec87aa2be4",
++   "person_id": "00000000-0000-4000-8000-000000000001",
++   "project_id": "00000000-0000-4000-8000-000000000111",
++   "receipt": {
++     "content": {
++       "assets": [
++         {
++           "id": "c11a502b-d859-51a1-94c1-80c55c1acee7",
++           "kind": "image",
++           "note": "Approved Aethelios emblem · referenced · brand-identity",
++           "provenance": "talk",
++         },
++       ],
++       "colors": [
++         {
++           "role": "canvas",
++           "value": "#080B0C",
++         },
++         {
++           "role": "ink",
++           "value": "#F6F0E4",
++         },
++         {
++           "role": "accent",
++           "value": "#51DBAB",
++         },
++         {
++           "role": "reserve",
++           "value": "#DAB66C",
++         },
++         {
++           "role": "muted",
++           "value": "#C1CEC8",
++         },
++       ],
++       "compatibleTextImport": "talk-architect-handoff/v1",
++       "copy": {
++         "approved": [
++           "The Human Ascendance",
++           "Aethelios Lifestyle — proposed launch campaign.",
++         ],
++         "title": "A considered daily ritual.",
++       },
++       "demo": {
++         "kind": "none",
++         "labelled": true,
++         "note": "Exact creative retained in designSnapshot. This receipt does not commission a build.",
++       },
++       "designSnapshot": {
++         "direction": {
++           "assets": [
++             {
++               "id": "crest",
++               "kind": "referenced",
++               "label": "Approved Aethelios emblem",
++               "provenance": "brand-identity",
++               "referenced": true,
++               "source": "official-crest",
++             },
++           ],
++           "copy": {
++             "disclaimer": "Proposed copy. Not an approved claim or live merchandising offer.",
++             "headline": "A considered daily ritual.",
++             "proof": "Aethelios Lifestyle — proposed launch campaign.",
++             "subhead": "The Human Ascendance",
++           },
++           "demo": {
++             "cta": "Review the line",
++             "headline": "A considered daily ritual.",
++             "image": {
++               "id": "campaign-photo",
++               "kind": "placeholder",
++               "label": "Product photography not supplied",
++               "provenance": "not-supplied",
++               "referenced": false,
++             },
++             "kind": "split-campaign",
++             "productLabel": "Product photography not supplied",
++             "supporting": "Considered essentials. Deliberate choices. A daily expression of the person you are becoming.",
++           },
++           "id": "direction-b",
++           "name": "Luminous Precision",
++           "tokens": {
++             "colors": [
++               {
++                 "hex": "#080B0C",
++                 "name": "Obsidian",
++                 "role": "background",
++               },
++               {
++                 "hex": "#151D20",
++                 "name": "Charcoal glass",
++                 "role": "surface",
++               },
++               {
++                 "hex": "#F6F0E4",
++                 "name": "Warm ivory",
++                 "role": "text",
++               },
++               {
++                 "hex": "#51DBAB",
++                 "name": "Luminous emerald",
++                 "role": "accent",
++               },
++               {
++                 "hex": "#DAB66C",
++                 "name": "Restrained gold",
++                 "role": "highlight",
++               },
++               {
++                 "hex": "#C1CEC8",
++                 "name": "Silver sage",
++                 "role": "muted",
++               },
++               {
++                 "hex": "#657773",
++                 "name": "Glass edge",
++                 "role": "border",
++               },
++             ],
++             "material": "charcoal-glass",
++             "shape": "soft",
++             "spacing": "balanced",
++             "typography": {
++               "body": "Inter",
++               "display": "Sora",
++               "scale": "measured",
++             },
++           },
++         },
++         "product": "Aethelios Lifestyle",
++         "rendererVersion": "premium/v2",
++       },
++       "identity": {
++         "boardId": "50000000-0000-4000-8000-000000000031",
++         "boardVersion": 2,
++         "conversationId": "30000000-0000-4000-8000-000000000031",
++         "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++       },
++       "layout": [
++         "split",
++         "board",
++       ],
++       "name": "Luminous Precision",
++       "schema": "talk-architect-direction/v1",
++       "summary": "Aethelios Lifestyle: A considered daily ritual.",
++       "typography": [
++         "display",
++         "body",
++       ],
++     },
++     "digest": "35135c2e679b8a9b9135bf157ab54824b17b487ba8a69d52da80b7ec87aa2be4",
++     "identity": {
++       "boardId": "50000000-0000-4000-8000-000000000031",
++       "boardVersion": 2,
++       "conversationId": "30000000-0000-4000-8000-000000000031",
++       "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++     },
++     "schema": "talk-architect-direction/v1",
++     "sourceRecords": [
++       {
++         "id": "30000000-0000-4000-8000-000000000031",
++         "kind": "conversation",
++       },
++       {
++         "id": "50000000-0000-4000-8000-000000000031",
++         "kind": "board",
++         "revision": 2,
++       },
++       {
++         "id": "f8575979-8ade-575c-8f22-bc3521c12532",
++         "kind": "direction",
++         "revision": 2,
++       },
++     ],
++   },
++   "request_id": "00000000-0000-4000-8000-000000000301",
++   "revision": 1,
++   "source_kind": "talk-authorized",
++   "started": false,
++   "verified": true,
+  }
+
+ ❯ tests/premium-snapshot-authority.test.ts:146:55
+    144|     const row = staleRow(verified, kind);
+    145|     (designDirectionStore() as MemoryDesignDirectionStore).rows.set(ro…
+    146|     await expect(readRetainedDirection(state.project)).rejects.toThrow…
+       |                                                       ^
+    147|     const response = await GET(
+    148|       new Request(`http://localhost/api/architect-design-direction?pro…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/18]⎯
+
+ FAIL  tests/premium-snapshot-authority.test.ts > blocks contaminated snapshot generation, including direct context entry (false, text-import)
+ FAIL  tests/premium-snapshot-authority.test.ts > blocks contaminated snapshot generation, including direct context entry (false, talk-authorized)
+ FAIL  tests/premium-snapshot-authority.test.ts > blocks contaminated snapshot generation, including direct context entry (true, text-import)
+ FAIL  tests/premium-snapshot-authority.test.ts > blocks contaminated snapshot generation, including direct context entry (true, talk-authorized)
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ tests/premium-snapshot-authority.test.ts:163:62
+    161|     const content = forgedReceipt().content;
+    162|     const direction = { ...content, verified, sourceKind };
+    163|     expect(() => supportedDirectionForGeneration(direction)).toThrow(/…
+       |                                                              ^
+    164|     expect(() =>
+    165|       buildAppGenerationContext({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/18]⎯
+
+ FAIL  tests/premium-snapshot-authority.test.ts > also rejects an unverified snapshot without the text compatibility flag (false, text-import)
+AssertionError: promise resolved "{ …(10) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "created_at": "2026-10-16",
++   "digest": "fbefac76467ff56633152ee2d1d464e1e88b7894e90fc02ec177183d3bf802a6",
++   "person_id": "00000000-0000-4000-8000-000000000001",
++   "project_id": "00000000-0000-4000-8000-000000000111",
++   "receipt": {
++     "content": {
++       "assets": [
++         {
++           "id": "c11a502b-d859-51a1-94c1-80c55c1acee7",
++           "kind": "image",
++           "note": "Approved Aethelios emblem · referenced · brand-identity",
++           "provenance": "talk",
++         },
++       ],
++       "colors": [
++         {
++           "role": "canvas",
++           "value": "#080B0C",
++         },
++         {
++           "role": "ink",
++           "value": "#F6F0E4",
++         },
++         {
++           "role": "accent",
++           "value": "#51DBAB",
++         },
++         {
++           "role": "reserve",
++           "value": "#DAB66C",
++         },
++         {
++           "role": "muted",
++           "value": "#C1CEC8",
++         },
++       ],
++       "copy": {
++         "approved": [
++           "The Human Ascendance",
++           "Aethelios Lifestyle — proposed launch campaign.",
++         ],
++         "title": "A considered daily ritual.",
++       },
++       "demo": {
++         "kind": "none",
++         "labelled": true,
++         "note": "Exact creative retained in designSnapshot. This receipt does not commission a build.",
++       },
++       "designSnapshot": {
++         "direction": {
++           "assets": [
++             {
++               "id": "crest",
++               "kind": "referenced",
++               "label": "Approved Aethelios emblem",
++               "provenance": "brand-identity",
++               "referenced": true,
++               "source": "official-crest",
++             },
++           ],
++           "copy": {
++             "disclaimer": "Proposed copy. Not an approved claim or live merchandising offer.",
++             "headline": "A considered daily ritual.",
++             "proof": "Aethelios Lifestyle — proposed launch campaign.",
++             "subhead": "The Human Ascendance",
++           },
++           "demo": {
++             "cta": "Review the line",
++             "headline": "A considered daily ritual.",
++             "image": {
++               "id": "campaign-photo",
++               "kind": "placeholder",
++               "label": "Product photography not supplied",
++               "provenance": "not-supplied",
++               "referenced": false,
++             },
++             "kind": "split-campaign",
++             "productLabel": "Product photography not supplied",
++             "supporting": "Considered essentials. Deliberate choices. A daily expression of the person you are becoming.",
++           },
++           "id": "direction-b",
++           "name": "Luminous Precision",
++           "tokens": {
++             "colors": [
++               {
++                 "hex": "#080B0C",
++                 "name": "Obsidian",
++                 "role": "background",
++               },
++               {
++                 "hex": "#151D20",
++                 "name": "Charcoal glass",
++                 "role": "surface",
++               },
++               {
++                 "hex": "#F6F0E4",
++                 "name": "Warm ivory",
++                 "role": "text",
++               },
++               {
++                 "hex": "#51DBAB",
++                 "name": "Luminous emerald",
++                 "role": "accent",
++               },
++               {
++                 "hex": "#DAB66C",
++                 "name": "Restrained gold",
++                 "role": "highlight",
++               },
++               {
++                 "hex": "#C1CEC8",
++                 "name": "Silver sage",
++                 "role": "muted",
++               },
++               {
++                 "hex": "#657773",
++                 "name": "Glass edge",
++                 "role": "border",
++               },
++             ],
++             "material": "charcoal-glass",
++             "shape": "soft",
++             "spacing": "balanced",
++             "typography": {
++               "body": "Inter",
++               "display": "Sora",
++               "scale": "measured",
++             },
++           },
++         },
++         "product": "Aethelios Lifestyle",
++         "rendererVersion": "premium/v2",
++       },
++       "identity": {
++         "boardId": "50000000-0000-4000-8000-000000000031",
++         "boardVersion": 2,
++         "conversationId": "30000000-0000-4000-8000-000000000031",
++         "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++       },
++       "layout": [
++         "split",
++         "board",
++       ],
++       "name": "Luminous Precision",
++       "schema": "talk-architect-direction/v1",
++       "summary": "Aethelios Lifestyle: A considered daily ritual.",
++       "typography": [
++         "display",
++         "body",
++       ],
++     },
++     "digest": "fbefac76467ff56633152ee2d1d464e1e88b7894e90fc02ec177183d3bf802a6",
++     "identity": {
++       "boardId": "50000000-0000-4000-8000-000000000031",
++       "boardVersion": 2,
++       "conversationId": "30000000-0000-4000-8000-000000000031",
++       "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++     },
++     "schema": "talk-architect-direction/v1",
++     "sourceRecords": [
++       {
++         "id": "30000000-0000-4000-8000-000000000031",
++         "kind": "conversation",
++       },
++       {
++         "id": "50000000-0000-4000-8000-000000000031",
++         "kind": "board",
++         "revision": 2,
++       },
++       {
++         "id": "f8575979-8ade-575c-8f22-bc3521c12532",
++         "kind": "direction",
++         "revision": 2,
++       },
++     ],
++   },
++   "request_id": "00000000-0000-4000-8000-000000000301",
++   "revision": 1,
++   "source_kind": "text-import",
++   "started": false,
++   "verified": false,
+  }
+
+ ❯ tests/premium-snapshot-authority.test.ts:210:55
+    208|     const row = { ...staleRow(verified, sourceKind), receipt, digest: …
+    209|     (designDirectionStore() as MemoryDesignDirectionStore).rows.set(ro…
+    210|     await expect(readRetainedDirection(state.project)).rejects.toThrow…
+       |                                                       ^
+    211|     const direction = { ...receipt.content, verified, sourceKind };
+    212|     expect(() => supportedDirectionForGeneration(direction)).toThrow(/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/18]⎯
+
+ FAIL  tests/premium-snapshot-authority.test.ts > also rejects an unverified snapshot without the text compatibility flag (false, talk-authorized)
+AssertionError: promise resolved "{ …(10) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "created_at": "2026-10-16",
++   "digest": "fbefac76467ff56633152ee2d1d464e1e88b7894e90fc02ec177183d3bf802a6",
++   "person_id": "00000000-0000-4000-8000-000000000001",
++   "project_id": "00000000-0000-4000-8000-000000000111",
++   "receipt": {
++     "content": {
++       "assets": [
++         {
++           "id": "c11a502b-d859-51a1-94c1-80c55c1acee7",
++           "kind": "image",
++           "note": "Approved Aethelios emblem · referenced · brand-identity",
++           "provenance": "talk",
++         },
++       ],
++       "colors": [
++         {
++           "role": "canvas",
++           "value": "#080B0C",
++         },
++         {
++           "role": "ink",
++           "value": "#F6F0E4",
++         },
++         {
++           "role": "accent",
++           "value": "#51DBAB",
++         },
++         {
++           "role": "reserve",
++           "value": "#DAB66C",
++         },
++         {
++           "role": "muted",
++           "value": "#C1CEC8",
++         },
++       ],
++       "copy": {
++         "approved": [
++           "The Human Ascendance",
++           "Aethelios Lifestyle — proposed launch campaign.",
++         ],
++         "title": "A considered daily ritual.",
++       },
++       "demo": {
++         "kind": "none",
++         "labelled": true,
++         "note": "Exact creative retained in designSnapshot. This receipt does not commission a build.",
++       },
++       "designSnapshot": {
++         "direction": {
++           "assets": [
++             {
++               "id": "crest",
++               "kind": "referenced",
++               "label": "Approved Aethelios emblem",
++               "provenance": "brand-identity",
++               "referenced": true,
++               "source": "official-crest",
++             },
++           ],
++           "copy": {
++             "disclaimer": "Proposed copy. Not an approved claim or live merchandising offer.",
++             "headline": "A considered daily ritual.",
++             "proof": "Aethelios Lifestyle — proposed launch campaign.",
++             "subhead": "The Human Ascendance",
++           },
++           "demo": {
++             "cta": "Review the line",
++             "headline": "A considered daily ritual.",
++             "image": {
++               "id": "campaign-photo",
++               "kind": "placeholder",
++               "label": "Product photography not supplied",
++               "provenance": "not-supplied",
++               "referenced": false,
++             },
++             "kind": "split-campaign",
++             "productLabel": "Product photography not supplied",
++             "supporting": "Considered essentials. Deliberate choices. A daily expression of the person you are becoming.",
++           },
++           "id": "direction-b",
++           "name": "Luminous Precision",
++           "tokens": {
++             "colors": [
++               {
++                 "hex": "#080B0C",
++                 "name": "Obsidian",
++                 "role": "background",
++               },
++               {
++                 "hex": "#151D20",
++                 "name": "Charcoal glass",
++                 "role": "surface",
++               },
++               {
++                 "hex": "#F6F0E4",
++                 "name": "Warm ivory",
++                 "role": "text",
++               },
++               {
++                 "hex": "#51DBAB",
++                 "name": "Luminous emerald",
++                 "role": "accent",
++               },
++               {
++                 "hex": "#DAB66C",
++                 "name": "Restrained gold",
++                 "role": "highlight",
++               },
++               {
++                 "hex": "#C1CEC8",
++                 "name": "Silver sage",
++                 "role": "muted",
++               },
++               {
++                 "hex": "#657773",
++                 "name": "Glass edge",
++                 "role": "border",
++               },
++             ],
++             "material": "charcoal-glass",
++             "shape": "soft",
++             "spacing": "balanced",
++             "typography": {
++               "body": "Inter",
++               "display": "Sora",
++               "scale": "measured",
++             },
++           },
++         },
++         "product": "Aethelios Lifestyle",
++         "rendererVersion": "premium/v2",
++       },
++       "identity": {
++         "boardId": "50000000-0000-4000-8000-000000000031",
++         "boardVersion": 2,
++         "conversationId": "30000000-0000-4000-8000-000000000031",
++         "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++       },
++       "layout": [
++         "split",
++         "board",
++       ],
++       "name": "Luminous Precision",
++       "schema": "talk-architect-direction/v1",
++       "summary": "Aethelios Lifestyle: A considered daily ritual.",
++       "typography": [
++         "display",
++         "body",
++       ],
++     },
++     "digest": "fbefac76467ff56633152ee2d1d464e1e88b7894e90fc02ec177183d3bf802a6",
++     "identity": {
++       "boardId": "50000000-0000-4000-8000-000000000031",
++       "boardVersion": 2,
++       "conversationId": "30000000-0000-4000-8000-000000000031",
++       "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++     },
++     "schema": "talk-architect-direction/v1",
++     "sourceRecords": [
++       {
++         "id": "30000000-0000-4000-8000-000000000031",
++         "kind": "conversation",
++       },
++       {
++         "id": "50000000-0000-4000-8000-000000000031",
++         "kind": "board",
++         "revision": 2,
++       },
++       {
++         "id": "f8575979-8ade-575c-8f22-bc3521c12532",
++         "kind": "direction",
++         "revision": 2,
++       },
++     ],
++   },
++   "request_id": "00000000-0000-4000-8000-000000000301",
++   "revision": 1,
++   "source_kind": "talk-authorized",
++   "started": false,
++   "verified": false,
+  }
+
+ ❯ tests/premium-snapshot-authority.test.ts:210:55
+    208|     const row = { ...staleRow(verified, sourceKind), receipt, digest: …
+    209|     (designDirectionStore() as MemoryDesignDirectionStore).rows.set(ro…
+    210|     await expect(readRetainedDirection(state.project)).rejects.toThrow…
+       |                                                       ^
+    211|     const direction = { ...receipt.content, verified, sourceKind };
+    212|     expect(() => supportedDirectionForGeneration(direction)).toThrow(/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/18]⎯
+
+ FAIL  tests/premium-snapshot-authority.test.ts > also rejects an unverified snapshot without the text compatibility flag (true, text-import)
+AssertionError: promise resolved "{ …(10) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "created_at": "2026-10-16",
++   "digest": "fbefac76467ff56633152ee2d1d464e1e88b7894e90fc02ec177183d3bf802a6",
++   "person_id": "00000000-0000-4000-8000-000000000001",
++   "project_id": "00000000-0000-4000-8000-000000000111",
++   "receipt": {
++     "content": {
++       "assets": [
++         {
++           "id": "c11a502b-d859-51a1-94c1-80c55c1acee7",
++           "kind": "image",
++           "note": "Approved Aethelios emblem · referenced · brand-identity",
++           "provenance": "talk",
++         },
++       ],
++       "colors": [
++         {
++           "role": "canvas",
++           "value": "#080B0C",
++         },
++         {
++           "role": "ink",
++           "value": "#F6F0E4",
++         },
++         {
++           "role": "accent",
++           "value": "#51DBAB",
++         },
++         {
++           "role": "reserve",
++           "value": "#DAB66C",
++         },
++         {
++           "role": "muted",
++           "value": "#C1CEC8",
++         },
++       ],
++       "copy": {
++         "approved": [
++           "The Human Ascendance",
++           "Aethelios Lifestyle — proposed launch campaign.",
++         ],
++         "title": "A considered daily ritual.",
++       },
++       "demo": {
++         "kind": "none",
++         "labelled": true,
++         "note": "Exact creative retained in designSnapshot. This receipt does not commission a build.",
++       },
++       "designSnapshot": {
++         "direction": {
++           "assets": [
++             {
++               "id": "crest",
++               "kind": "referenced",
++               "label": "Approved Aethelios emblem",
++               "provenance": "brand-identity",
++               "referenced": true,
++               "source": "official-crest",
++             },
++           ],
++           "copy": {
++             "disclaimer": "Proposed copy. Not an approved claim or live merchandising offer.",
++             "headline": "A considered daily ritual.",
++             "proof": "Aethelios Lifestyle — proposed launch campaign.",
++             "subhead": "The Human Ascendance",
++           },
++           "demo": {
++             "cta": "Review the line",
++             "headline": "A considered daily ritual.",
++             "image": {
++               "id": "campaign-photo",
++               "kind": "placeholder",
++               "label": "Product photography not supplied",
++               "provenance": "not-supplied",
++               "referenced": false,
++             },
++             "kind": "split-campaign",
++             "productLabel": "Product photography not supplied",
++             "supporting": "Considered essentials. Deliberate choices. A daily expression of the person you are becoming.",
++           },
++           "id": "direction-b",
++           "name": "Luminous Precision",
++           "tokens": {
++             "colors": [
++               {
++                 "hex": "#080B0C",
++                 "name": "Obsidian",
++                 "role": "background",
++               },
++               {
++                 "hex": "#151D20",
++                 "name": "Charcoal glass",
++                 "role": "surface",
++               },
++               {
++                 "hex": "#F6F0E4",
++                 "name": "Warm ivory",
++                 "role": "text",
++               },
++               {
++                 "hex": "#51DBAB",
++                 "name": "Luminous emerald",
++                 "role": "accent",
++               },
++               {
++                 "hex": "#DAB66C",
++                 "name": "Restrained gold",
++                 "role": "highlight",
++               },
++               {
++                 "hex": "#C1CEC8",
++                 "name": "Silver sage",
++                 "role": "muted",
++               },
++               {
++                 "hex": "#657773",
++                 "name": "Glass edge",
++                 "role": "border",
++               },
++             ],
++             "material": "charcoal-glass",
++             "shape": "soft",
++             "spacing": "balanced",
++             "typography": {
++               "body": "Inter",
++               "display": "Sora",
++               "scale": "measured",
++             },
++           },
++         },
++         "product": "Aethelios Lifestyle",
++         "rendererVersion": "premium/v2",
++       },
++       "identity": {
++         "boardId": "50000000-0000-4000-8000-000000000031",
++         "boardVersion": 2,
++         "conversationId": "30000000-0000-4000-8000-000000000031",
++         "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++       },
++       "layout": [
++         "split",
++         "board",
++       ],
++       "name": "Luminous Precision",
++       "schema": "talk-architect-direction/v1",
++       "summary": "Aethelios Lifestyle: A considered daily ritual.",
++       "typography": [
++         "display",
++         "body",
++       ],
++     },
++     "digest": "fbefac76467ff56633152ee2d1d464e1e88b7894e90fc02ec177183d3bf802a6",
++     "identity": {
++       "boardId": "50000000-0000-4000-8000-000000000031",
++       "boardVersion": 2,
++       "conversationId": "30000000-0000-4000-8000-000000000031",
++       "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++     },
++     "schema": "talk-architect-direction/v1",
++     "sourceRecords": [
++       {
++         "id": "30000000-0000-4000-8000-000000000031",
++         "kind": "conversation",
++       },
++       {
++         "id": "50000000-0000-4000-8000-000000000031",
++         "kind": "board",
++         "revision": 2,
++       },
++       {
++         "id": "f8575979-8ade-575c-8f22-bc3521c12532",
++         "kind": "direction",
++         "revision": 2,
++       },
++     ],
++   },
++   "request_id": "00000000-0000-4000-8000-000000000301",
++   "revision": 1,
++   "source_kind": "text-import",
++   "started": false,
++   "verified": true,
+  }
+
+ ❯ tests/premium-snapshot-authority.test.ts:210:55
+    208|     const row = { ...staleRow(verified, sourceKind), receipt, digest: …
+    209|     (designDirectionStore() as MemoryDesignDirectionStore).rows.set(ro…
+    210|     await expect(readRetainedDirection(state.project)).rejects.toThrow…
+       |                                                       ^
+    211|     const direction = { ...receipt.content, verified, sourceKind };
+    212|     expect(() => supportedDirectionForGeneration(direction)).toThrow(/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/18]⎯
+
+ FAIL  tests/premium-snapshot-authority.test.ts > rejects an unverified adapter result and a direct memory-store write before persistence
+AssertionError: promise resolved "{ kind: 'text-import', …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "digest": "fbefac76467ff56633152ee2d1d464e1e88b7894e90fc02ec177183d3bf802a6",
++   "kind": "text-import",
++   "note": "Not verified",
++   "receipt": {
++     "content": {
++       "assets": [
++         {
++           "id": "c11a502b-d859-51a1-94c1-80c55c1acee7",
++           "kind": "image",
++           "note": "Approved Aethelios emblem · referenced · brand-identity",
++           "provenance": "talk",
++         },
++       ],
++       "colors": [
++         {
++           "role": "canvas",
++           "value": "#080B0C",
++         },
++         {
++           "role": "ink",
++           "value": "#F6F0E4",
++         },
++         {
++           "role": "accent",
++           "value": "#51DBAB",
++         },
++         {
++           "role": "reserve",
++           "value": "#DAB66C",
++         },
++         {
++           "role": "muted",
++           "value": "#C1CEC8",
++         },
++       ],
++       "copy": {
++         "approved": [
++           "The Human Ascendance",
++           "Aethelios Lifestyle — proposed launch campaign.",
++         ],
++         "title": "A considered daily ritual.",
++       },
++       "demo": {
++         "kind": "none",
++         "labelled": true,
++         "note": "Exact creative retained in designSnapshot. This receipt does not commission a build.",
++       },
++       "designSnapshot": {
++         "direction": {
++           "assets": [
++             {
++               "id": "crest",
++               "kind": "referenced",
++               "label": "Approved Aethelios emblem",
++               "provenance": "brand-identity",
++               "referenced": true,
++               "source": "official-crest",
++             },
++           ],
++           "copy": {
++             "disclaimer": "Proposed copy. Not an approved claim or live merchandising offer.",
++             "headline": "A considered daily ritual.",
++             "proof": "Aethelios Lifestyle — proposed launch campaign.",
++             "subhead": "The Human Ascendance",
++           },
++           "demo": {
++             "cta": "Review the line",
++             "headline": "A considered daily ritual.",
++             "image": {
++               "id": "campaign-photo",
++               "kind": "placeholder",
++               "label": "Product photography not supplied",
++               "provenance": "not-supplied",
++               "referenced": false,
++             },
++             "kind": "split-campaign",
++             "productLabel": "Product photography not supplied",
++             "supporting": "Considered essentials. Deliberate choices. A daily expression of the person you are becoming.",
++           },
++           "id": "direction-b",
++           "name": "Luminous Precision",
++           "tokens": {
++             "colors": [
++               {
++                 "hex": "#080B0C",
++                 "name": "Obsidian",
++                 "role": "background",
++               },
++               {
++                 "hex": "#151D20",
++                 "name": "Charcoal glass",
++                 "role": "surface",
++               },
++               {
++                 "hex": "#F6F0E4",
++                 "name": "Warm ivory",
++                 "role": "text",
++               },
++               {
++                 "hex": "#51DBAB",
++                 "name": "Luminous emerald",
++                 "role": "accent",
++               },
++               {
++                 "hex": "#DAB66C",
++                 "name": "Restrained gold",
++                 "role": "highlight",
++               },
++               {
++                 "hex": "#C1CEC8",
++                 "name": "Silver sage",
++                 "role": "muted",
++               },
++               {
++                 "hex": "#657773",
++                 "name": "Glass edge",
++                 "role": "border",
++               },
++             ],
++             "material": "charcoal-glass",
++             "shape": "soft",
++             "spacing": "balanced",
++             "typography": {
++               "body": "Inter",
++               "display": "Sora",
++               "scale": "measured",
++             },
++           },
++         },
++         "product": "Aethelios Lifestyle",
++         "rendererVersion": "premium/v2",
++       },
++       "identity": {
++         "boardId": "50000000-0000-4000-8000-000000000031",
++         "boardVersion": 2,
++         "conversationId": "30000000-0000-4000-8000-000000000031",
++         "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++       },
++       "layout": [
++         "split",
++         "board",
++       ],
++       "name": "Luminous Precision",
++       "schema": "talk-architect-direction/v1",
++       "summary": "Aethelios Lifestyle: A considered daily ritual.",
++       "typography": [
++         "display",
++         "body",
++       ],
++     },
++     "digest": "fbefac76467ff56633152ee2d1d464e1e88b7894e90fc02ec177183d3bf802a6",
++     "identity": {
++       "boardId": "50000000-0000-4000-8000-000000000031",
++       "boardVersion": 2,
++       "conversationId": "30000000-0000-4000-8000-000000000031",
++       "directionId": "f8575979-8ade-575c-8f22-bc3521c12532",
++     },
++     "schema": "talk-architect-direction/v1",
++     "sourceRecords": [
++       {
++         "id": "30000000-0000-4000-8000-000000000031",
++         "kind": "conversation",
++       },
++       {
++         "id": "50000000-0000-4000-8000-000000000031",
++         "kind": "board",
++         "revision": 2,
++       },
++       {
++         "id": "f8575979-8ade-575c-8f22-bc3521c12532",
++         "kind": "direction",
++         "revision": 2,
++       },
++     ],
++   },
+  }
+
+ ❯ tests/premium-snapshot-authority.test.ts:238:82
+    236|   );
+    237|   try {
+    238|     await expect(resolveAuthorizedTalkSource({ personId: state.owner, …
+       |                                                                                  ^
+    239|       /authorized Talk source/,
+    240|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/18]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  18 failed | 7 passed (25)
+   Start at  00:56:05
+   Duration  4.40s (transform 57%, import 36%, tests 7%)
+
+  Transform  transforming modules took 3.78s · 57% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice

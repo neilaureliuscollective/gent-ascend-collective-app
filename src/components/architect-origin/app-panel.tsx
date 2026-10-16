@@ -296,6 +296,8 @@ export function ArchitectAppPanel({
     Boolean(preview) && (latestJob?.status === 'failed' || latestJob?.status === 'cancelled');
   const compactStatus = compactAppStatus({
     stage: workbench.stage,
+    awaitingApproval: Boolean(proposal),
+    blocked: Boolean(error && !preview) || library?.provider.enabled === false,
     retained: retainedPreview,
     uncertain: saveState === 'failed' || saveState === 'conflict',
     recovered: Boolean(recovered && workbench.stage === 'idle'),

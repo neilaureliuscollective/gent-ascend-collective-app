@@ -1,3 +1,4 @@
+import { requirePremiumReceiptAuthority } from './premium-receipt';
 import 'server-only';
 import { intelligenceSession, IntelligenceError } from '@/domains/intelligence/service';
 import { currentAccess } from '@/domains/access/current';
@@ -649,6 +650,9 @@ async function authorizedBoard(conversationId: string, boardId: string) {
   const board = row.data ? designBoardContentSchema.safeParse(row.data.content) : null;
   if (!row.data || row.data.candidate || !board?.success)
     throw new IntelligenceError('Design board unavailable.', 404);
+  await requirePremiumReceiptAuthority(client as never, produceArchitectDirection({
+    conversationId, boardId, version: row.data.version, board: board.data,
+  }));
   return { person, client, creation: row.data, board: board.data };
 }
 
@@ -687,11 +691,19 @@ export async function reviewDesignDirection(boardId: string) {
         .eq('request_id', existing.data.id)
         .eq('person_id', person.id)
         .maybeSingle()
-    : { data: null, error: null };
+    : board.rendererVersion === 'premium/v2'
+      ? await client.from('architect_design_directions')
+          .select('request_id,project_id,digest,verified')
+          .eq('person_id', person.id)
+          .eq('project_id', directionProjectIdentity(person.id, creation.id, creation.version, selectedDirection(board).id))
+          .maybeSingle()
+      : { data: null, error: null };
+  if (existing.error || destination.error)
+    throw new IntelligenceError('The design-direction destination could not be checked. Retry before continuing.', 503);
   const destinationOk = Boolean(
     destination.data?.verified &&
       destination.data.digest === receipt.digest &&
-      destination.data.project_id === existing.data?.project_id,
+      destination.data.project_id === (existing.data?.project_id ?? directionProjectIdentity(person.id, creation.id, creation.version, selectedDirection(board).id)),
   );
   return {
     boardId: creation.id,
@@ -699,13 +711,13 @@ export async function reviewDesignDirection(boardId: string) {
     version: creation.version,
     directionId: selectedDirection(board).id,
     receipt,
-    unsupported: [
+    unsupported: board.rendererVersion === 'premium/v2' ? ['Unprovided asset pixels are not transferred. Build approval is separate.'] : [
       'Talk hero-product demonstration stays in Talk. Architect v1 demo is tracker or none.',
       'Typeface names, shape, material, surface/border roles and disclaimer stay in Talk.',
     ],
-    requestId: existing.data?.id ?? null,
+    requestId: existing.data?.id ?? (destinationOk ? destination.data?.request_id : null) ?? null,
     imported: Boolean(existing.data?.imported && existing.data.digest === receipt.digest && destinationOk),
-    projectId: destinationOk ? existing.data?.project_id ?? null : null,
+    projectId: destinationOk ? destination.data?.project_id ?? null : null,
     destinationValid: destinationOk,
     originReady: originReady(),
     digest: receipt.digest,

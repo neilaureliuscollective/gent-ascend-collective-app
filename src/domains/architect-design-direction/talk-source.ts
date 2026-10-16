@@ -81,6 +81,8 @@ export async function resolveAuthorizedTalkSource(input: {
   personId: string;
   receipt: DesignDirectionReceipt;
 }): Promise<AuthorizedTalkSource> {
+  if (input.receipt.content.designSnapshot && isCompatibleTextImport(input.receipt))
+    throw new IntelligenceError('Compatible text imports cannot carry a premium design snapshot.', 409);
   if (isCompatibleTextImport(input.receipt)) {
     const digest = designDirectionDigest(input.receipt.content, input.receipt.sourceRecords);
     if (digest !== input.receipt.digest)
@@ -111,6 +113,8 @@ export async function resolveAuthorizedTalkSource(input: {
       'Referenced Talk conversation, board, version or direction is unavailable to this owner.',
       404,
     );
+  if (resolved.receipt.content.designSnapshot && (resolved.kind !== 'talk-authorized' || isCompatibleTextImport(resolved.receipt)))
+    throw new IntelligenceError('Premium snapshots require an authorized Talk source.', 409);
   const authorizedDigest = designDirectionDigest(resolved.receipt.content, resolved.receipt.sourceRecords);
   if (resolved.kind === 'talk-authorized' && resolved.digest !== authorizedDigest)
     throw new IntelligenceError(

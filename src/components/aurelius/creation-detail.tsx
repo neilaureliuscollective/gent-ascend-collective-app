@@ -13,7 +13,7 @@ import type {
 import { creationTitle } from '@/domains/talk-creation/schema';
 import { PaletteSwatches } from './palette-swatches';
 import { DesignBoardView } from './design-board';
-import type { DesignBoardContent } from '@/domains/talk-creation/design-board';
+import { type DesignBoardContent } from '@/domains/talk-creation/design-board';
 import {
   compileTalkDocument,
   compareTalkRevisions,
@@ -127,7 +127,7 @@ export function CreationDetail({
   } | null>(null);
   const [directionBusy, setDirectionBusy] = useState<'review' | 'transfer' | null>(null);
   const [directionRequestId] = useState(() => crypto.randomUUID());
-  const [documentView, setDocumentView] = useState<(typeof talkDocumentViews)[number]>('Edit');
+  const [documentView, setDocumentView] = useState<(typeof talkDocumentViews)[number]>('Preview');
   const [compareId, setCompareId] = useState<string | null>(null);
   const [review, setReview] = useState<{
     imported: boolean;
@@ -352,9 +352,9 @@ export function CreationDetail({
       )}
       {(brief || plan) && creation && documentView !== 'Edit' && (
         <article className="talk-document-preview" aria-label="Document preview">
-          <ReactMarkdown components={markdownGuards}>
+          <div className="talk-document-prose"><ReactMarkdown components={markdownGuards}>
             {compileTalkDocument(creation.kind, draft ?? creation.content) ?? ''}
-          </ReactMarkdown>
+          </ReactMarkdown></div>
         </article>
       )}
       </div>
@@ -376,6 +376,7 @@ export function CreationDetail({
             onCommit={(next) => onSave('board', next)}
           />
           <div className="talk-origin-review">
+            {board?.rendererVersion === 'premium/v2' && <p className="talk-creation-status">Review checks whether Architect can retain this exact premium design. Build approval stays separate.</p>}
             <p className="talk-creation-status" data-adapter="talk-architect-direction">
               {creation
                 ? describeTalkDestination({
@@ -401,7 +402,7 @@ export function CreationDetail({
                 : directionBusy === 'transfer'
                   ? 'Confirming transfer. Chat stays usable.'
                   : directionReview?.imported
-                    ? 'Imported. Architect acknowledged this exact reviewed direction.'
+                    ? 'Received in Architect. Build approval is still required.'
                     : directionReview?.receipt && directionReview.destinationValid === false
                       ? 'A previous Talk receipt has no matching Architect destination. Review again.'
                       : directionReview?.receipt
@@ -429,15 +430,17 @@ export function CreationDetail({
                 <div>
                   <dt>Transfers</dt>
                   <dd>
-                    Mapped color roles, display/body tokens, layout tokens, approved copy and labelled
-                    asset references.
+                    {board?.rendererVersion === 'premium/v2'
+                      ? 'Exact composition, typefaces, material, all surface/color roles, copy and authorized asset references.'
+                      : 'Mapped color roles, display/body tokens, layout tokens, approved copy and labelled asset references.'}
                   </dd>
                 </div>
                 <div>
                   <dt>Stays in Talk</dt>
                   <dd>
-                    Hero-product demonstration, typeface names and scale, shape, material, surface and
-                    border roles, and placeholder packaging pixels.
+                    {board?.rendererVersion === 'premium/v2'
+                      ? 'Unprovided image pixels. Referenced media keeps its existing owner access; transfer does not publish it.'
+                      : 'Hero-product demonstration, typeface names, scale, shape, material, surface and border roles, and unprovided image pixels remain in Talk for this historical transfer.'}
                   </dd>
                 </div>
                 <div>
@@ -498,6 +501,9 @@ export function CreationDetail({
                       selectedDirectionId: body.selectedDirectionId,
                       selectedDirectionName: body.selectedDirectionName,
                     });
+                  } catch {
+                    setDirectionReview({ unsupported: [], imported: false, projectId: null, requestId: null,
+                      destinationValid: false, error: 'This design could not be reviewed. Retry before continuing.' });
                   } finally {
                     setDirectionBusy(null);
                   }

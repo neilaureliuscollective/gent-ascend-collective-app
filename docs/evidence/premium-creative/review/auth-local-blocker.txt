@@ -1,0 +1,24 @@
+
+Error: ENOENT: no such file or directory, open '.env.development.local'
+
+   at talk-design-direction.spec.ts:8
+
+   6 |
+   7 | const env = Object.fromEntries(
+>  8 |   readFileSync('.env.development.local', 'utf8')
+     |   ^
+   9 |     .trim()
+  10 |     .split(/\r?\n/)
+  11 |     .map((line) => {
+    at /workspace/gent-ascend-collective-app/tests/talk-auth/talk-design-direction.spec.ts:8:3
+
+Error: No tests found.
+Make sure that arguments are regular expressions matching test files.
+You may need to escape symbols like "$" or "*" and quote the arguments.
+Listing tests:
+Total: 0 tests in 0 files
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice

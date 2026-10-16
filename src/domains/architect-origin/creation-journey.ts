@@ -295,16 +295,40 @@ export function creationBriefForGeneration(content: {
   blueprint?: Partial<ProjectContent['blueprint']>;
 }) {
   const brief = readCreationBrief(content);
-  return [
-    brief.idea,
+  const critical = [
     `Path: ${brief.path}`,
     brief.firstVisit ? `First visit: ${brief.firstVisit}` : '',
     brief.audience.trim() ? `Audience: ${brief.audience.trim()}` : '',
     brief.constraints.trim() ? `Constraints: ${brief.constraints.trim()}` : '',
     brief.outcome.trim() ? `Outcome: ${brief.outcome.trim()}` : '',
+    content.blueprint?.deliverables?.trim()
+      ? `Deliverables / palette: ${content.blueprint.deliverables.trim()}`
+      : '',
   ]
     .filter(Boolean)
     .join('\n');
+  // Keep critical requirements intact. Context admission rejects an oversized core
+  // rather than silently losing constraints or palette to a whole-string slice.
+  let result = critical;
+  const optional = [
+    { label: 'Idea', value: brief.idea, cap: 400 },
+    { label: 'Imported plan', value: content.blueprint?.solution ?? '', cap: 700 },
+    { label: 'Milestones', value: content.blueprint?.milestones ?? '', cap: 300 },
+  ].filter((section) => section.value.trim());
+  optional.forEach((section, index) => {
+    const prefix = `\n${section.label}: `;
+    const available = Math.min(
+      section.cap,
+      Math.floor((2000 - result.length) / (optional.length - index)) - prefix.length,
+    );
+    if (available < 12) return;
+    const value = section.value.trim();
+    const suffix = '… [excerpt]';
+    result +=
+      prefix +
+      (value.length > available ? value.slice(0, available - suffix.length) + suffix : value);
+  });
+  return result;
 }
 
 export function applicationPlan(input: {

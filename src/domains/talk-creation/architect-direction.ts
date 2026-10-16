@@ -2,11 +2,13 @@ import {
   DESIGN_DIRECTION_SCHEMA,
   designDirectionDigest,
   designDirectionReceiptSchema,
+  designDirectionContentSchema,
   type DesignDirectionContent,
   type DesignDirectionReceipt,
 } from '@/domains/architect-design-direction/contract';
 import { scopedTalkIdentity } from './persist';
 import {
+  designBoardContentSchema,
   selectedDirection,
   type DesignBoardContent,
   type DesignDirection,
@@ -96,7 +98,8 @@ export function produceArchitectDirection(input: {
   version: number;
   board: DesignBoardContent;
 }): DesignDirectionReceipt {
-  const direction = selectedDirection(input.board);
+  const board = designBoardContentSchema.parse(input.board);
+  const direction = selectedDirection(board);
   const identity = {
     conversationId: input.conversationId,
     boardId: input.boardId,
@@ -107,14 +110,14 @@ export function produceArchitectDirection(input: {
     schema: DESIGN_DIRECTION_SCHEMA,
     identity,
     name: direction.name.slice(0, 100),
-    summary: `${input.board.product}: ${direction.demo.headline}`.slice(0, 2000),
+    summary: `${board.product}: ${direction.demo.headline}`.slice(0, 2000),
     colors: mapColors(direction),
     typography: ['display', 'body'],
     layout: mapLayout(direction),
     demo: {
       kind: 'none',
       labelled: true,
-      note: 'Talk hero-product demonstration stays in Talk. Architect v1 accepts tracker or none only.',
+      note: board.rendererVersion === 'premium/v2' ? 'Exact creative retained in designSnapshot. This receipt does not commission a build.' : 'Talk hero-product demonstration stays in Talk. Architect v1 accepts tracker or none only.',
     },
     copy: {
       title: direction.copy.headline.slice(0, 120),
@@ -123,6 +126,11 @@ export function produceArchitectDirection(input: {
         .filter(Boolean)
         .slice(0, 16),
     },
+    ...(board.rendererVersion === 'premium/v2' ? { designSnapshot: {
+      rendererVersion: board.rendererVersion,
+      product: board.product,
+      direction,
+    } } : {}),
     assets: direction.assets.map((asset) => ({
       id: assetIdentity(input.boardId, asset.id),
       kind: 'image' as const,
@@ -130,6 +138,7 @@ export function produceArchitectDirection(input: {
       note: `${asset.label} · ${asset.kind} · ${asset.provenance}`.slice(0, 400),
     })),
   };
+  const canonicalContent = designDirectionContentSchema.parse(content);
   const sourceRecords = [
     { kind: 'conversation' as const, id: input.conversationId },
     { kind: 'board' as const, id: input.boardId, revision: input.version },
@@ -138,8 +147,8 @@ export function produceArchitectDirection(input: {
   return designDirectionReceiptSchema.parse({
     schema: DESIGN_DIRECTION_SCHEMA,
     identity,
-    content,
-    digest: designDirectionDigest(content, sourceRecords),
+    content: canonicalContent,
+    digest: designDirectionDigest(canonicalContent, sourceRecords),
     sourceRecords,
   });
 }

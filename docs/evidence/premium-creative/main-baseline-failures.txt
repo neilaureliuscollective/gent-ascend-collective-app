@@ -1,0 +1,118 @@
+
+ RUN  v5.0.1 /tmp/gent-premium-main-check
+
+ ❯ tests/studio-export-evidence.test.ts (3 tests | 3 failed) 108ms
+   ❯ Studio export evidence (3)
+     × writes inspected PNG, SVG, vector PDF and H.264 film artifacts 55ms
+     × exports a physical label with type, SVG mark and rotation, and a 32s mixed still film 34ms
+     × renders owned moving footage, title cards and non-tone audio 14ms
+ ❯ tests/architect-construct-host.test.ts (2 tests | 2 failed) 62967ms
+   × inspects the host isolation runtime and reports pass, fail, or unavailable honestly 30844ms
+   × cancels only after the named container is observed running, then confirms removal 32115ms
+stderr | tests/architect-apps-worker-image.test.ts > builds the packaged worker image when Docker is available
+{"image":"aethelios-architect-apps-worker:2026-10-15.1","action":"missing","reason":"Worker image build failed."}
+
+ ❯ tests/architect-apps-worker-image.test.ts (3 tests | 1 failed) 1906ms
+   × builds the packaged worker image when Docker is available 1877ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/architect-apps-worker-image.test.ts > builds the packaged worker image when Docker is available
+AssertionError: Worker image build failed.: expected 'missing' to be 'built' // Object.is equality
+
+Expected: "built"
+Received: "missing"
+
+ ❯ tests/architect-apps-worker-image.test.ts:56:42
+     54|     return;
+     55|   }
+     56|   expect(receipt.action, receipt.reason).toBe('built');
+       |                                          ^
+     57|   expect(receipt.id).toMatch(/^sha256:/);
+     58| }, 180000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/architect-construct-host.test.ts > inspects the host isolation runtime and reports pass, fail, or unavailable honestly
+AssertionError:
+Container timed out. Disposable container did not return a verified result (exit 124). A reachable Docker engine is not a sandbox.: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/architect-construct-host.test.ts:85:83
+     83|   }
+     84|   if (outcome === 'failed') {
+     85|     expect(execution?.sandbox, execution?.blocker ?? 'isolated contain…
+       |                                                                                   ^
+     86|   }
+     87| }, 120000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/architect-construct-host.test.ts > cancels only after the named container is observed running, then confirms removal
+AssertionError: expected 'unavailable' to be 'confirmed' // Object.is equality
+
+Expected: "confirmed"
+Received: "unavailable"
+
+ ❯ tests/architect-construct-host.test.ts:200:25
+    198|     return;
+    199|   }
+    200|   expect(receipt.proof).toBe('confirmed');
+       |                         ^
+    201|   expect(observed.running).toBe(true);
+    202|   expect(observed.launched?.aborted).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/studio-export-evidence.test.ts > Studio export evidence > writes inspected PNG, SVG, vector PDF and H.264 film artifacts
+Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
+ ❯ tests/studio-export-evidence.test.ts:25:5
+     23| describe('Studio export evidence', () => {
+     24|   it('writes inspected PNG, SVG, vector PDF and H.264 film artifacts',…
+     25|     await mkdir(out, { recursive: true });
+       |     ^
+     26|     const id = '10000000-0000-4000-8000-000000000001';
+     27|     const document = parseDesignDocument({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/studio-export-evidence.test.ts > Studio export evidence > exports a physical label with type, SVG mark and rotation, and a 32s mixed still film
+Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
+ ❯ tests/studio-export-evidence.test.ts:161:5
+    159|
+    160|   it('exports a physical label with type, SVG mark and rotation, and a…
+    161|     await mkdir(out, { recursive: true });
+       |     ^
+    162|     const id = '10000000-0000-4000-8000-000000000031';
+    163|     const document = parseDesignDocument({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/studio-export-evidence.test.ts > Studio export evidence > renders owned moving footage, title cards and non-tone audio
+Error: ENOENT: no such file or directory, mkdir '/opt/cursor'
+ ❯ tests/studio-export-evidence.test.ts:443:5
+    441|
+    442|   it('renders owned moving footage, title cards and non-tone audio', a…
+    443|     await mkdir(out, { recursive: true });
+       |     ^
+    444|     const dir = await mkdtemp(path.join(tmpdir(), 'studio-moving-'));
+    445|     const run = (args: string[]) =>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  6 failed | 2 passed (8)
+   Start at  23:55:57
+   Duration  74.85s (tests 90%, import 6%, transform 5%)
+
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice

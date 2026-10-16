@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { designDirectionSchema } from '@/domains/talk-creation/design-board';
 import { createHash } from 'node:crypto';
 
 /** Talk conversational text import this contract extends. Talk owns the producer UI. */
@@ -16,14 +17,7 @@ export const designColorRole = z.enum([
   'danger',
 ]);
 
-export const designLayoutToken = z.enum([
-  'stack',
-  'split',
-  'board',
-  'form',
-  'gallery',
-  'table',
-]);
+export const designLayoutToken = z.enum(['stack', 'split', 'board', 'form', 'gallery', 'table']);
 
 export const designTypeToken = z.enum(['display', 'body', 'label', 'numeric']);
 
@@ -78,9 +72,25 @@ export const designDirectionContentSchema = z
       })
       .strict(),
     assets: z.array(designAssetRefSchema).max(16),
+    designSnapshot: z
+      .object({
+        rendererVersion: z.literal('premium/v2'),
+        product: z.string().min(1).max(80),
+        direction: designDirectionSchema,
+      })
+      .strict()
+      .optional(),
     compatibleTextImport: z.literal(TEXT_HANDOFF_SCHEMA).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((content, ctx) => {
+    if (content.designSnapshot && content.compatibleTextImport)
+      ctx.addIssue({
+        code: 'custom',
+        path: ['designSnapshot'],
+        message: 'Compatible text imports cannot carry a premium design snapshot.',
+      });
+  });
 
 export type DesignDirectionContent = z.infer<typeof designDirectionContentSchema>;
 
@@ -107,12 +117,27 @@ export const designDirectionReceiptSchema = z
 
 export type DesignDirectionReceipt = z.infer<typeof designDirectionReceiptSchema>;
 
+/** Premium-only canonical JSON: fixed ASCII schema keys sorted recursively; arrays retain order.
+ * Historical receipts deliberately keep JSON.stringify byte identity.
+ */
+export function canonicalDesignJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalDesignJson).join(',')}]`;
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return `{${Object.keys(record).filter((key) => record[key] !== undefined).sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalDesignJson(record[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'null';
+}
+
 export function designDirectionDigest(
   content: DesignDirectionContent,
   sourceRecords: DesignDirectionReceipt['sourceRecords'],
 ) {
   return createHash('sha256')
-    .update(JSON.stringify({ content, sourceRecords }), 'utf8')
+    .update(content.designSnapshot
+      ? canonicalDesignJson({ content, sourceRecords })
+      : JSON.stringify({ content, sourceRecords }), 'utf8')
     .digest('hex');
 }
 

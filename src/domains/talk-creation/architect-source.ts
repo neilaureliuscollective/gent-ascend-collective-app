@@ -1,3 +1,4 @@
+import { requirePremiumReceiptAuthority } from './premium-receipt';
 import 'server-only';
 import {
   createTalkAuthorizedSourceAdapter,
@@ -6,7 +7,10 @@ import {
 } from '@/domains/architect-design-direction/talk-source';
 import { IntelligenceError, intelligenceSession } from '@/domains/intelligence/service';
 import type { DesignDirectionReceipt } from '@/domains/architect-design-direction/contract';
-import { designBoardContentSchema, selectedDirection } from './design-board';
+import {
+  designBoardContentSchema,
+  selectedDirection,
+} from './design-board';
 import { produceArchitectDirection, directionIdentity } from './architect-direction';
 
 async function resolveTalkDesignSource(input: {
@@ -36,6 +40,7 @@ async function resolveTalkDesignSource(input: {
     version: row.data.version,
     board: board.data,
   });
+  await requirePremiumReceiptAuthority(client as never, authorized);
   return {
     kind: 'talk-authorized',
     digest: authorized.digest,
