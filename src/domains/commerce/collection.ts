@@ -88,5 +88,5 @@ export function collectionEntries(
         categories: preview.handle === 'hydros' ? ['performance'] : ['grooming'],
       });
     }
-  return entries.sort((a, b) => Number(b.handle === 'vitalis') - Number(a.handle === 'vitalis'));
+  return entries;
 }

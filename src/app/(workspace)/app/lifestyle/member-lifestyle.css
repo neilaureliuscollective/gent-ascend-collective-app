@@ -84,6 +84,7 @@
 
 .member-lifestyle-home {
   min-width: 0;
+  padding-bottom: calc(var(--interaction-nav-space, 0px) + 16px);
 }
 .member-lifestyle-masthead {
   display: flex;
@@ -121,7 +122,8 @@
   align-items: stretch;
   padding: 14px 6% 16px;
   background:
-    radial-gradient(ellipse 46% 80% at 18% 80%, #245b481c, transparent 68%),
+    radial-gradient(ellipse 58% 92% at 16% 88%, #245b4852, transparent 64%),
+    radial-gradient(ellipse 40% 70% at 88% 12%, #163f352e, transparent 70%),
     linear-gradient(180deg, #0a0a0a, #111111 72%);
 }
 .member-lifestyle-focal {
@@ -137,8 +139,8 @@
   color: inherit;
   text-decoration: none;
   background:
-    radial-gradient(ellipse 70% 90% at 50% 110%, #36896c18, transparent 62%),
-    var(--io-glass);
+    radial-gradient(ellipse 90% 120% at 50% 122%, #36896c4d, transparent 54%),
+    linear-gradient(165deg, #1c2421f2, #111111f5 72%);
   box-shadow:
     inset 0 1px #ffffff24,
     0 18px 36px #0007;
@@ -311,7 +313,7 @@
 .member-collection .collection-chamber {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  grid-template-columns: 1fr;
   gap: clamp(16px, 3vw, 36px);
   align-items: center;
   padding: 22px 6% 20px;
@@ -319,9 +321,6 @@
     radial-gradient(ellipse 50% 90% at 88% 80%, #245b4833, transparent 70%),
     var(--aether-smoke-undercut);
   border-bottom: 1px solid color-mix(in srgb, var(--aether-gold) 22%, transparent);
-}
-.member-collection .collection-chamber:not(:has(.member-lifestyle-stage)) {
-  grid-template-columns: 1fr;
 }
 .member-collection .collection-chamber::after {
   display: none;
@@ -413,8 +412,7 @@
 .member-collection .product-image-stage,
 .member-collection .reserve-product-stage {
   background:
-    radial-gradient(ellipse 70% 80% at 50% 100%, #245b4818, transparent 70%),
-    var(--io-glass);
+    radial-gradient(ellipse 70% 80% at 50% 100%, #245b4818, transparent 70%), var(--io-glass);
   border: 0;
   box-shadow: inset 0 1px #ffffff1f;
 }
@@ -448,14 +446,29 @@
   background: var(--aether-smoke-panel);
   border-top: 1px solid var(--io-divider);
 }
+@media (max-width: 760px) {
+  .member-collection .reserve-sticky-purchase {
+    display: flex;
+    bottom: var(--interaction-nav-space, 68px);
+    padding-bottom: 12px;
+    z-index: 32;
+  }
+  body:has(.member-collection .reserve-sticky-purchase) .commerce-cart-trigger,
+  .member-collection:has(.reserve-sticky-purchase) .commerce-cart-trigger {
+    bottom: calc(var(--interaction-nav-space, 68px) + 84px);
+    z-index: 33;
+  }
+  .member-collection:has(.reserve-sticky-purchase) {
+    padding-bottom: calc(var(--interaction-nav-space, 68px) + 120px);
+  }
+}
 .member-collection .cabinet-hero h1 em {
   color: var(--aether-gold-light);
   font-style: italic;
 }
 .member-collection .cabinet-image {
   background:
-    radial-gradient(ellipse 70% 80% at 50% 100%, #245b4838, transparent 70%),
-    var(--io-navigation);
+    radial-gradient(ellipse 70% 80% at 50% 100%, #245b4838, transparent 70%), var(--io-navigation);
 }
 .member-collection .cabinet-shelf article,
 .member-collection .customer-order-list li {
@@ -539,7 +552,7 @@ html[data-material='solid']
     grid-template-columns: 1fr;
   }
   .member-lifestyle-focal {
-    height: 260px;
+    height: 220px;
   }
   .member-lifestyle-companion {
     height: 150px;

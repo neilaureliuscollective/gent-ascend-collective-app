@@ -1,8 +1,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { CollectionEntry } from '@/domains/commerce/collection';
+import {
+  lifestyleBrowseEntries,
+  resolveLifestyleScene,
+  type CatalogStatus,
+} from '@/domains/commerce/lifestyle-merchandising';
 import { brand } from '@/platform/brand';
 import { CollectionCard } from './collection-card';
+import { LifestyleProductStage } from './lifestyle-product-stage';
 
 export function LifestyleLanding({
   entries,
@@ -13,25 +19,38 @@ export function LifestyleLanding({
   basePath?: string;
   lifestylePath?: string;
   entries: CollectionEntry[];
-  status: 'ready' | 'empty' | 'unconfigured' | 'error';
+  status: CatalogStatus;
 }) {
-  const featured = status === 'ready' ? entries.find((entry) => entry.image) : undefined;
+  const scene = resolveLifestyleScene(entries, { basePath, status });
+  const browse = lifestyleBrowseEntries(entries, scene);
   return (
     <div className="reserve-commerce lifestyle-world">
-      <header className="lifestyle-hero">
-        <div className="lifestyle-hero-copy">
-          <div className="lifestyle-coordinate" aria-hidden="true">
-            A / L — 01
-          </div>
+      <header className="lifestyle-masthead lifestyle-hero">
+        <div className="lifestyle-masthead-brand">
           <Image
             className="lifestyle-lockup"
             src={brand.crest}
-            alt=""
-            width={96}
-            height={96}
-            sizes="96px"
+            alt={brand.crestAlt}
+            width={56}
+            height={56}
+            sizes="56px"
           />
-          <span className="world-kicker">AETHELIOS / THE HUMAN ASCENDANCE</span>
+          <div>
+            <span className="world-kicker">AETHELIOS / THE HUMAN ASCENDANCE</span>
+            <p className="lifestyle-masthead-name">Aethelios Lifestyle</p>
+          </div>
+        </div>
+        <nav className="lifestyle-masthead-actions" aria-label="Lifestyle shopping">
+          <Link className="world-button" href={basePath}>
+            Explore the collection
+          </Link>
+          <Link className="world-text-link" href={`${basePath}/cart`}>
+            Bag
+          </Link>
+        </nav>
+      </header>
+      <div className="lifestyle-opening">
+        <div className="lifestyle-opening-copy">
           <h1>
             The art of
             <br />
@@ -39,45 +58,30 @@ export function LifestyleLanding({
           </h1>
           <p className="lifestyle-lead">Aethelios Lifestyle</p>
           <p>
-            Aethelios Lifestyle. Aethelios Human Ascendance products.
-            <br />A higher standard for the everyday.
+            Grooming, personal care and daily ritual. Browse published products, current prices and
+            availability without an account.
           </p>
-          <div className="collection-entry-actions">
-            <Link className="world-button" href={basePath}>
-              Explore the collection
-            </Link>
-            <Link className="world-text-link" href={`${basePath}/cart`}>
-              Your cart
-            </Link>
-          </div>
-          <span className="lifestyle-hero-foot">CARE · CHARACTER · DAILY RITUAL</span>
         </div>
-        {featured?.image && (
-          <Link className="lifestyle-hero-product" href={`${basePath}/${featured.handle}`}>
-            <Image
-              src={featured.image.url}
-              alt={featured.image.altText ?? featured.title}
-              width={featured.image.width ?? 800}
-              height={featured.image.height ?? 1000}
-              sizes="(max-width: 700px) 86vw, 40vw"
-              preload
-            />
-            <span>
-              {featured.title} <small>{featured.price}</small>
-            </span>
-          </Link>
-        )}
-      </header>
+        <LifestyleProductStage scene={scene} status={status} exploreHref={basePath} />
+      </div>
       <section className="collection-browse" aria-labelledby="lifestyle-products">
         <div className="collection-browse-heading">
           <div>
             <span className="world-kicker">The collection</span>
             <h2 id="lifestyle-products">
-              Discover your <em>daily essentials.</em>
+              {browse.length ? (
+                <>
+                  More from the <em>assortment.</em>
+                </>
+              ) : (
+                <>
+                  Discover your <em>daily essentials.</em>
+                </>
+              )}
             </h2>
           </div>
           <Link className="world-text-link" href={basePath}>
-            View the collection →
+            View the collection
           </Link>
         </div>
         {status !== 'ready' ? (
@@ -100,13 +104,18 @@ export function LifestyleLanding({
               </Link>
             )}
           </div>
-        ) : (
+        ) : browse.length ? (
           <div className="reserve-collection-grid">
-            {entries.slice(0, 3).map((entry, index) => (
+            {browse.map((entry, index) => (
               <CollectionCard key={entry.handle} entry={entry} index={index} basePath={basePath} />
             ))}
           </div>
-        )}
+        ) : entries.length ? (
+          <p className="collection-save-note">
+            The opening shows the current published pieces. Open the collection to search, filter
+            and compare options.
+          </p>
+        ) : null}
       </section>
       <footer className="collection-world-footer">
         <span className="world-kicker">AETHELIOS LIFESTYLE</span>
@@ -121,7 +130,7 @@ export function LifestyleLanding({
           Shopify at checkout.
         </p>
         <Link className="world-text-link" href={`${basePath}/cart`}>
-          Your cart →
+          Review your bag
         </Link>
       </footer>
     </div>
