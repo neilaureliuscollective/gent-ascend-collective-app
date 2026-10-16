@@ -1,170 +1,48 @@
-# Architect Apps activation package
+# Architect Apps activation preparation — not activated
 
-Date: 2026-10-15. PR #130 continuation. This is a reviewable production path and a concrete activation decision. It is not authorization to merge, deploy, provision, apply hosted SQL, configure credentials, or make a paid model call.
+Current source and dated production facts: [ARCHITECT_COMMISSIONING.md](ARCHITECT_COMMISSIONING.md), inspected 2026-10-16. This replaces the earlier uncommissioned snapshot; no hosted apply, purchase, credential configuration, generation enablement, merge or deployment is authorized here. #154's release remains separate.
 
-## Exact head and compatibility
+## Reviewed order, not executed
 
-Reviewed Architect source: PR #130 `bf25662ae7fa6e92711523ffab7eb04df9d14d51`. This follow-on does not modify that branch. Main and Talk compatibility heads are pinned in the [commissioning manifest](../scripts/architect-apps-release-manifest.json), inspected 2026-10-15. Those are source pins, not a release candidate or transferable green-check evidence. Supply the exact candidate and fresh evidence to the [offline release report](ARCHITECT_APPS_RELEASE_REPORT.md). Any branch movement requires explicit pin review and refreshed evidence.
+1. Review the physical existing base/retain schema and the four missing Apps dependencies listed in commissioning. Obtain a separate approval for additive hosted completion. Preserve all projects, versions and records; no reset, replay or interim retain overwrite.
+2. Approve and commission a persistent Docker worker host. Prove image integrity, shared work-root write, isolated compile and packaged-worker topology on that host. Record exact source SHA and immutable image digests. A build log or listening port alone is insufficient.
+3. Separately configure web/worker settings below through the owner's secret store. Keep paid generation off until readiness and fixture/approved-source compilation pass. The worker needs no OpenAI key. Normal preflight reports worker presence, so invoking it against hosted data requires the corresponding authorization.
+4. Review exact integrated-candidate tests and compatibility with #154, then obtain separate merge/deployment authorization. This branch's code has not been deployed by this task.
+5. Separately authorize founder-pilot generation flags and the database execution policy. Default policy stays false. Env flags alone cannot authorize direct PostgREST approve/start/reserve/begin.
+6. Separately approve a bounded real-model proposal for the existing Nexus project, then review/approve/compile/preview/revise/reopen as in commissioning. Stop on uncertain or failed spend; do not automatically retry a provider call.
 
-**Historical snapshot recorded 2026-10-15: hosted Talk SQL was reported PAUSED after step 6. Current hosted status is not verified by this offline tool.** The plan below is nonexecuted documentation. No batch or recovery file may be resumed by this checker.
+## Web plane, Vercel
 
-The founder-production capability is **off** until every name below is deliberately set. Default production remains production. Mock output cannot be presented as live AI generation.
+Name-only checklist; no secret values belong in Git or chat:
 
-## Intended capability
+- `APP_ENV=production`, existing matching public Supabase URL/publishable key; existing owner session and person-bound `founder_access`.
+- `ARCHITECT_ORIGIN_ENABLED=true` (observed already set), `ARCHITECT_APPS_ENABLED=true` (not observed).
+- Shared `ARCHITECT_APPS_PREVIEW_SECRET` of at least 16 characters and `ARCHITECT_APPS_PREVIEW_CLUSTER=true`; matching physical preview-session schema.
+- `ARCHITECT_APPS_IMAGE_DIGEST` matching the worker's immutable toolchain image. **Required on web as well as worker** for paid-generation admission.
+- Only after separate approval: `ARCHITECT_APPS_FOUNDER_PILOT=true`, `ARCHITECT_APPS_AI_ENABLED=true`, existing server-only `OPENAI_API_KEY`; `AURELIUS_AI_MODEL` unset or `gpt-6-astra`.
+- Never enable mock/fixture/memory-store/host-fixture settings in production. Optional GitHub credentials do not enable Apps and are not required for standalone builds.
 
-The founder uses the real OpenAI adapter inside the actual Aethelios Architect workbench: propose → approve → isolated compile → compiled preview → revise → reopen. Ordinary signed-in users receive an accurate not-enabled state.
+The web model adapter generates source; Vercel does not execute generated code. Compile worker credentials never enter generated bundles or iframe code.
 
-| State | What happens |
-| --- | --- |
-| Disabled (default) | `appsAiReady` is false. Propose returns unavailable. Worker may compile already-approved revisions only after commissioned compile flags exist. |
-| Enabled founder pilot | Production `APP_ENV` stays `production`. `ARCHITECT_APPS_FOUNDER_PILOT=true`, `ARCHITECT_APPS_AI_ENABLED=true`, server-only `OPENAI_API_KEY`, commissioned worker, and `currentFounderAccess()` (session + `founder_access` RLS) all pass. `defaultAppGenerationTransport` selects `openaiAppTransport`. |
-| Denied mock-in-production | `ARCHITECT_APPS_AI_MOCK=true` in production is a refused configuration. Worker preflight/health fail. No mocked files are labelled as model output. |
-| Ordinary account | Server-verified founder check fails on propose, approve, start, retries and revisions. HTTP 403 class `permission`. Ownership of a project is not founder entitlement. Browser flags and client-supplied founder IDs do nothing. Existing owned records and compiled previews remain readable by the owner. |
+## Smallest host matching the current worker limits
 
-Identity is the existing person-bound `founder_access` row. Email, membership, user metadata, cookies, and client headers are not authorization.
+A persistent Linux Docker Engine host, **at least 2 vCPU / 2 GiB RAM**, single worker concurrency, sufficient disk for both pinned images and transient work. The current compile invocation requests `--cpus 2`, `--memory 1024m`, `--pids-limit 128`, read-only root, bounded writable tmpfs, uid 65534, all capabilities dropped, no-new-privileges and **network none**. The earlier 1-vCPU recommendation does not match this CPU request. 4 GiB RAM offers more daemon/build-image headroom, but is not claimed necessary without a host proof.
 
-## Required schema
+DigitalOcean's [current Basic pricing](https://www.digitalocean.com/pricing/droplets), read 2026-10-16, lists 2 GiB / 2 vCPU / 60 GiB at **$18/month** and 4 GiB / 2 vCPU / 80 GiB at **$24/month**, excluding tax/optional services. Purchase/provisioning is not approved. The $18 option is a candidate minimum, not a measured Nexus-host acceptance result. An existing equivalent dedicated Docker host could avoid a new purchase; no such host was verified here.
 
-The [commissioning manifest](../scripts/architect-apps-release-manifest.json) is the single ordered dependency list, with exact SQL checksums and source pins. Print its nonexecuted plan with `npm run architect:release-report -- --plan talk-integrated` (or `architect-only`). This emits filenames and checksums, never SQL commands.
+Worker names:
 
-Both profiles require physical verification of the pinned main baseline first. The manifest includes pending Origin dependencies as well as Apps dependencies. The integrated profile includes the Talk chain and its later import-recovery file; it does not authorize applying or replaying either. Already-applied files need verified physical/checksum evidence, not another execution.
+- `APP_ENV=production`, `ARCHITECT_APPS_DEPLOYMENT_MODE=commissioned`, Origin/Apps enabled, `ARCHITECT_APPS_REQUIRE_ISOLATION=true`.
+- `ARCHITECT_APPS_IMAGE=aethelios-architect-apps:2026-10-15.1`, `ARCHITECT_APPS_WORKER_IMAGE=aethelios-architect-apps-worker:2026-10-15.1`; record actual image digests, with matching `ARCHITECT_APPS_IMAGE_DIGEST` on web.
+- `ARCHITECT_APPS_WORK_ROOT=/var/lib/architect-apps-work`, identical host/container path; uid 1000, mode 0755 or 2775 with Docker socket group. Never chmod 777.
+- Unique `ARCHITECT_APPS_WORKER_ID`, server-only `ARCHITECT_CONSTRUCT_WORKER_TOKEN` (at least 32 characters), matching Supabase URL/publishable key and service-role key.
+- No `VERCEL`/`VERCEL_ENV`; no OpenAI key passed to the packaged worker. Host Docker socket is powerful control-plane authority; generated-code containers never receive it or secrets.
+- Supervise the packaged worker with automatic restart and boot startup (existing entrypoint loops); restrict SSH, expose no public worker port, health only on loopback. Keep private durable jobs/artifacts in the existing database; no separate project database is needed.
 
-The standalone profile places interim retain `20261015155000` before preview sessions `20261015156000`. The Talk profile excludes interim retain, preserves Talk's winning retain contracts, and places budget lock `20261015156700` after execution gate `20261015156600` and before Talk retain `20261015160000` / `20261015170000`. The omitted budget-lock step is mandatory in both profiles.
+Existing prepare-runtime and packaged-worker write/compile/topology/preflight scripts supply receipts. They are **not executed by this document**. Worker freshness is 90 seconds; missing, stale, malformed or mismatched evidence blocks paid generation. A stopped worker must leave queued work honestly queued, not fabricate a preview.
 
-Physical table/column/RPC requirements come directly from [schema-probe.ts](../src/domains/architect-apps/schema-probe.ts), including `architect_app_generation_budgets` and `architect_apps_lock_generation_budget`. Recorded migration history alone is insufficient. Existing worker preflight remains the runtime authority; the offline report validates its supplied receipt without starting it.
+## Spend and rollback boundaries
 
-Do not execute hosted SQL from this workstream. Shared names must be applied once.
+Current code permits at most two calls per run, 16k bounded input / 4k output tokens per call, $1 reserved allowance, `maxRetries=0`, 30s generation and 90s compile limits. The bound is not a provider-guaranteed spending cap; pricing/model availability must be verified when asking for spend approval. No model call was made here.
 
-## Environment names (no secret values)
-
-Web plane (Vercel Production), generation only:
-
-- `APP_ENV=production`
-- `ARCHITECT_ORIGIN_ENABLED=true`
-- `ARCHITECT_APPS_ENABLED=true`
-- `ARCHITECT_APPS_FOUNDER_PILOT=true` (off until commissioned)
-- `ARCHITECT_APPS_AI_ENABLED=true` (off until commissioned)
-- `OPENAI_API_KEY` (server-only; existing OpenAI credit path)
-- `AURELIUS_AI_MODEL` (must be unset or `gpt-6-astra`; any other value is refused)
-- `ARCHITECT_APPS_PREVIEW_SECRET` (≥16)
-- `ARCHITECT_APPS_PREVIEW_CLUSTER=true`
-- Matching `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- Leave `ARCHITECT_APPS_AI_MOCK` **unset**
-- Leave `ARCHITECT_APPS_STORE` unset
-- Leave `ARCHITECT_APPS_ALLOW_HOST_FIXTURE` unset
-
-Worker host (not Vercel):
-
-- `APP_ENV=production`
-- `ARCHITECT_APPS_DEPLOYMENT_MODE=commissioned`
-- `ARCHITECT_APPS_REQUIRE_ISOLATION=true`
-- `ARCHITECT_APPS_IMAGE=aethelios-architect-apps:2026-10-15.1`
-- `ARCHITECT_APPS_IMAGE_DIGEST` (`sha256:` + 64 hex from `docker image inspect`)
-- `ARCHITECT_APPS_WORK_ROOT=/var/lib/architect-apps-work` (identical host/container path)
-- `ARCHITECT_CONSTRUCT_WORKER_TOKEN` (≥32)
-- `ARCHITECT_APPS_WORKER_ID`
-- `SUPABASE_SERVICE_ROLE_KEY` (server-only on the worker)
-- Matching public Supabase URL + publishable key
-- No `VERCEL` / `VERCEL_ENV`
-- Generation names may be present so readiness can verify policy; the worker does not call OpenAI
-
-Readiness (`--preflight` / `--health`) must report isolation, schema classification, work-root ownership, digest match, **and** generation policy (`mode`, `permitted`, `founderPilot`, `generationReady`). A listening HTTP port or a successful `docker build` is not readiness.
-
-## Hosting recommendation and cost
-
-Official sources inspected 2026-10-15:
-
-- DigitalOcean Droplet pricing: Basic 2 GiB / 1 vCPU / 50 GiB SSD / 2,000 GiB transfer, **$12.00/month** cap, **$0.01786/hour**. Per-second billing from 1 January 2026, minimum 60 seconds or $0.01. https://www.digitalocean.com/pricing/droplets
-- Docker 1-Click Marketplace image: Ubuntu 22.04 with docker-engine and docker-compose. The 1-Click adds **no extra app fee**; you pay the Droplet. https://docs.digitalocean.com/products/marketplace/catalog/docker/ (catalog page generated 17 August 2026)
-
-| Item | Ongoing | Uncertainty |
-| --- | --- | --- |
-| Docker Droplet Basic 2 GiB / 1 vCPU | **$12/month** (or hourly until destroyed) | Region/tax. 1 GiB / $6 is below the 1024m compile tmpfs and is not recommended. |
-| Docker 1-Click software | $0 | Image slug/version may change; pin by inspecting `docker version` after create. |
-| Optional Droplet backups / snapshots | Confirm current percentage in the control panel before enabling | Not required for this package. |
-| Outbound transfer over 2,000 GiB | Overage at DigitalOcean’s published rate | Unlikely for founder-only compiles. |
-| Existing Vercel Production | Already paid/used by the web app | Merge to `main` typically auto-deploys this web plane. |
-| Existing Supabase project | Already paid/used | Hosted Apps SQL is a separate approval. |
-| OpenAI | Usage only; see acceptance case | Model list price can change. Default config is `gpt-6-astra`. |
-
-No account, Droplet, or purchase is created here. A founder laptop is not the host.
-
-## Credentials and permissions the owner must configure
-
-Through DigitalOcean’s own login / billing (not this agent):
-
-- Droplet create from the Docker 1-Click image, SSH key, firewall (SSH + no public worker port; health binds `127.0.0.1` only).
-
-Through Vercel / existing secret store (not this agent):
-
-- Apps flags and preview secret on Production.
-- Founder-pilot names only after worker preflight is green.
-
-Through OpenAI’s own dashboard (not this agent):
-
-- Confirm the existing server-only `OPENAI_API_KEY` and credit. Do not paste the value into chat or Git.
-
-Through Supabase (not this agent):
-
-- Founder-approved SQL apply of the ordered files.
-- Confirm the physical tables/RPCs, not only migration history.
-- Worker uses the service-role key; owner APIs stay session + RLS.
-
-`founder_access` must already exist for the founder person. Do not invent a browser grant.
-
-## Ordered commissioning
-
-Do not merge `main` until the founder separately approves the automatic Vercel Production deploy that merge causes.
-
-1. **Schema (historical pause recorded 2026-10-15; not executed here).** Review the selected manifest profile and its complete order using the offline report above, including budget lock. Reconcile physical baseline and completed steps with the Talk owner before any separately authorized continuation. Do not replay the original 18-name batch or later recovery file.
-2. **Worker host.** Create the $12 Docker Droplet. Install nothing extra if `docker version` already works. Clone this SHA. `node scripts/architect-apps-prepare-runtime.mjs`.
-3. **Proofs.** `--prove-write`, `--prove-compile`, `--prove-topology`. Then the existing `--preflight` receipt must be `ok` / `idle` with work-root `ready` and generation `permitted`. Normal preflight can write worker presence; it is not the offline release checker.
-4. **Denied proof.** A disposable local env with production + `ARCHITECT_APPS_AI_MOCK=true` must report generation `refused` and fail health. Do not use that env for hosting.
-5. **Supervise.** Start the packaged worker. Jobs stay `queued` if it stops; the UI must not invent a preview.
-6. **Web flags.** Set Origin/Apps + preview cluster on Vercel. Generation names stay **off**.
-7. **Compile acceptance.** One labelled Field Notes isolated compile (mock or fixture on a local/CI host, or an already-approved revision). Not a paid model call.
-8. **Founder-pilot enable.** Separate approval: set `ARCHITECT_APPS_FOUNDER_PILOT` and `ARCHITECT_APPS_AI_ENABLED` with the existing server-only key. Confirm an ordinary account still sees not-enabled.
-9. **SQL execution policy.** Separate approval: as `service_role`, `select public.architect_apps_set_execution_policy(true)`. Env flags do not authorize a direct PostgREST approve/start. Default remains false.
-10. **Bounded real-model case.** Only after step 9 and a separate spend approval.
-
-## Bounded real-model acceptance case (not executed)
-
-Selected model: **only** `gpt-6-astra` (not GPT-5.5, not an `AURELIUS_AI_MODEL` override). Official standard short-context list price inspected 2026-10-15 from https://developers.openai.com/api/docs/pricing: **$10.00 / 1M input** and **$50.00 / 1M output** for ≤272K input tokens. Long-context (>272K) is $20 / $75 and is refused by the 16k input ceiling.
-
-Server-side acceptance allowance (atomic, person+run+request): 2 calls, 16k input / 4k output per call, **$1.00 reserved cap**. Input accounting serializes instructions, prompt (files, collections, bridge, brief, direction) and output-schema stub at 2 characters/token plus 512 tokens. That is a conservative bound, **not a guaranteed spending cap**. Two ceiling reservations cost $0.72 list ($0.16 input + $0.20 output each). Per-call `maxRetries=0`, `maxOutputTokens=4000`, 30s generation timeout, 90s compile timeout remain. `begin_generation` is the provider-start boundary; pre-start cancel can zero a reserved row; started or uncertain rows stay reserved until trustworthy reconciliation. Concurrent requests and retries reuse the same `requestId` without a second provider call.
-
-1. Sign in as the founder on production Aethelios. An ordinary owner of the same project must still receive not-enabled on propose/approve/start.
-2. Confirm worker readiness (`architect_apps_worker_readiness`) is recent, digest-matched, isolated, and schema/queue/artifact capable. Do not send a paid propose if it is missing or stale.
-3. Create a small Field Notes app from a short brief (create).
-4. Accept, start, wait for isolated compile and compiled preview.
-5. Revise with “Add an optional tag.”
-6. Accept, compile, confirm last-good retention if the revise compile fails.
-7. Reopen the last working revision.
-
-**Proposed maximum spend: $1.00 USD** for those two `gpt-6-astra` calls. This is the server reserved cap, not an OpenAI dashboard alert. OpenAI spend alerts notify only and do not stop traffic. Organization/project hard spend limits can slightly overshoot while the limit state propagates (https://developers.openai.com/api/docs/guides/spend-limits). If the provider omits usage, the receipt keeps the reserved ceiling. If either call errors, stop; do not re-run without a new approval. A single preflight cannot keep the worker available after admission; a later worker failure must fail the job without a second model call or a false compile success.
-
-Implemented readiness (code + local tests) is not commissioned infrastructure. No worker host, hosted SQL, or production flags exist until the approvals below.
-
-## Recovery and rollback
-
-1. `select public.architect_apps_set_execution_policy(false)` as service-role, then unset `ARCHITECT_APPS_FOUNDER_PILOT` and `ARCHITECT_APPS_AI_ENABLED` on Vercel. Direct RPC execution and generation stop. Existing revisions remain.
-2. Set `ARCHITECT_APPS_ENABLED=false` if the workbench must disappear.
-3. Stop the worker process or power off the Droplet. Queued jobs stay queued.
-4. Leave tables in place. Do not drop owner records.
-5. Revert `ARCHITECT_APPS_IMAGE_DIGEST` only after a newer digest has failed isolation proofs.
-6. Revert the Vercel Production deployment to the last main SHA if a merge was the mistake.
-
-## Exact approvals still required
-
-| Action | Status |
-| --- | --- |
-| Merge PR #130 to `main` (auto-deploys Vercel Production) | Not approved |
-| Hosted SQL apply | Not approved |
-| Create DigitalOcean account / Droplet / SSH | Not approved |
-| Write `OPENAI_API_KEY`, worker token, or service-role key onto a host | Not approved |
-| Set `ARCHITECT_APPS_FOUNDER_PILOT` or `ARCHITECT_APPS_AI_ENABLED` in production | Not approved |
-| Set `architect_apps_execution_policy.founder_pilot=true` via service-role | Not approved |
-| Paid OpenAI acceptance case (max $1.00 reserved, gpt-6-astra short-context; bound is not a guaranteed cap) | Not approved |
-| Talk #131 merge / Talk SQL | Separate Talk release |
-
-This workstream may only publish code and documentation to the review branch.
+For a separately authorized rollback, disable SQL execution policy and generation flags first, then stop worker/disable Apps if needed. Preserve all tables, project revisions, artifacts and records. A code rollback is not a schema rollback. No rollback actions are executed here.

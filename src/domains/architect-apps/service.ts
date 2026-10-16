@@ -1,4 +1,5 @@
 import 'server-only';
+import { appActivationStatus } from './activation';
 import { currentFounderAccess } from '@/domains/access/founder';
 import { IntelligenceError, intelligenceSession } from '@/domains/intelligence/service';
 import { creationBriefForGeneration } from '@/domains/architect-origin/creation-journey';
@@ -162,6 +163,19 @@ function scopeHash(input: {
       toolchain: APP_TOOLCHAIN_VERSION,
     }),
   };
+}
+
+export async function readArchitectAppActivation(projectId: string) {
+  // Ownership is required even while Apps is disabled. No service-role client or writes.
+  const { client } = await requireOwnedProject(projectId);
+  const [founder, runtime, policy] = await Promise.all([
+    currentFounderAccess().catch(() => false),
+    readPaidGenerationRuntime(client),
+    Promise.resolve(client.from('architect_apps_execution_policy').select('founder_pilot').eq('id', true).maybeSingle())
+      .catch(() => ({ data: null, error: { message: 'Unavailable' } })),
+  ]);
+  return appActivationStatus({ founder, runtime,
+    executionPolicy: !policy.error && (policy.data as { founder_pilot?: boolean } | null)?.founder_pilot === true });
 }
 
 export async function readArchitectApp(projectId: string, selectedRevision?: number) {

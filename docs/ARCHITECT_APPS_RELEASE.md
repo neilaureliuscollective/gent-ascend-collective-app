@@ -1,48 +1,19 @@
-# Architect Apps release path — not live
+# Architect Apps release state — pipeline not production-demonstrated
 
-Implemented on PR #130. This is not a production authorization and not a claim that review-ready means hosted.
+Inspected 2026-10-16 against main `175fda72eeb37f389d76d73572dd882fe68cef15`. #130 is merged; this continuation stays on draft #146. #154 and the separate Talk dock are not incorporated or changed.
 
-## Implemented code
+| Level | Evidence / limit |
+| --- | --- |
+| Implemented on released main | Origin saved projects, Apps proposal/approve/start, durable jobs, isolated Docker compiler, verified private preview, revision/reopen and owner-bound data bridge. Code presence does not activate them. |
+| Configured and observed | Origin enabled; existing Nexus revision 1 and owner founder access. Base Apps tables exist. Latest READY production deployment points to main `175fda72…`. |
+| Not configured / missing | Apps/AI/founder-pilot/preview/image-digest configuration; physical preview/budget/execution/presence schema; verifiable persistent worker. Existing API key name does not satisfy those requirements. |
+| Repair implemented on #146 | Capability-specific label and read-only owner-scoped readiness action; missing worker evidence fails closed. Historical commissioning instructions reconciled with current source and dated facts. |
+| Locally tested | Labelled synthetic API/policy/ownership/negative tests. Exact-head checks must be attached to #146 after publication. |
+| Deployed by this task | Nothing. No merge or deployment is authorized. Existing production is not this repair. |
+| Production-demonstrated | Saved Nexus exists. No generated Nexus code, isolated compile, preview, revision or authenticated reopen demonstration. No paid model call made. |
 
-- Owner APIs, durable Apps RPCs, isolated Docker compile, compiled iframe, host collections, mutation identity, and the Origin workbench.
-- Explicit founder-pilot generation policy: `ARCHITECT_APPS_FOUNDER_PILOT`. Production stays identified as production. Mock generation is refused in production.
-- Ordered SQL dependencies and byte checksums are maintained only in the [commissioning manifest](../scripts/architect-apps-release-manifest.json); use its explicit standalone or Talk-integrated profile. Both include budget lock `20261015156700`.
-- Pinned images `aethelios-architect-apps:2026-10-15.1` and `aethelios-architect-apps-worker:2026-10-15.1`. Prepare both with `node scripts/architect-apps-prepare-runtime.mjs` on the host that will compile.
-- Labelled mocked provider (`ARCHITECT_APPS_AI_MOCK`) for local/test Field Notes only. Do not set it on hosted production.
+Root cause, exact missing SQL files, saved-project preservation and real pipeline: [commissioning](ARCHITECT_COMMISSIONING.md). Required flags, worker sizing/configuration, separate approvals and bounded acceptance: [activation](ARCHITECT_APPS_ACTIVATION.md).
 
-## Missing hosted infrastructure
+The existing [offline release checker](ARCHITECT_APPS_RELEASE_REPORT.md) still validates its pinned historical fresh-install manifest. It is not a live schema authority or an apply tool. Production has advanced beyond the old six-step Talk snapshot and outside the manifest's original source pins; do not relabel that snapshot as current or replay any original batch. A new integrated-candidate evidence set and reviewed physical reconciliation are still required.
 
-| Prerequisite | Current | Smallest action |
-| --- | --- | --- |
-| Hosted Apps migrations | Unapplied | Founder-authorized hosted apply of the shared Talk/Apps files once, then the #130 extras below. Recorded history is not physical schema. Health `20261015181000` is unrelated and stays on its own approval. |
-| Worker host | Code-complete commissioned path; no persistent host | Founder-approved DigitalOcean Docker Droplet (Basic 2 GiB, $12/mo) or equivalent daemon host. Set `ARCHITECT_APPS_DEPLOYMENT_MODE=commissioned`. Vercel and Fly Machines are not that host. A founder laptop is not the plan. |
-| Isolated images | Built in Quality `apps-isolate` and Origin `local-auth` after prepare-runtime | Same pinned tags on the worker host; work root uid 1000 mode 0755; no unsandboxed fallback |
-| `ARCHITECT_APPS_PREVIEW_SECRET` | Required; shared `architect_app_preview_sessions` | Hosted secret ≥16 chars plus `ARCHITECT_APPS_PREVIEW_CLUSTER=true` on the web plane. Missing/revoked sessions deny. |
-| Feature flags | Default false | Hosted `ARCHITECT_ORIGIN_ENABLED` + `ARCHITECT_APPS_ENABLED`. Leave `ARCHITECT_APPS_AI_MOCK` unset. |
-| Founder-pilot model | Disabled until commissioned | Separate founder authorization for `ARCHITECT_APPS_FOUNDER_PILOT=true` + `ARCHITECT_APPS_AI_ENABLED=true` + server-only `OPENAI_API_KEY`. Propose, approve, start, retries and revisions all require session `founder_access`. Credit does not provide worker, DB, image or permissions. Ordinary accounts stay unavailable. |
-| Worker presence before spend | Implemented in code; no commissioned host | Paid propose reads `architect_apps_worker_readiness` (schema, digest, isolation, queue, artifacts, 90s heartbeat). Missing/stale evidence sends no model request. |
-| Acceptance budget | Implemented in code; $1.00 reserved, two calls | Atomic reserve/begin/finish on `gpt-6-astra` short-context $10/$50 per 1M. Clients cannot cancel or reduce started or uncertain usage. The conservative token bound is not a guaranteed spending cap. OpenAI spend alerts are not a cap. |
-| SQL execution policy | Implemented; default off | `architect_apps_execution_policy.founder_pilot` plus `founder_access` on approve/start/reserve/begin/finish. Env flags do not authorize a direct PostgREST call. |
-| Talk adapter | Pending on this checkout | Review the exact Talk compatibility head pinned in the manifest; independently verify its inclusion in the candidate and refresh checks. Do not copy Talk files from this branch |
-
-## Sequence if later authorized
-
-Merging this PR to `main` typically triggers the existing Vercel Production deploy. That is not authorized here. The web plane would go live without a worker or hosted schema. Generation would still stay off until the founder-pilot names are set.
-
-1. **Historical snapshot recorded 2026-10-15: hosted SQL was reported PAUSED after Talk step 6; current status is unverified here.** The [offline release report](ARCHITECT_APPS_RELEASE_REPORT.md) prints the selected manifest profile, including budget lock after execution gate and before Talk retain. After separate authorization only, reconcile completed steps and physical baseline with the Talk owner; never replay batches. The report does not apply anything or grant permission.
-2. Provision the approved Docker Droplet. Prepare both images and the uid-1000 work root. Prove write, compile and topology.
-3. Set preview secret and Apps flags on Vercel only after worker preflight is green. Do not enable `ARCHITECT_APPS_AI_MOCK` on production.
-4. Start the supervised packaged worker. Confirm one isolated Field Notes compile before inviting anyone else.
-5. Only after that compile, and only with a separate founder approval, set `ARCHITECT_APPS_FOUNDER_PILOT` and `ARCHITECT_APPS_AI_ENABLED` with a server-only key.
-6. Only after that, and only with a separate founder approval, `select public.architect_apps_set_execution_policy(true)` as service-role. Env flags do not authorize direct PostgREST execution.
-7. Rollback: `architect_apps_set_execution_policy(false)`, then unset `ARCHITECT_APPS_FOUNDER_PILOT` and `ARCHITECT_APPS_AI_ENABLED`, then `ARCHITECT_APPS_ENABLED`, stop the worker, leave tables in place. Do not drop owner records. Revert the image tag only after a newer tag has failed isolation.
-
-See [ARCHITECT_APPS_ACTIVATION.md](ARCHITECT_APPS_ACTIVATION.md) for the exact activation decision.
-
-## Rollback that is not authorized here
-
-No hosted migration, credential, paid service, main merge or production deploy is performed by this workstream.
-
-## Evidence gate
-
-Use `npm run architect:release-report -- --target target.json --evidence evidence.json`. The exact candidate commit, current pinned branch heads, terminal checks, migration order/checksums, physical schema, worker/image/proofs and web provider policy must match. Missing, stale or mismatched receipts fail closed. A green build or a complete offline report is not hosted acceptance; real authenticated hosted, provider and physical-device acceptance remain separate prerequisites. See [report contract](ARCHITECT_APPS_RELEASE_REPORT.md).
+No key values or personal project contents were committed. No hosted data was changed. Keep this PR draft until integration authority is reconciled with the separate #154 owner. A green build or fixture worker receipt never substitutes for the first authorized real Nexus build and authenticated production acceptance.

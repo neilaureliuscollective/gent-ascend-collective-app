@@ -1,3 +1,7 @@
+## Architect activation preparation — 2026-10-16
+
+Continued #146 on released main `175fda72` after verifying merged #130. Read-only production inspection found saved Nexus revision 1 with founder access, but absent Apps activation names and preview/budget/execution/presence schema. “Build connection pending” was a Construct flag label, not a GitHub dependency. Repairs add owner-only readiness diagnostics and strict missing-worker-evidence denial; no paid generation, SQL mutation, credentials, purchases, merge or deployment. #154 and Talk dock remain separate. See [commissioning facts and pending approvals](ARCHITECT_COMMISSIONING.md). Real Nexus pipeline acceptance remains blocked.
+
 ## Architect release-readiness follow-on — 2026-10-15
 
 Isolated from reviewed #130 (`bf25662ae7fa6e92711523ffab7eb04df9d14d51`): repaired the omitted budget-lock commissioning dependency and stale Talk source references. One checksummed manifest now feeds a read-only release evidence checker and the existing preflight wrapper's offline mode. Local fixture tests cover ordering, omission, branch/check freshness, physical schema, worker and provider failures. See [release report](ARCHITECT_APPS_RELEASE_REPORT.md). Historical snapshot recorded 2026-10-15: hosted Talk SQL was reported paused after six steps (current status is not verified here); no database access, flags, credentials, paid calls, merge or deployment. This is not hosted acceptance.

@@ -4,6 +4,7 @@ import {
   cancelArchitectApp,
   proposeArchitectApp,
   readArchitectApp,
+  readArchitectAppActivation,
   reopenArchitectApp,
   startArchitectApp,
 } from '@/domains/architect-apps/service';
@@ -29,6 +30,7 @@ export async function GET(request: Request) {
     const project = params.get('project');
     const selected = params.get('selected');
     if (!project || !z.uuid().safeParse(project).success) throw new IntelligenceError('Invalid project.');
+    if (params.get('view') === 'activation') return privateJson(await readArchitectAppActivation(project));
     const revision = selected && /^\d+$/.test(selected) ? Number(selected) : undefined;
     return privateJson(await readArchitectApp(project, revision));
   } catch (error) {

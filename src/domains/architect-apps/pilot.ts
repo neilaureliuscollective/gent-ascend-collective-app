@@ -91,12 +91,12 @@ export function classifyPaidGenerationReadiness(
   if (!evidence.schemaCompatible) missing.push('schema');
   if (!evidence.workerPresent) missing.push('worker');
   if (evidence.isolation !== 'docker') missing.push('isolation');
-  if (evidence.queueReady === false) missing.push('queue');
-  if (evidence.artifactsReady === false) missing.push('artifacts');
+  if (evidence.queueReady !== true) missing.push('queue');
+  if (evidence.artifactsReady !== true) missing.push('artifacts');
   if (!expected) missing.push('ARCHITECT_APPS_IMAGE_DIGEST');
-  else if (evidence.observedDigest && evidence.observedDigest !== expected) missing.push('image-digest');
-  if (evidence.ageMs != null && evidence.ageMs > APP_ACCEPTANCE_BUDGET.heartbeatMaxAgeMs) missing.push('heartbeat');
-  if (evidence.state === 'unavailable' || evidence.state === 'misconfigured') missing.push('worker-state');
+  else if (parseAppsImageDigest(evidence.observedDigest) !== expected) missing.push('image-digest');
+  if (typeof evidence.ageMs !== 'number' || !Number.isFinite(evidence.ageMs) || evidence.ageMs < 0 || evidence.ageMs > APP_ACCEPTANCE_BUDGET.heartbeatMaxAgeMs) missing.push('heartbeat');
+  if (evidence.state !== 'idle' && evidence.state !== 'working') missing.push('worker-state');
   if (missing.length) {
     return {
       ok: false,
