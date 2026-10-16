@@ -1,4 +1,16 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
+
+async function canvasDigest(canvas: Locator) {
+  return canvas.evaluate((node) => {
+    const canvasNode = node as HTMLCanvasElement;
+    const context = canvasNode.getContext('2d');
+    if (!context) return '';
+    const image = context.getImageData(0, 0, canvasNode.width, canvasNode.height);
+    let total = 0;
+    for (let i = 0; i < image.data.length; i += 17) total = (total + (image.data[i] ?? 0)) % 1_000_003;
+    return `${canvasNode.width}x${canvasNode.height}:${image.data.length}:${total}`;
+  });
+}
 
 const viewports = [
   { name: 'phone', width: 390, height: 844 },
@@ -218,14 +230,22 @@ test('Still and reduced motion apply on the production Live surface without remo
   await page.getByRole('button', { name: 'Start voice', exact: true }).click();
   const compact = page.getByRole('region', { name: 'Persistent Aethelios voice controls' });
   const globe = compact.locator('.live-call-globe');
+  const canvas = globe.locator('.live-globe-canvas');
   await expect(globe).toBeVisible();
   await expect(globe).toHaveAttribute('data-earth', /ready|fallback/, { timeout: 15000 });
-  await globe.locator('.live-globe-canvas').evaluate((node) => node.setAttribute('data-keep', '1'));
+  await canvas.evaluate((node) => node.setAttribute('data-keep', '1'));
+  const first = await canvasDigest(canvas);
+  await expect.poll(async () => canvasDigest(canvas), { timeout: 1500 }).not.toBe(first);
   await page.getByRole('button', { name: 'Pause ambient motion', exact: true }).click();
   await expect(globe).toHaveAttribute('data-motion', 'still');
+  await page.waitForTimeout(80);
+  const still = await canvasDigest(canvas);
+  await page.waitForTimeout(240);
+  expect(await canvasDigest(canvas)).toBe(still);
   await page.getByRole('button', { name: 'Enable ambient motion', exact: true }).click();
   await expect(globe).toHaveAttribute('data-motion', 'ambient');
-  await expect(globe.locator('.live-globe-canvas')).toHaveAttribute('data-keep', '1');
+  await expect.poll(async () => canvasDigest(canvas), { timeout: 1500 }).not.toBe(still);
+  await expect(canvas).toHaveAttribute('data-keep', '1');
   await compact.getByRole('button', { name: 'Expand', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
   const immersive = dialog.locator('.live-call-globe');
@@ -410,4 +430,93 @@ test('Still resize updates canvas bitmap and displayed size without restarting m
   await expect(canvas).toHaveAttribute('data-keep', '1');
   await page.keyboard.press('Escape');
   await compact.getByRole('button', { name: 'End session', exact: true }).click();
+});
+
+test('Ambient changes canvas pixels and Still or reduced motion stop after settling', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('http://127.0.0.1:3102/?mode=live-call-globe&scene=listening');
+  const globe = page.locator('.live-call-globe-immersive');
+  const canvas = globe.locator('.live-globe-canvas');
+  await expect(globe).toHaveAttribute('data-earth', 'ready', { timeout: 15000 });
+  await expect(globe).toHaveAttribute('data-emblem', 'ready', { timeout: 15000 });
+  await expect(globe).toHaveAttribute('data-motion', 'ambient');
+  await canvas.evaluate((node) => node.setAttribute('data-keep', '1'));
+  const first = await canvasDigest(canvas);
+  await expect.poll(async () => canvasDigest(canvas), { timeout: 1500 }).not.toBe(first);
+  const moving = await canvasDigest(canvas);
+  await page.getByRole('button', { name: 'Pause ambient motion', exact: true }).click();
+  await expect(globe).toHaveAttribute('data-motion', 'still');
+  await page.waitForTimeout(80);
+  const still = await canvasDigest(canvas);
+  await page.waitForTimeout(240);
+  expect(await canvasDigest(canvas)).toBe(still);
+  await page.getByRole('button', { name: 'Enable ambient motion', exact: true }).click();
+  await expect(globe).toHaveAttribute('data-motion', 'ambient');
+  await expect.poll(async () => canvasDigest(canvas), { timeout: 1500 }).not.toBe(still);
+  await expect(canvas).toHaveAttribute('data-keep', '1');
+  expect(moving).not.toBe(first);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(globe).toHaveAttribute('data-motion', 'still');
+  await page.waitForTimeout(80);
+  const reduced = await canvasDigest(canvas);
+  await page.waitForTimeout(240);
+  expect(await canvasDigest(canvas)).toBe(reduced);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await expect(globe).toHaveAttribute('data-motion', 'ambient');
+  await expect.poll(async () => canvasDigest(canvas), { timeout: 1500 }).not.toBe(reduced);
+  await expect(canvas).toHaveAttribute('data-keep', '1');
+});
+
+test('transparent emblem leaves surrounding globe visible without a rectangular plate', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('http://127.0.0.1:3102/?mode=live-call-globe&scene=listening');
+  const globe = page.locator('.live-call-globe-immersive');
+  const canvas = globe.locator('.live-globe-canvas');
+  await expect(globe).toHaveAttribute('data-emblem-id', 'original-full-logo');
+  await expect(globe).toHaveAttribute('data-earth', 'ready', { timeout: 15000 });
+  await expect(globe).toHaveAttribute('data-emblem', 'ready', { timeout: 15000 });
+  const sample = await canvas.evaluate((node) => {
+    const canvasNode = node as HTMLCanvasElement;
+    const context = canvasNode.getContext('2d');
+    if (!context) return null;
+    const { data, width, height } = context.getImageData(0, 0, canvasNode.width, canvasNode.height);
+    const at = (x: number, y: number) => {
+      const index = (Math.round(y) * width + Math.round(x)) * 4;
+      return [data[index] ?? 0, data[index + 1] ?? 0, data[index + 2] ?? 0] as const;
+    };
+    const cx = width / 2;
+    const cy = height / 2;
+    const radius = width * 0.46;
+    const size = radius * 0.7;
+    const dy = size * 0.035;
+    const half = size / 2;
+    const field = [
+      at(cx - half + 3, cy - half + dy + 3),
+      at(cx + half - 3, cy - half + dy + 3),
+      at(cx - half + size * 0.18, cy - half + dy + size * 0.16),
+      at(cx + half - size * 0.18, cy - half + dy + size * 0.16),
+      at(cx + radius * 0.82, cy),
+    ];
+    return {
+      center: at(cx, cy + dy),
+      field,
+      earth: at(cx + radius * 0.82, cy),
+    };
+  });
+  expect(sample).toBeTruthy();
+  expect(sample!.center[0]).toBeGreaterThan(90);
+  expect(sample!.center[0]).toBeGreaterThan(sample!.center[2]);
+  const plateLike = (pixel: readonly [number, number, number]) => {
+    const luma = 0.2126 * pixel[0] + 0.7152 * pixel[1] + 0.0722 * pixel[2];
+    const chroma = Math.max(pixel[0], pixel[1], pixel[2]) - Math.min(pixel[0], pixel[1], pixel[2]);
+    return luma > 170 && chroma < 28;
+  };
+  expect(sample!.field.some((pixel) => plateLike(pixel))).toBe(false);
+  expect(sample!.earth[1]).toBeGreaterThan(sample!.earth[0] - 8);
+  expect(sample!.earth[0]).toBeLessThan(140);
+  expect(new Set(sample!.field.map((pixel) => pixel.join(','))).size).toBeGreaterThan(1);
 });

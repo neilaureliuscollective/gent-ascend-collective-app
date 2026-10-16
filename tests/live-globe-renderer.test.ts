@@ -8,8 +8,6 @@ import {
   mountLiveGlobe,
 } from '../src/platform/visual/live-globe-renderer';
 
-const MAP_BYTES = 640 * 320 * 4;
-
 function fakeCanvas() {
   const canvas = {
     className: '',
@@ -45,9 +43,38 @@ function fakeCanvas() {
     createRadialGradient: () => ({ addColorStop: vi.fn() }),
     createImageData: (width = canvas.width, height = canvas.height) => ({
       data: new Uint8ClampedArray(width * height * 4),
+      width,
+      height,
     }),
     putImageData: vi.fn(),
-    getImageData: () => ({ data: new Uint8ClampedArray(MAP_BYTES) }),
+    getImageData: (...args: number[]) => {
+      const sw = args[2] ?? canvas.width;
+      const sh = args[3] ?? canvas.height;
+      const width = sw || canvas.width;
+      const height = sh || canvas.height;
+      const data = new Uint8ClampedArray(width * height * 4);
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          const index = (y * width + x) * 4;
+          const stripe = Math.floor((x + y) / 12) % 3;
+          if (stripe === 0) {
+            data[index] = 18;
+            data[index + 1] = 42;
+            data[index + 2] = 120;
+          } else if (stripe === 1) {
+            data[index] = 48;
+            data[index + 1] = 150;
+            data[index + 2] = 72;
+          } else {
+            data[index] = 210;
+            data[index + 1] = 210;
+            data[index + 2] = 206;
+          }
+          data[index + 3] = 255;
+        }
+      }
+      return { data, width, height };
+    },
     arc: vi.fn(),
     ellipse: vi.fn(),
     filter: 'none',
@@ -274,29 +301,40 @@ describe('live globe renderer', () => {
         phase: 'listening',
         muted: false,
         playbackBlocked: false,
+        speechDetected: true,
       }),
-      { moving: true },
+      {
+        moving: true,
+        readEnergy: () => ({ inward: 0.25, outward: 0.08 }),
+      },
     );
     const first = globe.metrics().rotation;
     const origin = typeof performance !== 'undefined' ? performance.now() : 0;
     frames.at(-1)?.(origin + 40);
+    const firstDigest = frameDigest(display.context);
     frames.at(-1)?.(origin + 80);
-    expect(globe.metrics().rotation).toBeGreaterThan(first);
     const movingDigest = frameDigest(display.context);
-    expect(movingDigest).not.toBe('');
+    expect(globe.metrics().rotation).toBeGreaterThan(first);
+    expect(firstDigest).not.toBe('');
+    expect(movingDigest).not.toBe(firstDigest);
     globe.setMotion(false);
     expect(globe.metrics().looping).toBe(false);
     const stillDigest = frameDigest(display.context);
     const queued = frames.length;
-    frames.at(-1)?.(400);
+    frames.at(-1)?.(origin + 400);
     expect(frames.length).toBe(queued);
     expect(frameDigest(display.context)).toBe(stillDigest);
     globe.setMotion(true);
     expect(globe.metrics().looping).toBe(true);
+    frames.at(-1)?.(origin + 440);
+    frames.at(-1)?.(origin + 480);
+    expect(frameDigest(display.context)).not.toBe(stillDigest);
     media.matches = true;
     listeners.forEach((listener) => listener({ matches: true }));
     const reducedDigest = frameDigest(display.context);
-    frames.at(-1)?.(800);
+    const afterReduce = frames.length;
+    frames.at(-1)?.(origin + 800);
+    expect(frames.length).toBe(afterReduce);
     expect(frameDigest(display.context)).toBe(reducedDigest);
     expect(globe.metrics().looping).toBe(false);
     globe.dispose();

@@ -49,7 +49,7 @@ The extra Web Audio monitor is removed. Atmosphere energy reuses `LiveController
 
 ## Motion and polling
 
-`setMotion` and a `prefers-reduced-motion` listener apply Still immediately without remounting. Hidden pages cancel the single rAF loop. Renderer tests assert ambient rotation and frame-digest change, then no further digest change after Still or reduced motion settle. A host `ResizeObserver` paints once when Still/reduced-motion size is stale (CSS or drawing buffer), then disconnects on dispose; it does not restart the loop. `createLiveLevelPoller` reuses `audioLevels()`, takes one sample when Still, pauses while hidden, and drops in-flight results after dispose. No second AudioContext.
+`setMotion` and a `prefers-reduced-motion` listener apply Still immediately without remounting. Hidden pages cancel the single rAF loop. Renderer tests use a nonuniform texture and fixed energy, then compare distinct painted frames while Ambient and unchanged frames after Still or reduced motion settle. Browser tests read the real canvas after assets load. A host `ResizeObserver` paints once when Still/reduced-motion size is stale (CSS or drawing buffer), then disconnects on dispose; it does not restart the loop. `createLiveLevelPoller` reuses `audioLevels()`, takes one sample when Still, pauses while hidden, and drops in-flight results after dispose. No second AudioContext.
 
 ## Evidence
 
