@@ -34,9 +34,10 @@ A transfer remains a retained creative proposal, not a completed build. Real-pro
 
 ## Integration order and boundaries
 
-- PR152 remains open/draft at `1ca5123642a60a4d95fa483e240749c201a48094`. Its image controls and Studio ownership paths are unchanged. The historical authenticated saved-version test has one explicitly requested semantic-copy assertion update for receipt versus build approval; all later persistence, duplicate, reload and ownership assertions remain unchanged. This branch changes only two small scroll-intent lines in its overlapping Talk workspace file; its other overlap is additive transfer review text in `talk-creation/service.ts`. In-memory `git merge-tree` checks merge cleanly; neither PR was merged into this branch.
-- PR153 remains open/draft at `584943611adf4540f99b616ddce413f39d98dacc`. No knowledge, continuity, intelligence runtime or associated tests were edited. Its in-memory merge also succeeds.
-- There is no dependency on either PR for the renderer/lifecycle slice. Premium transfer has the separate database-authority dependency described above. Prefer PR152's approved release first, then this PR, and repeat the combined image/lifecycle and authenticated transfer gates. PR153 remains independently reviewable. Main release/deployment approval is still required.
+- PR152 has been released on main `e85c2f1a79e22e5cf9125bb95ba35b5c2140c001`. The approved repair merged that main into this review branch in `23ab277`, retaining image upload/progress/recovery, Studio reference ownership/source selection, and the premium renderer/lifecycle changes. The only textual conflict was concurrent STATUS additions; both were retained. The combined historical Auth test includes released saved-completion synchronization and v3 lineage/reload checks, plus this branch's truthful receipt/approval message assertion.
+- PR153 remains separately owned at the previously inspected `584943611adf4540f99b616ddce413f39d98dacc`. No knowledge/continuity runtime or associated tests were edited by this repair.
+- The four confirmed Quality browser failures were test expectations: three entered fields without selecting Edit after Preview became primary, and one expected the retired fixture name for selected direction-c. `4b66def` explicitly selects Edit and asserts “A Singular Standard,” retaining save/reload, new-conversation and target-switch assertions. No timeout, runtime behavior, authority validation or premium transfer gate was changed.
+- Premium transfer retains the separate PostgreSQL authority dependency above. Verify this combined branch's image/lifecycle and complete authenticated persistence gates before review approval. Main release/deployment approval remains separate.
 
 ## Verification and evidence
 
