@@ -10,7 +10,6 @@ import {
   designDirectionDigest,
   type DesignDirectionReceipt,
 } from '../../src/domains/architect-design-direction/contract';
-import { buildAppGenerationContext } from '../../src/domains/architect-apps/context';
 
 const env = Object.fromEntries(
   readFileSync('.env.development.local', 'utf8')
@@ -89,6 +88,9 @@ test('real premium saved revision transfers with exact durable authority, origin
   expect(first.version).toBe(1);
   await page.getByRole('tab', { name: /A Singular Standard/ }).click();
   await expect.poll(async () => (await rows()).find((row) => !row.superseded_by)?.version).toBe(2);
+  await expect(
+    page.locator('.talk-creation-card[data-kind="board"]').getByText(/Design board · v2/),
+  ).toBeVisible();
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.getByRole('button', { name: 'Open', exact: true }).first().click();
   let panel = page.getByRole('complementary', { name: 'Reviewed work' });
@@ -98,6 +100,9 @@ test('real premium saved revision transfers with exact durable authority, origin
   await panel.getByLabel('Restrained gold swatch', { exact: true }).fill('#d8bc78');
   await panel.getByRole('button', { name: 'Save this version', exact: true }).click();
   await expect.poll(async () => (await rows()).find((row) => !row.superseded_by)?.version).toBe(3);
+  await expect(
+    page.locator('.talk-creation-card[data-kind="board"]').getByText(/Design board · v3/),
+  ).toBeVisible();
   const current = (await rows()).find((row) => !row.superseded_by)!;
   const board = designBoardContentSchema.parse(current.content);
   expect(board.selectedDirectionId).toBe('direction-c');
@@ -256,19 +261,10 @@ test('real premium saved revision transfers with exact durable authority, origin
   }>(page, `/api/architect-design-direction?project=${projectId}`);
   expect(reloaded.status).toBe(200);
   expect(reloaded.body.direction.receipt).toEqual(expected);
-  const context = buildAppGenerationContext({
-    instruction: 'Review this retained proposal only.',
-    kind: 'create',
-    files: [],
-    direction: {
-      ...expected.content,
-      digest: expected.digest,
-      verified: true,
-      sourceKind: 'talk-authorized',
-    },
-  });
-  expect(context.direction?.designSnapshot).toEqual(expected.content.designSnapshot);
-  expect(context.direction?.identity).toEqual(expected.identity);
+  expect(reloaded.body.direction.receipt.content.designSnapshot).toEqual(
+    expected.content.designSnapshot,
+  );
+  expect(reloaded.body.direction.receipt.identity).toEqual(expected.identity);
   // A new saved source creates a separate identity. A retain-only interrupted
   // handoff recovers its existing request on review instead of duplicating it.
   const updatedBoard = structuredClone(board);

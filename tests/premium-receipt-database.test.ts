@@ -319,6 +319,18 @@ it('revalidates archive/workspace and private asset revocation without deleting 
     );
   }
   await db.exec(
+    `update public.ai_studio_projects set company_id='${randomUUID()}' where id='${studioProject}'`,
+  );
+  expect((await derive(id)).receipt).toBeNull();
+  await db.exec(`update public.ai_studio_projects set company_id=null where id='${studioProject}'`);
+  await db.exec(
+    `update public.ai_studio_versions set status='failed',storage_key=null where id='${versionId}'`,
+  );
+  expect((await derive(id)).receipt).toBeNull();
+  await db.exec(
+    `update public.ai_studio_versions set status='complete',storage_key='synthetic-owned.png' where id='${versionId}'`,
+  );
+  await db.exec(
     `update public.ai_studio_versions set person_id='${foreign}' where id='${versionId}'`,
   );
   expect((await derive(id)).receipt).toBeNull();
@@ -350,5 +362,20 @@ it('keeps internal derivation private and refuses anonymous capability reads', a
     ).rejects.toThrow(/permission denied/);
   } finally {
     await db.exec('reset role');
+  }
+});
+
+it('matches UTF-16 bounds and rejects untrimmed or null premium source strings', async () => {
+  for (const [value, min, max, expected] of [
+    ['🧭', 1, 1, false],
+    ['🧭', 1, 2, true],
+    ['', 0, 200, true],
+    ['\u00a0copy', 1, 200, false],
+    [null, 0, 200, false],
+  ] as const) {
+    expect(
+      (await db.query(`select public.ai_talk_premium_text(${literal(value)},${min},${max}) as ok`))
+        .rows[0],
+    ).toEqual({ ok: expected });
   }
 });

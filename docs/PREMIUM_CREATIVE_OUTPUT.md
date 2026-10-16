@@ -1,5 +1,7 @@
 # Premium creative output and working experience
 
+**Current continuation:** [Premium durable handoff](PREMIUM_DURABLE_HANDOFF.md) supersedes the always-blocked staged boundary described below. This document records the earlier renderer/lifecycle checkpoints; current transfer eligibility requires fresh compatible database authority, not a client flag.
+
 Current application source: `80acca2c01a006e4319fdfe5f67e20a54e0a9489`; capture/Auth assertion source: `d5a5f0b`. Initial implementation source: `05a2565abaa2024ce8c6c2fe0ea5372461dea5d9`, based on main `6e35741e46fd5ec6e9d8fc94a634e22a99f4bdc5`. No entrance redesign, merge, deployment, paid provider call, hosted database/configuration change, credential change or worker commissioning is included.
 
 ## Reproduced findings and implementation
