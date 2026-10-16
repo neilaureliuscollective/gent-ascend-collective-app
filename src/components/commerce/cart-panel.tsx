@@ -121,7 +121,7 @@ export function CartPanel({
       <div className="cart-heading">
         <div>
           <span className="world-kicker">Your selection</span>
-          <h2>Bag.</h2>
+          <h2>Cart.</h2>
           <p>Review selected options, quantities and the current estimated subtotal.</p>
         </div>
         {!fullPage && (

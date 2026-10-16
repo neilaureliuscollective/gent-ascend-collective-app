@@ -10,7 +10,7 @@ Elevates the existing Shopify-backed Lifestyle foundation into one immersive sto
 - Public `/lifestyle` and member `/app/lifestyle` share a compact header plus an asymmetric emerald product scene. Scene products are not repeated in the following assortment.
 - Collection search, URL-backed filters, sort, return navigation, Cabinet, browser save and Shopify cart/checkout are preserved. Mobile shoppers get a visible Filters control, active chips and reset. Search and availability stay on the first row.
 - Product pages keep the existing gallery, variant, uncertain-add and related-product contracts. The sticky purchase control hides while the software keyboard is open and continues to clear member bottom navigation.
-- The bag keeps server-confirmed quantities, validated `/checkout` handoff and HttpOnly cart protection. The heading is now Bag; checkout copy still distinguishes estimated subtotal from Shopify’s final total.
+- The bag keeps server-confirmed quantities, validated `/checkout` handoff and HttpOnly cart protection. The heading remains Cart; checkout copy still distinguishes estimated subtotal from Shopify’s final total.
 
 ## Assets in this checkout
 

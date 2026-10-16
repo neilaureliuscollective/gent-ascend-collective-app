@@ -95,7 +95,7 @@ export function LifestyleLanding({
               {status === 'error'
                 ? 'Please try again. Current prices and availability could not be verified.'
                 : status === 'unconfigured'
-                  ? 'Live product availability is not connected yet. Products are not available to order here.'
+                  ? 'House photography is shown until the published catalog is connected.'
                   : 'No published products are available in this collection yet.'}
             </p>
             {status === 'error' && (
