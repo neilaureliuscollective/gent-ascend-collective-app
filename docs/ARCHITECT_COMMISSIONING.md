@@ -1,103 +1,70 @@
-# Architect commissioning — usable saved projects
+# Architect commissioning — current source and observed blockers
 
-Date: 2026-10-14. Branch `cursor/architect-creation-journey-165a`. Reviewed head before this correction: `ef5f93d128720737b72a150366c9510acd6975cc`. No production merge, hosted migration, credential write, OAuth grant, paid model call, or infrastructure purchase.
+Read-only inspection: 2026-10-16. Source main `175fda72eeb37f389d76d73572dd882fe68cef15`; Architect #130 merged as `58a59df9cb1d56694f13c71c8f36d85d7b321daf` from `8e9e56cc3fc3d6f18db57ca15931c011af37e899`. This continues draft #146, not a new Architect implementation. Main was merged into that isolated branch with both STATUS histories preserved. #154 (`2cee4c9`) owns premium Talk handoff and `20261016051741_premium_design_receipt.sql`; its migration/release and the separate Talk dock are excluded. Small overlapping Architect edits must be reconciled with that owner before integration.
 
-## Incorporated heads
+## Root cause
 
-| Workstream | PR | Exact head | In #120 |
-| --- | --- | --- | --- |
-| Architect Construct | #116 | `ef3741e81fe7ef931cdc1054f7ffc49d86c6dfca` | yes |
-| Connections | #117 | `c5581234b6badf2d8dcf0b9ed21fb91256897b5f` | yes |
-| Architect immersive UI | #119 | `7e0cf2c4534a3f8d88e337b22af8f127c0301a5b` | yes |
-| main | #118 | `9dda52549dac548b59b3e3175f2ee832cb4ed471` | yes |
-| Talk conversational creation | #121 | `75605834df83bc907e3bed29bd5ebf5f07071798` | **no — keep on Talk** |
+`workspace.tsx` previously rendered “Build connection pending” whenever `constructReady()` was false. That means Origin/Construct flags, **not** a GitHub OAuth failure. Construct is the existing source-patch execution path and still refuses production workers. Standalone generated applications use **Apps**, which has its own commissioned production worker path. Do not bypass Construct's production ban to enable Apps.
 
-Talk overlap remains `docs/STATUS.md`, `docs/DECISIONS.md`, and additive `src/platform/supabase/database.ts` types. This branch does not acknowledge `talk-architect-handoff/v1`.
+Saving a blueprint only needs Origin. A generated application additionally needs model admission, complete Apps schema, database execution policy, founder access, a fresh matching isolated worker and shared preview sessions. GitHub and Vercel account connections are optional read-only source context, never standalone-build prerequisites.
 
-## Three different products
+The repair gives application projects an Apps-specific label, corrects the misleading “not in this checkout” Construct copy, and provides an explicit owner-only **Check build readiness** GET. It reads existing worker readiness and execution policy with the user's session, reports configuration gates without secret values, and neither starts jobs nor calls a model. Normal worker preflight can write presence and was not run against production. Incomplete worker heartbeat/digest/queue/artifact/state evidence now fails closed before paid admission.
 
-Do not treat these as one switch.
+## Production facts, not inferred from source
 
-| Capability | What the founder can do | Required |
-| --- | --- | --- |
-| Entrance only | Open `/app/architect`, read the starters, see “Project persistence is not active.” `Create & save` stays **disabled**. | Merge/deploy of this UI with `ARCHITECT_ORIGIN_ENABLED` false. **This is not a working studio.** |
-| Saved-project use | Create, save, reopen, switch, and edit person-owned Origin projects and revisions. | `20261012230000_architect_origin.sql` applied on the target database **and** `ARCHITECT_ORIGIN_ENABLED=true`. Signed-in session. Existing publishable Supabase URL/key for that environment. |
-| Isolated execution | Queue a Construct run, worker claim, Docker sandbox, cancel with confirmed teardown. | Origin saved-project setup **plus** Construct migrations, `ARCHITECT_CONSTRUCT_ENABLED=true`, matching DB URL/key, server-only `SUPABASE_SERVICE_ROLE_KEY`, `ARCHITECT_CONSTRUCT_WORKER_TOKEN` (≥32), supervised worker **off Vercel**, Docker. |
-| Model-generated test | Propose a bounded patch with the live OpenAI adapter, then execute it in isolation. | Non-production only. All execution requirements **plus** `ARCHITECT_CONSTRUCT_AI_ENABLED=true`, server-only `OPENAI_API_KEY`, explicit funded-test authorization. Credit alone is not enough. |
-| Publishing | Push, merge, or Vercel deploy from Architect. | **Not implemented.** Connections are read-only. Connecting an account ≠ executing a build ≠ publishing. |
+Observed via Vercel metadata (no decrypted secrets) and narrow SELECT queries on the existing Gent database `volpzkfsnmtztrovexcw`. These are dated snapshots, not permanent authority.
 
-`ARCHITECT_ORIGIN_AI_ENABLED` is a separate Origin proposal flag. It is not required to save projects.
-
-## Hosted inspection (read-only, 2026-10-14)
-
-| Check | Result |
+| Item | Observation |
 | --- | --- |
-| Production `/app/architect` | Entrance is live. Copy: “Project persistence awaits activation.” Starters render. Saving is not active. |
-| Hosted migration ledger snapshot (`scripts/check-migration-ledger.mjs`) | Ends at `20261012095801_studio_footage.sql`. **`20261012230000_architect_origin.sql` and all Construct/Connections migrations are absent.** |
-| Vercel project `gent-ascend-collective-app` env names | **Unverified.** No Vercel CLI credentials in this runtime. Presence of `ARCHITECT_ORIGIN_ENABLED` or `SUPABASE_SERVICE_ROLE_KEY` was not read. |
-| This runtime `.env*` | Only `.env.example`. All secret values unverified. |
-| Docker / local Supabase | Unavailable here. |
-| Durable worker on production | **Not assumed.** `constructWorkerAuthorized` refuses `APP_ENV=production` and any `VERCEL` / `VERCEL_ENV`. A passing CI smoke does not prove production is configured. |
-| Worker disguise | Forbidden. Setting `APP_ENV=local` on Vercel is rejected by `parseEnvironment`. Do not run a production worker as development. |
+| Latest production deployment | READY `dpl_7SgntMmfpGU157dACvWVdeRkrEX8`, main `175fda72…`; production URL https://www.gentascend.com. This is the existing deployment, not this repair. |
+| Saved Nexus | Existing **Ascendance Nexus**, revision 1, updated 2026-10-16 20:04:27 UTC, owner has `founder_access`, zero Apps rows. Identifiers/content were not copied into Git. No duplicate project created and no saved data edited. |
+| Origin | Tables and saved project exist; production `ARCHITECT_ORIGIN_ENABLED` is true. |
+| Apps config | No production `ARCHITECT_APPS_ENABLED`, `ARCHITECT_APPS_AI_ENABLED`, `ARCHITECT_APPS_FOUNDER_PILOT`, preview secret/cluster or image-digest names were present in the inspected project configuration. Existing `OPENAI_API_KEY` and service-role names exist; values/validity were not read. |
+| Base Apps schema | `architect_apps`, revisions, artifacts, jobs, events and records exist; approve/start/claim/heartbeat/finish/write-record RPC names exist. Existence is not full contract/permission acceptance. |
+| Missing Apps schema | Preview-session, generation-run, worker-presence, execution-policy and generation-budget tables absent. Preview, reserve/begin/finish-generation, worker-readiness and budget-lock RPCs absent. |
+| Construct | No Construct tables/RPCs appeared in the inspected schema. Its production flag is absent. Not required for a standalone Apps build. |
+| Worker | No Apps presence table or readiness RPC, hence no verifiable commissioned worker receipt. No persistent host is demonstrated. |
+| Hosted Talk progress | Ledger has later base/retain/trusted-observe entries beyond the old six-step snapshot. The original “paused after six” note is historical only. This task did not resume or reconcile Talk SQL. |
 
-## Worker names (from code)
+The earlier 2026-10-14 entrance-only report and “Origin unapplied” advice are superseded by these observations. Do not reapply Origin or replay the original Talk batch.
 
-`createWorkerConstructStore` requires `supabaseConnection(env)` **and** `SUPABASE_SERVICE_ROLE_KEY`. In non-production, the connection is `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for the **same** database the app uses. The worker also requires `ARCHITECT_ORIGIN_ENABLED=true`, `ARCHITECT_CONSTRUCT_ENABLED=true`, `ARCHITECT_CONSTRUCT_WORKER_TOKEN` (≥32), `APP_ENV` not `production`, and no `VERCEL`/`VERCEL_ENV`.
+Identity reconciliation (2026-10-16): the initial management lookup established the saved project and person-bound founder entitlement, but the initially supplied email did not match. Neil subsequently supplied his actual app sign-in. A narrow owner-scoped SELECT now confirms the Auth user → person → existing Nexus relationship, founder access, application discipline, revision 1, one saved version, zero Apps rows and unchanged creation/update timestamp. No entitlement grant or duplicate project is needed. Authenticated browser/session-RLS acceptance is still unperformed; the management lookup does not substitute for it. Personal emails and owner/project identifiers remain outside Git. This task made no data mutation.
 
-Startup command: `npm run architect:worker:supervised` (or `ARCHITECT_CONSTRUCT_WORKER_MODE=supervised npm run architect:worker`).
+## Required SQL review, nonexecuted
 
-Those names must never appear with values in logs, docs, chat, client bundles, or generated-code containers. `sanitize.ts` redacts `SUPABASE_SERVICE_ROLE_KEY` and `ARCHITECT_CONSTRUCT_WORKER_TOKEN`. Docker args reject those names.
+The approved `7f237291` schema attempt was **not executed**: fresh production default-ACL inspection exposed authenticated TRUNCATE privileges surviving the old preview-session/generation-run declarations. The source now explicitly revokes authenticated ALL before granting SELECT on those two tables. See the [revised hashes, audit, regression coverage and transaction plan](ARCHITECT_APPS_ACTIVATION.md#revised-sql-candidate--earlier-approval-not-executed). Fresh explicit approval is required for this revised candidate. No hosted data, ledger or functions changed.
 
-## Release recommendation for usable saved projects
+Existing ledger names include the shared Apps files `20261015080000`, `20261015120000`, `20261015140000` and Talk retain `20261015160000` / `20261015170000`; physical base Apps tables were observed. Preserve them.
 
-**Do not ship an all-flags-off merge and call it a working Architect studio.** That only republishes the entrance already visible on https://www.gentascend.com/app/architect.
+Missing Apps dependency chain from current source:
 
-The smallest safe sequence that lets the founder **save and use projects** on the canonical app / Vercel project `gent-ascend-collective-app`:
+1. `20261015156000_architect_apps_preview_sessions.sql`
+2. `20261015156500_architect_apps_pilot_budget.sql`
+3. `20261015156600_architect_apps_execution_gate.sql`
+4. `20261015156700_architect_apps_budget_lock.sql`
 
-1. Founder-approved apply of **only** `20261012230000_architect_origin.sql` on the canonical Gent database already bound to that Vercel project.
-2. Set `ARCHITECT_ORIGIN_ENABLED=true` in Vercel for the intended environment (Production if that is the chosen save target; Preview if the first save target is the READY preview).
-3. Leave `ARCHITECT_CONSTRUCT_ENABLED`, `ARCHITECT_CONSTRUCT_AI_ENABLED`, `ARCHITECT_CONSTRUCT_AI_MOCK`, and `ARCHITECT_ORIGIN_AI_ENABLED` **false**. Do not add a production worker.
+This is a review list, not an apply script or authorization. Because Talk retain is already present, **do not apply** interim `20261015155000_architect_apps_retain_verified.sql`: it would replace the winning retain contract. The four missing files do not define `architect_apps_retain_design`; confirm hashes, function dependencies, grants and actual current definitions before any separately authorized additive completion. Their natural fresh-install ordering precedes Talk retain; the hosted database has advanced out of that sequence, so a fresh-install receipt must not be fabricated. #154's premium-receipt migration remains owned by Cursor.
 
-Rollback: set `ARCHITECT_ORIGIN_ENABLED=false`. The Origin migration is additive; do not drop it without a separate recovery plan.
+Review the four files as one transaction, not four independently committed partial states. Disposable PGlite review with synthetic identity and the later retain/provenance definitions verified rollback, atomic commit, unchanged retain definition, policy false, denial of founder execution while false, removed four-argument reservation overload and relevant authenticated/anon/service-role grants. This does not prove hosted defaults or Supabase Auth. Persistent effects include five tables, indexes/RLS policies, new/replaced security-definer functions and grants. Preview RPCs remain available for owned revisions while policy is false; worker claim can still consume already queued jobs. Before commissioning a worker, inspect outstanding jobs without claiming them and stop for unrelated queued work. Disabling flags does not revoke database privileges or reverse the schema. Require fresh physical ACL/definition checks, precommit assertions and an agreed ledger-recording method before authorizing the transaction.
 
-This still is **not** isolated execution, a model-generated build, or publishing.
+Origin tool/repair extras (`20261014080000`, `20261014190000`, `20261014203000`, `20261014220000`, `20261014224500`) and Construct's five migrations are distinct capabilities, not prerequisites for standalone Apps generation. Do not bundle them into an Apps activation grant. The existing [release manifest](../scripts/architect-apps-release-manifest.json) remains a **pinned historical fresh-install dependency profile**, including those wider capabilities; its main/source pins are not the current main and cannot certify this production state. A refreshed integrated release manifest and physical reconciliation receipt must be reviewed before its offline report can pass for a new candidate.
 
-### Later isolated model-generated test (non-production only)
+## Real pipeline and Nexus acceptance
 
-On a founder-chosen **non-production** database and a Docker host that is **not** Vercel:
+1. Reopen the existing Nexus project using its saved-project link in Architect. Preserve revision history and all data; no duplicate or hand-coded substitute.
+2. Choose App. Prepare a bounded generation request from the saved brief. `proposeArchitectApp` checks founder policy and worker readiness, reserves/begins the bounded model call, and uses `defaultAppGenerationTransport` → direct OpenAI `openaiAppTransport` (`gpt-6-astra`). It returns a proposed source tree, not a working preview.
+3. Review the proposed files/changes. Approve persists a revision tied to project/version, approved hash and generation provenance. Start queues that exact approved revision. In the existing implementation, model generation happens during **proposal**, before compile approval; requesting a proposal is the paid boundary. Do not describe approval as the first possible spend.
+4. The supervised Apps worker claims durable jobs with leases, compiles in Docker, stores verified artifacts/receipts and finishes the job. A queue without a worker is not a build. Failed revisions preserve the last working revision.
+5. Preview uses a signed shared session for the verified revision; iframe code has no credentials/network authority. The host data bridge supports owner-bound list/get/create/update. Revise generates a bounded patch on the selected revision; explicit approval/start compiles it. Reopen restores a verified saved artifact/session and retained records.
 
-1. Apply Construct migrations after Origin: `20261013160000`, `20261013180000`, `20261013193000`, `20261013220000`, `20261013230000`.
-2. Set `ARCHITECT_CONSTRUCT_ENABLED=true` on that non-production app env only.
-3. On the worker host, set matching `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, server-only `SUPABASE_SERVICE_ROLE_KEY`, `ARCHITECT_CONSTRUCT_WORKER_TOKEN`, `ARCHITECT_CONSTRUCT_WORKER_MODE=supervised`.
-4. Run `npm run architect:worker:supervised`. Success: `construct-worker: supervised start` and a queued fixture is claimed. Failure names are printed; values are not.
-5. After isolated fixture execution is proven, founder-authorize a funded test, then set `ARCHITECT_CONSTRUCT_AI_ENABLED=true` on that same non-production env. Reuse existing `OPENAI_API_KEY` / `AURELIUS_AI_MODEL`. Credit alone is not sufficient.
+First real request, after approvals: a focused interactive knowledge graph of AI/software concepts, search, node inspector, focus mode, create/edit concepts and saved relationships, responsive at phone/Fold widths. Require accessible keyboard/search/list fallback and additive host collections for concepts/relationships; no external network, external-content ingestion, additional package installs, 3D engine or publishing in this first build. This is a request/acceptance scope, not generated code. No Nexus app or real-model result is claimed here.
 
-A later **production** enablement of Construct would require a separate founder decision, a production-legal worker host that is still not Vercel, and a change to the current production worker ban. That change is **not** authorized here and must not be done by setting `APP_ENV=local` on the production project.
+Acceptance must include one real generation and compile, search/inspect/focus, create/edit and relationships surviving reload/reopen, one bounded revision, last-good recovery, ordinary-account denial and real phone/Fold review. Existing labelled local fixtures/CI prove contracts, not that this specific real model build succeeds.
 
-## First founder action
+## Additional approvals
 
-**Approve and apply `20261012230000_architect_origin.sql` on the canonical Gent Supabase project used by Vercel `gent-ascend-collective-app`.**
+See [activation configuration and worker plan](ARCHITECT_APPS_ACTIVATION.md). Explicit separate approvals are still needed for (1) narrowly reconciled hosted SQL completion, (2) billed host provisioning, (3) credential placement/configuration and preview settings, (4) generation flags plus SQL execution policy, (5) bounded real model spend, and (6) merge/deploy of this repair after coordinating #154. None was performed by this task. Authenticated browser access for the existing Nexus owner is also required for live demonstration; the management SELECT is not a user-session acceptance test.
 
-- Service/page: Supabase dashboard for that existing project → SQL editor, or `npx supabase db push` against that linked project only after you confirm the project ref.
-- Setting/file name: `20261012230000_architect_origin.sql` (creates `architect_origin_projects`, `architect_origin_versions`, `architect_origin_runs`, and `architect_origin_save`).
-- This is a **hosted migration approval**. This agent will not apply it.
-- Verify: `npx supabase migration list` (or the dashboard migration history) shows `20261012230000`. The tables exist. Saving still stays off until the next step.
-- Enables: the schema required for Create & save. Does **not** enable Construct, models, or publishing.
+## Validation of this continuation
 
-## Ordered checklist after that approval
-
-Enter secrets only in the named service. Do not paste them into chat.
-
-1. **Vercel → Project `gent-ascend-collective-app` → Settings → Environment Variables.** Set `ARCHITECT_ORIGIN_ENABLED` to `true` for the environment that should persist projects (Production and/or Preview). Redeploy that environment. Verify: signed-in `/app/architect` no longer says persistence is off; `Create & save` enables after a 3+ character idea; a saved revision reopens after reload. Enables: saved-project use.
-2. **Optional, later, non-production only — Construct queue.** Apply the Construct migrations listed above on a non-production database. Set `ARCHITECT_CONSTRUCT_ENABLED=true` there. Verify: Construct no longer says execution persistence is off; enqueue returns `queued`. Enables: a durable queue that stays queued until a worker exists.
-3. **Optional, later, non-production worker host (not Vercel).** Settings: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (same database), `SUPABASE_SERVICE_ROLE_KEY`, `ARCHITECT_CONSTRUCT_WORKER_TOKEN`, `ARCHITECT_CONSTRUCT_WORKER_MODE=supervised`. Command: `npm run architect:worker:supervised`. Verify: supervised start; fixture claimed; cancel receipt `proof: confirmed` only if Docker observed the container RUNNING. Enables: isolated execution. Docker image `node:24-alpine`, `--network none`, nobody 65534.
-4. **Optional Connections** remain read-only (`CONNECTIONS_CREDENTIAL_KEY`, `GITHUB_APP_*`, `VERCEL_INTEGRATION_*`, `NEXT_PUBLIC_APP_URL`). Connecting does not grant push or deploy.
-5. **Optional funded non-production proposal** only after step 3 is proven: `ARCHITECT_CONSTRUCT_AI_ENABLED=true` plus existing `OPENAI_API_KEY`. Enables: labelled live proposals that still need explicit approval. Not a self-build claim.
-
-## Evidence already retained
-
-- Quality artifact `architect-construct-host-receipts`: host cancel `proof: confirmed` on CI Docker (MemoryConstructStore, not the durable SQL smoke).
-- Origin local-auth durable smoke: enqueue, lost-response one-run retry, worker, isolated Docker, reload, owner isolation.
-- Local/this runtime cancel receipt remains `proof: unavailable` (no Docker). That is not proof.
-
-Preview for reviewed `ef5f93d`: https://gent-ascend-collective-7xqa0t66g-stutes-legacy.vercel.app — entrance/review only unless Origin is enabled on that preview.
+Local labelled checks: 33 API/admission/budget/policy tests and 41 related lifecycle/budget/preview/mutation tests (overlapping suites, not 74 distinct tests), plus 50 offline release-report tests, typecheck and changed-file lint passed. Phone/Fold readiness fixtures verify the action sends one GET, makes no Apps mutation, preserves the saved project and fits 390/720px. Two existing 320/390px preview-reachability fixtures also passed. Normal production build remains locally blocked in existing prebuild asset download by `EAI_AGAIN storage.googleapis.com`; exact-head CI is the build evidence gate, not a claimed local pass. No real-model or authenticated hosted Nexus acceptance was run.

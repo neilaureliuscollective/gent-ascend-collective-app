@@ -17,6 +17,7 @@ jobs:
           cache: npm
       - uses: ./.github/actions/install-ffmpeg
       - run: npm ci
+      - run: npm run test:architect:release
       - run: npm run db:ledger
       - run: npm run check
       - uses: actions/upload-artifact@v4

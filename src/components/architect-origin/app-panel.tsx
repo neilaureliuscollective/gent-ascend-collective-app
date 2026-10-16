@@ -1,5 +1,6 @@
 'use client';
 
+import { AppActivationCheck } from './app-activation-check';
 import { BplusMaterial } from '@/components/visual/bplus-material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { describeAppFailure } from '@/domains/architect-apps/generation-policy';
@@ -453,7 +454,9 @@ export function ArchitectAppPanel({
   if (!enabled) {
     return (
       <section className="architect-app" aria-label="Generated application">
-        <p>Application creation is awaiting local enablement. Origin, Construct, Talk and Live stay unchanged.</p>
+        <h3>Application builds are not activated</h3>
+        <p>Your saved plan is available. Generating code, isolated compilation and private previews need separate activation. Connecting GitHub will not enable them.</p>
+        <AppActivationCheck projectId={projectId} />
       </section>
     );
   }
@@ -482,6 +485,7 @@ export function ArchitectAppPanel({
             </section>
             <details className="architect-app-status-details" aria-label="Build diagnostics">
               <summary>Build details</summary>
+              <AppActivationCheck projectId={projectId} />
               <p>
                 {library?.provider.enabled === false ? `${library.provider.reason} ` : ''}
                 {library?.provider.mode === 'mock' || library?.provider.mode === 'fixture'

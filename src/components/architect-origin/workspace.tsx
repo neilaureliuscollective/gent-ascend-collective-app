@@ -450,7 +450,9 @@ export function ArchitectOrigin({
     return new URLSearchParams(location.search).get('demo') === 'architect-preview';
   }
   function connectionChip() {
-    if (!constructEnabled) return 'Build connection pending';
+    if (surface === 'App' || draft?.discipline === 'application')
+      return appsEnabled ? 'Application workspace enabled · check build readiness' : 'Application builds not activated';
+    if (!constructEnabled) return 'Construct execution not activated';
     if (constructView?.building) return constructView.label;
     if (constructSource?.github.repository)
       return `Read-only ${constructSource.github.repository.fullName}`;
@@ -1253,7 +1255,7 @@ export function ArchitectOrigin({
                     <p>
                       {constructEnabled
                         ? 'Checks appear only from recorded Construct exit codes. The browser cannot mark them passed.'
-                        : 'Construct checks are not in this checkout. Consistency prompts below are field-completeness hints, not validation.'}
+                        : 'Construct execution is not activated in this environment. Consistency prompts below are field-completeness hints, not validation.'}
                     </p>
                     {constructView?.current?.result?.checks?.length ? (
                       <ul>

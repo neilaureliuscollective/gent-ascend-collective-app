@@ -684,7 +684,7 @@ test('HTML document preview is sandboxed and keeps the prior artifact when Const
   await expect(page.evaluate(() => 'injected' in window)).resolves.toBe(false);
   await expect(page.getByRole('button', { name: 'Publish' })).toBeDisabled();
   await expect(page.locator('.origin-workbench-meta .origin-connection-chip')).toHaveText(
-    'Build connection pending',
+    'Application builds not activated',
   );
 });
 
@@ -733,7 +733,7 @@ test('Fold dock reveals one panel at 720px without fabricating checks', async ({
     .click();
   await expect(page.locator('.origin-checks-pane')).toBeVisible();
   await expect(page.locator('.origin-checks-pane')).toContainText(
-    'Construct checks are not in this checkout',
+    'Construct execution is not activated in this environment.',
   );
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/architect-studio-fold-720.png', fullPage: true });
@@ -2521,4 +2521,35 @@ test('restored entrance cards retain original plates and emblems with bottle-fre
     plates: expectedPlates,
     files,
   }, null, 2) + '\n');
+});
+
+for (const width of [390, 720]) test(`application activation diagnostics are explicit read-only at ${width}px (synthetic)`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 900 });
+  const state = await fixture(page);
+  let checks = 0;
+  const mutations: string[] = [];
+  await page.route('**/api/architect-apps*', route => {
+    if (route.request().method() !== 'GET') mutations.push(route.request().method());
+    checks++;
+    expect(new URL(route.request().url()).searchParams.get('view')).toBe('activation');
+    return route.fulfill({ json: { ready: false, checks: [
+      { name: 'Application workspace', ready: false, detail: 'Application creation needs separate activation.' },
+      { name: 'Isolated build worker', ready: false, detail: 'A commissioned worker is required.' },
+    ], note: 'Synthetic readiness response. GitHub is optional for standalone applications. No model called.' } });
+  });
+  await page.goto(base);
+  await page.getByRole('button', { name: 'Design an Application' }).click();
+  await page.getByLabel('Tell Aethelios what you want to create').fill('Synthetic knowledge graph acceptance fixture');
+  await page.getByRole('button', { name: 'Create & save project' }).click();
+  await expect(page.getByRole('status')).toContainText('Saved revision 1');
+  await page.getByRole('button', { name: 'App', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Application builds are not activated' })).toBeVisible();
+  expect(checks).toBe(0);
+  const saved = JSON.stringify(state.getProject());
+  await page.getByRole('button', { name: 'Check build readiness' }).click();
+  await expect(page.getByRole('region', { name: 'Application activation' })).toContainText('GitHub is optional');
+  expect(checks).toBe(1);
+  expect(mutations).toEqual([]);
+  expect(JSON.stringify(state.getProject())).toBe(saved);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
