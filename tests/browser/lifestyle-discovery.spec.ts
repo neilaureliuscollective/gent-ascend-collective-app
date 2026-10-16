@@ -6,6 +6,8 @@ for (const width of [344, 720, 768, 1440]) {
     await page.getByRole('searchbox').fill('no matching product');
     await expect(page).toHaveURL(/q=no\+matching\+product/);
     await page.getByRole('checkbox', { name: 'Available to order', exact: true }).check();
+    const filters = page.getByRole('button', { name: /^Filters/ });
+    if (await filters.isVisible()) await filters.click();
     await page.getByLabel('Sort products').selectOption('name');
     await page.goBack();
     await expect(page.getByLabel('Sort products')).toHaveValue('featured');
@@ -35,6 +37,8 @@ test('unsupported URL filters recover without inventing catalog attributes', asy
     'aria-pressed',
     'true',
   );
+  const filters = page.getByRole('button', { name: /^Filters/ });
+  if (await filters.isVisible()) await filters.click();
   await expect(page.getByLabel('Sort products')).toHaveValue('featured');
   await expect(page.getByRole('group', { name: 'Applied filters' })).toHaveCount(0);
 });

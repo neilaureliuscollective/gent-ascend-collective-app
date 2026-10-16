@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { commerceEvent } from './commerce-events';
 import type { Product } from '@/domains/commerce/shopify';
 import { formatMoney } from './money';
@@ -24,7 +24,21 @@ export function ProductPurchase({
   const [message, setMessage] = useState('');
   const pending = useRef(false);
   const [uncertain, setUncertain] = useState(false);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const variant = product.variants.nodes.find((entry) => entry.id === selected);
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const sync = () => {
+      setKeyboardOpen(window.innerHeight - viewport.height > 120);
+    };
+    viewport.addEventListener('resize', sync);
+    viewport.addEventListener('scroll', sync);
+    return () => {
+      viewport.removeEventListener('resize', sync);
+      viewport.removeEventListener('scroll', sync);
+    };
+  }, []);
   async function add() {
     if (!variant || !open || pending.current || uncertain || !variant.availableForSale) return;
     pending.current = true;
@@ -135,7 +149,7 @@ export function ProductPurchase({
               ? 'Add to cart'
               : 'Currently unavailable'}
       </button>
-      {open && variant && (
+      {open && variant && !keyboardOpen && (
         <div className="reserve-sticky-purchase">
           <div>
             <span>{product.title}</span>

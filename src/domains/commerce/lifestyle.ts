@@ -32,8 +32,12 @@ export function lifestyleCollectionHandle(value?: string) {
   return handle;
 }
 
+const genericVendor = /^(my store|shop|store|default store|development store)$/i;
+
 export function productBrand(product: Pick<ProductSummary, 'collections' | 'vendor'>) {
-  return product.vendor?.trim() || 'Aethelios Lifestyle';
+  const vendor = product.vendor?.trim();
+  if (!vendor || genericVendor.test(vendor)) return 'Aethelios Lifestyle';
+  return vendor;
 }
 
 export function memberCommerceBenefit() {

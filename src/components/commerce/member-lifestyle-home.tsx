@@ -5,6 +5,11 @@ import {
   memberGroomingState,
   type MemberLifestyleCabinet,
 } from '@/domains/commerce/member-lifestyle';
+import {
+  lifestyleBrowseEntries,
+  resolveLifestyleScene,
+  type CatalogStatus,
+} from '@/domains/commerce/lifestyle-merchandising';
 import type { CollectionEntry } from '@/domains/commerce/collection';
 import { CollectionCard } from './collection-card';
 import { LifestyleAction } from './lifestyle-action';
@@ -17,17 +22,17 @@ export function MemberLifestyleHome({
   cabinet,
 }: {
   entries: CollectionEntry[];
-  status: 'ready' | 'empty' | 'unconfigured' | 'error';
+  status: CatalogStatus;
   cabinet: MemberLifestyleCabinet;
 }) {
-  const ready = status === 'ready';
+  const scene = resolveLifestyleScene(entries, { basePath: '/app/collection', status });
   const destinations = memberCatalogDestinations(entries);
   const kept = memberCabinetPreview(cabinet.records);
   const grooming = memberGroomingState(cabinet);
-  const browse = entries.slice(0, 6);
+  const browse = lifestyleBrowseEntries(entries, scene);
 
   return (
-    <div className="reserve-commerce member-lifestyle-home">
+    <div className="reserve-commerce member-lifestyle-home lifestyle-world">
       <header className="member-lifestyle-masthead">
         <div className="member-lifestyle-copy">
           <span className="world-kicker">Aethelios Lifestyle</span>
@@ -54,7 +59,7 @@ export function MemberLifestyleHome({
         </nav>
       </header>
 
-      <LifestyleProductStage status={status} />
+      <LifestyleProductStage scene={scene} status={status} exploreHref="/app/collection" />
 
       {status === 'error' && (
         <p className="member-lifestyle-retry">
@@ -149,20 +154,20 @@ export function MemberLifestyleHome({
                 {label}
               </LifestyleAction>
             ))}
-            {destinations.brands.map((brand) => (
+            {destinations.brands.map((brandName) => (
               <LifestyleAction
-                key={brand}
+                key={brandName}
                 className="member-lifestyle-destination"
-                href={`/app/collection?brand=${encodeURIComponent(brand)}`}
+                href={`/app/collection?brand=${encodeURIComponent(brandName)}`}
               >
-                {brand}
+                {brandName}
               </LifestyleAction>
             ))}
           </div>
         </section>
       )}
 
-      {ready && browse.length > 0 && (
+      {status === 'ready' && browse.length > 0 && (
         <section
           className="collection-browse member-lifestyle-browse"
           aria-labelledby="member-lifestyle-products"
