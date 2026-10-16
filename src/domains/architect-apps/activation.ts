@@ -1,3 +1,4 @@
+import { assertApprovedAppGenerationModel } from './budget';
 import { appsGenerationAdmission } from './generation-policy';
 import { classifyPaidGenerationReadiness, type AppsPaidRuntimeEvidence } from './pilot';
 import { appsReady } from './readiness';
@@ -19,6 +20,12 @@ export function appActivationStatus(input: {
   const env = input.env ?? process.env;
   const provider = appsGenerationAdmission(input.founder, env);
   const worker = classifyPaidGenerationReadiness(input.runtime, env);
+  let approvedModel = true;
+  try {
+    assertApprovedAppGenerationModel(env);
+  } catch {
+    approvedModel = false;
+  }
   const checks = [
     {
       name: 'Application workspace',
@@ -32,7 +39,7 @@ export function appActivationStatus(input: {
     },
     {
       name: 'Model generation',
-      ready: provider.enabled && provider.mode === 'openai',
+      ready: provider.enabled && provider.mode === 'openai' && approvedModel,
       detail: 'The real model adapter needs separately authorized generation configuration.',
     },
     {

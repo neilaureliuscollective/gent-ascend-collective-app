@@ -147,3 +147,14 @@ for (const field of ['observedDigest', 'ageMs', 'state', 'queueReady', 'artifact
 it.each([NaN, Infinity, -1, 90001])('denies invalid or stale heartbeat %s', (ageMs) => {
   expect(classifyPaidGenerationReadiness({ ...runtime, ageMs }, env).ok).toBe(false);
 });
+
+it('reports an unsupported model override as not ready using the existing admission contract', () => {
+  const status = appActivationStatus({
+    founder: true,
+    runtime,
+    executionPolicy: true,
+    env: { ...env, AURELIUS_AI_MODEL: 'not-an-approved-model' },
+  });
+  expect(status.ready).toBe(false);
+  expect(status.checks.find((check) => check.name === 'Model generation')?.ready).toBe(false);
+});
