@@ -1,0 +1,54 @@
+Focused test-only correction from 47fad9da35854af2334960ca1fdae41cbf24e1da
+Remote branch and PR head verified before editing.
+
+No runtime, provider, visuals, schema, migration, timeout or expected-version changes.
+Matching request text + conversation -> request ID -> same operation complete/confirmed -> authenticated completed-turn read -> version 3/new ID/preserved lineage source/supersession/content -> reload same ID/version/source/content.
+
+Targeted ESLint
+
+Strict TypeScript
+
+> aurelius-collective-app@0.1.0 typecheck
+> next typegen && tsc --noEmit
+
+Generating route types...
+✓ Types generated successfully
+
+Existing stream/design unit tests
+
+ RUN  v5.0.1 /workspace/gent-ascend-collective-app
+
+
+ Test Files  5 passed (5)
+      Tests  14 passed (14)
+   Start at  22:22:28
+   Duration  536ms (import 42%, transform 38%, tests 15%, worker 4%)
+
+
+Local authenticated attempt: isolated worktree /tmp/pr152-auth-acceptance, unchanged normal Auth test command with deterministic local provider fixture. Cold Supabase image pulls hit Docker image capacity: failed to register layer: no space left on device. Minimal database/Auth/REST-only setup also fails on the PostgreSQL image. No fixture environment/password file created, no hosted calls. The test cannot start without disposable local Auth; not a runtime save failure and not acceptance evidence.
+
+Existing Quality gates database job will run the corrected authenticated design-board test on this draft push. Exact-head hosted results and any remaining failure are recorded in PR #152; do not infer eventual-save success from unit checks.
+
+First synchronized hosted run 6806b16: completed matching turn + UI, version 3 and new board ID assertions passed. The new source_turn_id=requestId assertion failed. Existing SQL ai_talk_save_creation inherits prior.source_turn_id, and the database test asserts one shared origin for lineage versions. Corrected the added check to compare the persisted prior lineage origin. All original expected-version/content/supersession/reload assertions remain; no runtime or timeout change. Full authenticated rerun required for later assertions.
+
+Corrected lineage check: targeted lint, strict types, and 24 tests including existing creation-lineage SQL regressions passed.
+
+ESLint
+
+Strict types
+
+> aurelius-collective-app@0.1.0 typecheck
+> next typegen && tsc --noEmit
+
+Generating route types...
+✓ Types generated successfully
+
+Stream/design/lineage database unit regressions
+
+ RUN  v5.0.1 /workspace/gent-ascend-collective-app
+
+
+ Test Files  6 passed (6)
+      Tests  24 passed (24)
+   Start at  22:38:42
+   Duration  2.89s (tests 76%, import 13%, transform 10%, worker 1%)

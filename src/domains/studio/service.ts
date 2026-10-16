@@ -15,10 +15,15 @@ export const studioInput = z
     mode: z.enum(['fast', 'precise']),
     size: z.enum(['1024x1024', '1536x1024', '1024x1536']),
   })
-  .strict();
+  .strict()
+  .refine((input) => !(input.parentId && input.referenceId), {
+    message: 'Choose one image source: a saved version or a reference.',
+    path: ['referenceId'],
+  });
 export const creativeType = z.enum(['open', 'brand', 'campaign', 'product', 'personal']);
 export const projectBrief = z
   .object({
+    referenceId: z.uuid().nullable().optional(),
     purpose: z.string().trim().max(500),
     audience: z.string().trim().max(300),
     direction: z.string().trim().max(700),
@@ -177,6 +182,29 @@ export async function studioWorkspace(projectId?: string) {
     !allStudioProductionTablesMissing(designs.error, compositions.error, renders.error)
   )
     throw new IntelligenceError('Studio history could not be loaded.', 503);
+  const selectedReference = z
+    .uuid()
+    .safeParse(
+      (
+        projects.data?.find((project) => project.id === current)?.brief as {
+          referenceId?: unknown;
+        } | null
+      )?.referenceId,
+    );
+  if (
+    selectedReference.success &&
+    !references.data?.some((reference) => reference.id === selectedReference.data)
+  ) {
+    const pinned = await client
+      .from('ai_studio_references')
+      .select('*')
+      .eq('id', selectedReference.data)
+      .eq('project_id', current!)
+      .eq('person_id', person.id)
+      .maybeSingle();
+    if (pinned.error) throw new IntelligenceError('Selected reference could not be loaded.', 503);
+    if (pinned.data) references.data = [...(references.data ?? []), pinned.data];
+  }
   return {
     owner: person.id,
     projects: projects.data ?? [],
