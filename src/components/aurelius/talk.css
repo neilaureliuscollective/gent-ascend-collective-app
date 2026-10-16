@@ -305,7 +305,7 @@
   display: none;
 }
 .talk-page[data-keyboard='open'] .talk-voice-dock:not(:empty) {
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   max-height: calc(var(--conversation-height, 100dvh) * 0.48);
 }
 .talk-page[data-keyboard='open'] .composer-controls > .quiet-label {

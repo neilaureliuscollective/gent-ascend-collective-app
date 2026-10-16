@@ -6,6 +6,10 @@ Founder authorized merge of PR #156 onto main and deploy through the existing Ve
 
 House packshots are not SKUs. Bind them to published Shopify products only by exact handle. Do not sort the catalog to force `vitalis` first. Shopify’s default store name (`My Store` and close aliases) is presentation, not a supplier: show Aethelios Lifestyle. Real vendor strings stay visible. Do not rewrite Shopify vendor data. Evidence: [LIFESTYLE_PRODUCT_WORLD.md](LIFESTYLE_PRODUCT_WORLD.md).
 
+# Aethelios Live emerald-gold globe — 2026-10-16
+
+Keep the Canvas 2D NASA globe and original transparent A/star. Replace the `gradeEarth` ice snap (`luma > 196 && |R-G| < 24` → `[90,102,100]`) with a continuous emerald grade so bright deserts keep relief instead of painting digital gray. Add only restrained gold specular and rim lighting; do not add particles, circuitry, rings or a replacement emblem. Cache sphere lighting, reuse ImageData, measure layout on resize, and keep the 480 buffer cap with timestamp ~30fps. Interruptions zero speaking energy on the same `setVisual`. Evidence: [AETHELIOS_LIVE_CALL.md](AETHELIOS_LIVE_CALL.md).
+
 # Aethelios Live original emblem — 2026-10-16
 
 Use the founder-supplied 1254×1254 RGBA gold A and compass star for the Live globe. Do not keep the rounded-square `aethelios-official-20261015` install tile, do not redraw the mark, and do not change global brand assets. The supplied original already has alpha and no wordmark; no SVG of this mark exists in the repository. Evidence: [AETHELIOS_LIVE_CALL.md](AETHELIOS_LIVE_CALL.md).

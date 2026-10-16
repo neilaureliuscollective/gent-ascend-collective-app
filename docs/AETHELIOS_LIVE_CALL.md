@@ -1,6 +1,6 @@
 # Aethelios Live call globe — 2026-10-16
 
-Original-emblem pass on `cursor/aethelios-live-call-globe-1aa9` after reviewed head `c8b447b4d4c8681f812b76bb7bb34e3a5c5434b3`. Axis-tick, Still-resize and capture-lint fixes stay in place. Main/PR152 Talk attachments remain merged. Concept image is direction only. No merge, deploy, credential, Cedar, session-duration or hosted SQL change.
+Emerald-gold elevation on `cursor/talk-voice-dock-compact-42b1` after dock head `84e694aa3916eabe4eef2b77aa18d41c3be8ae66`. Compact dock/composer work is preserved. Concept image remains direction only. No merge, deploy, credential, Cedar, session-duration or hosted SQL change.
 
 ## Planet
 
@@ -10,7 +10,9 @@ The first-pass 640×320 single-color polygon map is the offline fallback only. T
 - Source: NASA Visible Earth image 57752, public domain
 - Rights: [NASA_BLUE_MARBLE_ATTRIBUTION.md](../public/visual/NASA_BLUE_MARBLE_ATTRIBUTION.md)
 
-The texture is downsampled to 1024×512, graded to restrained emerald land / obsidian water / cooler ice, then lit with directional wrap, terminator depth, a tight specular and a thin atmosphere. It is not a screenshot of the concept image and does not invent geography.
+The texture is downsampled to 1024×512, graded to restrained emerald land / obsidian water, then lit with directional wrap, terminator depth, a tight warm-gold specular, a thin atmosphere and a refined gold rim. The A/star stays the strongest gold focal point. It is not a screenshot of the concept image and does not invent geography.
+
+`gradeEarth` through `84e694aa` snapped `luma > 196 && |R-G| < 24` to flat `[90, 102, 100]`. Bright deserts share that luma/chroma (Nubian 20°N 32°E on NASA 57752 is RGB 255,243,185) and painted as gray digital patches. The diagnostic mask is `docs/evidence/live-call-globe/grade-earth-ice-mask.png`. The current grade keeps relief in luma, warmth in deserts, and a continuous polar lift instead of an ice snap. Geography is not blurred away.
 
 Latitude uses screen-down `y`, so `lat = asin(-ny)`. `tests/live-globe-projection.test.ts` checks that the top of the disk is north and that Greenland/Scandinavia sit above Cape Horn, with Tasmania southern when Australia faces the camera.
 
@@ -45,15 +47,17 @@ The extra Web Audio monitor is removed. Atmosphere energy reuses `LiveController
 | Interrupted                     | Immediate return to listening                           | New measured input, speaking output dropped |
 | Muted / blocked / ended / error | Distinct, quieter or still                              | Not audio-reactive                          |
 
-`data-reactive` is `true` only when a measured transport sample is driving listening or speaking. Reduced motion and Still paint one frame. Hidden pages skip the loop. Pixel budget stays at 480.
+`data-reactive` is `true` only when a measured transport sample is driving listening or speaking. Reduced motion and Still paint one frame. Hidden pages skip the loop. Pixel budget stays at 480. Listening/speaking ease measured energy over ~160ms; leaving speaking zeros outward on the same `setVisual` so interruption does not keep a speaking highlight.
 
 ## Motion and polling
 
-`setMotion` and a `prefers-reduced-motion` listener apply Still immediately without remounting. Hidden pages cancel the single rAF loop. Renderer tests use a nonuniform texture and fixed energy, then compare distinct painted frames while Ambient and unchanged frames after Still or reduced motion settle. Browser tests read the real canvas after assets load. A host `ResizeObserver` paints once when Still/reduced-motion size is stale (CSS or drawing buffer), then disconnects on dispose; it does not restart the loop. `createLiveLevelPoller` reuses `audioLevels()`, takes one sample when Still, pauses while hidden, and drops in-flight results after dispose. No second AudioContext.
+Rotation is timestamp-based at `stamp - last >= 33` (~30fps). Sphere lighting and limb indices are cached; ImageData is reused; host size is measured on mount/`ResizeObserver`, not every paint. `setMotion` and a `prefers-reduced-motion` listener apply Still immediately without remounting. Hidden pages cancel the single rAF loop. Renderer tests use a nonuniform texture and fixed energy, then compare distinct painted frames while Ambient and unchanged frames after Still or reduced motion settle. Browser tests read the real canvas after assets load. A host `ResizeObserver` paints once when Still/reduced-motion size is stale (CSS or drawing buffer), then disconnects on dispose; it does not restart the loop. `createLiveLevelPoller` reuses `audioLevels()`, takes one sample when Still, pauses while hidden, and drops in-flight results after dispose. No second AudioContext. Resolution was not raised and 60fps was not forced.
 
 ## Evidence
 
-`docs/evidence/live-call-globe/before/` is the first-pass fixture at `e11a82b`. Root files are the current production-priority captures. `live-voice-*` uses the real LiveSurface with a fake transport. The webm is a labeled fake-transport tour, not a live OpenAI voice call. Capture waits for `data-earth` / `data-emblem` loaded-or-fallback state instead of sleeping.
+`docs/evidence/live-call-globe/before/` is the first-pass fixture at `e11a82b`. `emerald-before/` is the dock-complete globe at `84e694aa` (gray desert patches). `emerald-after/` is this elevation at the same initial rotation `0.35` and reduced-motion Still, plus `frame-timing.json` and `emerald-motion.webm`. Root files are the current production-priority captures. `live-voice-*` uses the real LiveSurface with a fake transport. The webm is a labeled fake-transport tour, not a live OpenAI voice call. Capture waits for `data-earth` / `data-emblem` loaded-or-fallback state instead of sleeping. Emulated 884×690 is not physical Fold testing.
+
+Headless Chromium 153 on this cloud VM (Linux x86_64, not a physical phone or Fold), 390×844 listening fixture, 300px buffer: **29.99 rendered fps** over 2.5s (75 paints), **p50 paint 6.3ms / p95 6.4ms**. Target was ~30fps with proposed floors of 28 fps and p95 < 12ms. Hiding the page paints once to settle then `looping: false`. The prior renderer at `84e694aa` allocated ImageData and computed `liveGlobeSphereCoords(rotation)` plus lighting every pixel; this pass caches those. Pixel budget remains 480.
 
 ## Out of scope
 

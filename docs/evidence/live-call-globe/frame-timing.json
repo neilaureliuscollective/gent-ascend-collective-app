@@ -1,0 +1,28 @@
+{
+  "capturedAt": "2026-10-16T22:23:15.618Z",
+  "device": "headless Chromium in the cloud agent environment, not a physical phone or Fold",
+  "targetFps": 30,
+  "proposed": {
+    "renderedFps": 28,
+    "p95PaintMs": 12
+  },
+  "current": {
+    "fps": 29.99280172758985,
+    "paints": 75,
+    "elapsedMs": 2500.5999999996275,
+    "lastPaintMs": 6.2999999998137355,
+    "p50PaintMs": 6.2999999998137355,
+    "p95PaintMs": 6.400000000372529,
+    "bufferWidth": 300,
+    "sampleCount": 180,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36"
+  },
+  "hidden": {
+    "before": 980,
+    "afterHidden": 981,
+    "looping": false,
+    "grew": 1
+  },
+  "priorRenderer": "84e694aa allocated ImageData every paint and computed liveGlobeSphereCoords(rotation) plus lighting per pixel. Current reuses ImageData, caches sphere lighting, and adds rotation to lon0. Pixel budget remains 480.",
+  "limitations": "Frame timing is headless Chromium on the cloud VM. Emulated 884×690 is not physical Fold testing. 30fps is the rAF cadence (stamp-last >= 33), not a forced vsync."
+}

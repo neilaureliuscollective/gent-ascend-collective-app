@@ -335,6 +335,11 @@ async function prepareTalkVoice(page: Page, original: Buffer) {
   );
   await page.route(/\/api\/aethelios\/live(?:\?|$)/, async (route) => {
     if (route.request().method() === 'GET') return route.fulfill({ json: { jobs: live.jobs } });
+    if (route.request().method() === 'PATCH') {
+      const body = route.request().postDataJSON() as { jobId?: string };
+      live.jobs = live.jobs.filter((job) => job.id !== body.jobId);
+      return route.fulfill({ json: { reviewed: true } });
+    }
     if (route.request().method() === 'DELETE') {
       live.ends += 1;
       return route.fulfill({ json: { ended: live.cleanupWorks } });
@@ -378,7 +383,8 @@ test('combined voice dock, selected work and attachment keep reading space', asy
   );
   const dock = await startCombinedVoice(page, original);
   await expect.poll(() => prepared.selected()).toBe(conversation);
-  await expect(page.getByLabel('Message Aethelios', { exact: true })).toHaveValue('');
+  const input = page.getByLabel('Message Aethelios', { exact: true });
+  await input.fill('Keep this draft through Expand');
   await expect(dock.locator('[aria-label="Expand voice"] .live-call-action-caption')).toBeVisible();
 
   for (const viewport of viewports) {
@@ -430,6 +436,12 @@ test('combined voice dock, selected work and attachment keep reading space', asy
       const host = window as unknown as VoiceHost;
       return { micGets: host.micGets, peerCount: host.peerCount };
     });
+    const caret = await input.evaluate((node) => {
+      const field = node as HTMLTextAreaElement;
+      field.focus();
+      field.setSelectionRange(5, 9);
+      return { start: field.selectionStart, end: field.selectionEnd, value: field.value };
+    });
     await dock.getByRole('button', { name: 'Expand voice', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
     await expect(dialog).toBeVisible();
@@ -443,12 +455,25 @@ test('combined voice dock, selected work and attachment keep reading space', asy
     });
     await page.keyboard.press('Escape');
     await expect(dock).toBeVisible();
-    await expect(page.getByLabel('Message Aethelios', { exact: true })).toHaveValue('');
+    await expect(input).toHaveValue(caret.value);
+    await expect(page.locator('.talk-selection-summary-text')).toContainText(
+      'Lifestyle product world',
+    );
+    await expect(page.getByRole('button', { name: 'Remove image', exact: true })).toBeVisible();
+    expect(page.url()).toContain(conversation);
+    const restored = await input.evaluate((node) => {
+      const field = node as HTMLTextAreaElement;
+      return { start: field.selectionStart, end: field.selectionEnd };
+    });
+    expect(restored).toEqual({ start: caret.start, end: caret.end });
     expect(await page.evaluate(() => (window as unknown as VoiceHost).micGets)).toBe(
       counts.micGets,
     );
     expect(await page.evaluate(() => (window as unknown as VoiceHost).peerCount)).toBe(
       counts.peerCount,
+    );
+    expect(await page.evaluate(() => (window as unknown as VoiceHost).micTracks[0]?.enabled)).toBe(
+      true,
     );
     expect(prepared.live.starts).toBe(1);
     expect(prepared.live.ends).toBe(0);
@@ -726,4 +751,90 @@ test('details, speaking, blocked playback, cleanup retry and approvals stay insi
   await dock.getByRole('button', { name: 'Retry end session', exact: true }).click();
   expect(await page.evaluate(() => (window as unknown as VoiceHost).micStopped)).toBe(true);
   expect(prepared.live.starts).toBe(1);
+});
+
+test('several approvals with the keyboard open keep chrome controls inside the viewport', async ({
+  page,
+}, testInfo) => {
+  testInfo.annotations.push({
+    type: 'viewport',
+    description:
+      'Simulated Chromium 390×420 keyboard height with three fixture approvals; not a physical phone, Fold or native IME.',
+  });
+  const original = await readFile('public/brand/gent-ascend-master.png');
+  await fakeTransport(page);
+  const prepared = await prepareTalkVoice(page, original);
+  prepared.live.jobs.push(
+    {
+      id: 'synthetic-approval-a',
+      task: 'Review the Lifestyle product world photography brief for Solaris.',
+      coworker: 'athena',
+      status: 'approval',
+      result: '',
+      duration_ms: null,
+    },
+    {
+      id: 'synthetic-approval-b',
+      task: 'Confirm the Hydros lemonade launch copy before Studio retain.',
+      coworker: 'athena',
+      status: 'approval',
+      result: '',
+      duration_ms: null,
+    },
+    {
+      id: 'synthetic-approval-c',
+      task: 'A third approval stays off the compact dock because Live shows two.',
+      coworker: 'athena',
+      status: 'approval',
+      result: '',
+      duration_ms: null,
+    },
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(
+    `http://127.0.0.1:3102/app/aethelios?mode=talk-live&conversation=${conversation}`,
+  );
+  const dock = await startCombinedVoice(page, original);
+  const input = page.getByLabel('Message Aethelios', { exact: true });
+  await input.fill('Line one\nLine two\nLine three\nLine four');
+  await page.setViewportSize({ width: 390, height: 420 });
+  await expect(page.locator('[data-keyboard="open"]')).toBeVisible();
+  const short = { width: 390, height: 420 };
+  await expect.poll(() => dock.getByRole('button', { name: 'Approve this task' }).count()).toBe(2);
+  expect(await dock.getByRole('button', { name: 'Decline' }).count()).toBe(2);
+  for (const control of [
+    dock.getByRole('button', { name: 'Mute microphone', exact: true }),
+    dock.getByRole('button', { name: 'End session', exact: true }),
+    dock.getByRole('button', { name: 'Expand voice', exact: true }),
+    page.getByRole('button', { name: 'Remove image', exact: true }),
+    page.getByRole('button', { name: 'Send', exact: true }),
+  ])
+    await assertPointerTarget(control, short);
+  const approve = dock.getByRole('button', { name: 'Approve this task' }).first();
+  await approve.scrollIntoViewIfNeeded();
+  await assertPointerTarget(approve, short);
+  expect((await page.locator('.aurelius-compose-region').boundingBox())!.height).toBeLessThan(
+    short.height * 0.72,
+  );
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
+  ).toBe(true);
+  const before = await page.evaluate(() => {
+    const host = window as unknown as VoiceHost;
+    return { micGets: host.micGets, peerCount: host.peerCount };
+  });
+  await dock.getByRole('button', { name: 'Expand voice', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Aethelios Live', exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dock).toBeVisible();
+  await expect(input).toHaveValue('Line one\nLine two\nLine three\nLine four');
+  expect(await page.evaluate(() => (window as unknown as VoiceHost).micGets)).toBe(before.micGets);
+  expect(await page.evaluate(() => (window as unknown as VoiceHost).peerCount)).toBe(
+    before.peerCount,
+  );
+  expect(prepared.live.starts).toBe(1);
+  await page.screenshot({
+    path: 'test-results/talk-voice-dock-phone-keyboard-approvals.png',
+    fullPage: true,
+  });
 });

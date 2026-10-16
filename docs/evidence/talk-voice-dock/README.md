@@ -15,5 +15,6 @@ Chromium Playwright fixtures on the component server (`:3102`), fake `RTCPeerCon
 | `fold-speaking.png`               | 884×690               | Speaking / Stop                                       |
 | `fold-cleanup-retry.png`          | 884×690               | Retry end session                                     |
 | `mocked-compact-expand-tour.webm` | 390 then Fold/desktop | Expand / Escape minimize, same session                |
+| `phone-keyboard-approvals.png`    | 390×420               | Two dock approvals over the composer, keyboard open   |
 
 Combined layout in the compact shots: selected-work chip, long attachment name, empty textarea, Mute / End / Expand fully in view. Stress shots are captured with Details, approvals, blocked playback, speaking and cleanup retry — not only idle listening.
