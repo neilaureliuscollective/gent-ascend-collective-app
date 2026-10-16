@@ -187,10 +187,14 @@
   color: var(--aether-text);
   overflow-y: auto;
 }
+.talk-text-entry {
+  position: relative;
+  min-width: 0;
+}
 .talk-expand {
   position: absolute;
-  right: 8px;
-  top: 6px;
+  right: 0;
+  top: 0;
   width: 44px;
   min-height: 44px;
   border: 0;
@@ -229,19 +233,46 @@
   align-self: center;
 }
 .talk-selection-chip {
-  margin: 0 0 8px;
-  padding: 8px 12px;
+  margin: 0 0 6px;
+  padding: 6px 10px;
   font-size: 13px;
   color: var(--io-text, #f4efe6);
   background: color-mix(in srgb, var(--aether-emerald, #0b3b32) 55%, #080d0d);
   border: 1px solid color-mix(in srgb, var(--aether-gold, #c4912f) 35%, transparent);
   border-radius: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .talk-voice-dock:empty {
   display: none;
 }
 .talk-voice-dock:not(:empty) {
   margin: 0 0 8px;
+}
+.talk-page:has(.talk-voice-dock:not(:empty)) .aurelius-composer textarea.talk-input {
+  max-height: max(44px, min(120px, calc(var(--conversation-height, 100dvh) * 0.16)));
+}
+.talk-page[data-keyboard='open']:has(.talk-voice-dock:not(:empty))
+  .aurelius-composer
+  textarea.talk-input {
+  max-height: 44px;
+}
+.talk-page[data-keyboard='open'] .talk-selection-chip {
+  margin-bottom: 4px;
+  padding-block: 4px;
+}
+.talk-page[data-keyboard='open'] .talk-voice-dock:not(:empty) {
+  margin-bottom: 4px;
+}
+.talk-page[data-keyboard='open'] .composer-controls > .quiet-label {
+  display: none;
+}
+.talk-page[data-keyboard='open'] .live-compact.live-call-compact {
+  padding: 0.3rem 0.55rem;
+}
+.talk-page[data-keyboard='open'] .live-compact-presence .live-brand {
+  display: none;
 }
 .talk-page .latest-message {
   position: absolute;
@@ -269,7 +300,7 @@
   border: 1px solid #c4912f40;
   padding: 12px;
 }
-.talk-page :where(button, textarea, a):focus-visible,
+.talk-page :where(button, textarea, a, .conversation-scroll):focus-visible,
 .talk-drawer :where(button, textarea, a, input, select):focus-visible {
   outline: 2px solid #e0bb6a;
   outline-offset: 2px;
@@ -600,7 +631,8 @@ html[data-material='solid'] .talk-page .talk-composer:focus-within {
 }
 
 .app-shell.imperial-workspace
-  .talk-page [data-bplus='talk']
+  .talk-page
+  [data-bplus='talk']
   .aurelius-composer
   textarea:focus-visible {
   outline: none;

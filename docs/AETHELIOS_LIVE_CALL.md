@@ -26,9 +26,9 @@ The original already yields a clean emblem: corners are fully transparent, about
 
 ## Call chrome
 
-Immersive and compact Live use charcoal-glass spacing, circular tappable actions and accessible names (`Mute microphone` / `Unmute microphone`, `End session`, `Compact` / `Expand`, `Transcript`). Mute state is `aria-pressed`. End is a distinct hang-up action. Transcript is secondary. Diagnostics stay behind the existing `Voice diagnostics` disclosure. Scene-switching buttons exist only on the `?mode=live-call-globe` fixture.
+Immersive Live keeps the charcoal-glass call stage with circular tappable actions. Compact Talk uses a persistent voice dock above the composer: the existing globe, truthful listening/speaking/muted/connecting status, Mute/Unmute, End and Expand. The full-screen stage labels Minimize rather than Compact. Transcript opens or focuses the Talk conversation timeline when docked, and the live transcript log when undocked. Diagnostics, background-job copy and privacy notes live in a labelled Details disclosure; closed details are inert. Mute state is `aria-pressed`. End is a distinct hang-up action. Scene-switching buttons exist only on the `?mode=live-call-globe` fixture.
 
-Compact docking and Escape-to-compact are unchanged.
+Layout changes do not reconnect, restart consent or end the call. Compact docking and Escape-to-compact stay presentation-only.
 
 ## Audio
 
@@ -36,14 +36,14 @@ The extra Web Audio monitor is removed. Atmosphere energy reuses `LiveController
 
 ## Honest reactivity
 
-| State | Visual | Energy |
-| --- | --- | --- |
-| Connecting / reconnecting | Restrained rotation, labeled Connecting or Reconnecting | State only |
-| Listening | Gentle inward atmosphere | Transport input when measured |
-| Speaking | Outward emerald illumination | Transport output when measured |
-| Waiting (`responsePending`) | Subtle rest, no speaking pretence | State only |
-| Interrupted | Immediate return to listening | New measured input, speaking output dropped |
-| Muted / blocked / ended / error | Distinct, quieter or still | Not audio-reactive |
+| State                           | Visual                                                  | Energy                                      |
+| ------------------------------- | ------------------------------------------------------- | ------------------------------------------- |
+| Connecting / reconnecting       | Restrained rotation, labeled Connecting or Reconnecting | State only                                  |
+| Listening                       | Gentle inward atmosphere                                | Transport input when measured               |
+| Speaking                        | Outward emerald illumination                            | Transport output when measured              |
+| Waiting (`responsePending`)     | Subtle rest, no speaking pretence                       | State only                                  |
+| Interrupted                     | Immediate return to listening                           | New measured input, speaking output dropped |
+| Muted / blocked / ended / error | Distinct, quieter or still                              | Not audio-reactive                          |
 
 `data-reactive` is `true` only when a measured transport sample is driving listening or speaking. Reduced motion and Still paint one frame. Hidden pages skip the loop. Pixel budget stays at 480.
 
@@ -57,4 +57,4 @@ The extra Web Audio monitor is removed. Atmosphere energy reuses `LiveController
 
 ## Out of scope
 
-Cedar/Marin voice choice, OpenAI session configuration, authentication, usage limits, transcript filtering/persistence, Talk composer/scrolling, image attachments, knowledge continuity, Architect handoff, production merge and deployment.
+Cedar/Marin voice choice, OpenAI session configuration, authentication, usage limits, transcript filtering/persistence, knowledge continuity, Architect handoff, production merge and deployment. Talk composer height, selected-work chips, attachment truncation and the persistent compact dock are in this pass; they are mocked-transport layout proof, not a physical-device or paid-voice test.

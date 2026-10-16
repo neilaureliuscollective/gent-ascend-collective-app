@@ -10,8 +10,9 @@
 .talk-image-preview {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.375rem;
+  min-width: 0;
 }
 .talk-image-actions > button {
   min-height: 44px;
@@ -22,6 +23,7 @@
   min-width: 0;
   max-width: 10rem;
   flex-wrap: nowrap;
+  overflow: hidden;
 }
 .talk-image-preview span {
   min-width: 0;
@@ -29,6 +31,32 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.75rem;
+}
+@media (max-width: 380px) {
+  .talk-image-actions {
+    flex-wrap: wrap;
+  }
+}
+.talk-page[data-keyboard='open']:has(.talk-voice-dock:not(:empty)) .talk-image-actions {
+  flex-wrap: nowrap;
+}
+.talk-page[data-keyboard='open']:has(.talk-voice-dock:not(:empty))
+  .composer-controls:has(> .talk-image-attachment) {
+  flex-wrap: nowrap;
+}
+.talk-page
+  .talk-image-attachment[data-expanded='true']
+  .talk-image-actions
+  > button[aria-label='Add image'] {
+  display: none;
+}
+.talk-page .talk-image-attachment[data-expanded='true'] .talk-image-preview {
+  max-width: min(14rem, 42vw);
+}
+.talk-page[data-keyboard='open']:has(.talk-voice-dock:not(:empty))
+  .talk-image-actions
+  > .talk-image-studio {
+  display: none;
 }
 .talk-image-preview img {
   object-fit: contain;
@@ -86,9 +114,19 @@
 .talk-page .composer-controls:has(> .talk-image-attachment) {
   flex-wrap: wrap;
 }
-.talk-page .composer-controls > .talk-image-attachment[data-expanded='true'] {
-  flex-basis: 100%;
-}
 .talk-page .composer-controls:has(> .talk-image-attachment) > .quiet-label {
   flex: 1;
+}
+.talk-page .composer-controls > .talk-image-attachment[data-expanded='true'] {
+  flex: 1 1 12rem;
+  min-width: 0;
+  max-width: 100%;
+  flex-basis: min(100%, 18rem);
+}
+.talk-page .composer-controls:has(> .talk-image-attachment[data-expanded='true']) > .quiet-label {
+  flex: 1 1 6rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

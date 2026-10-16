@@ -88,7 +88,12 @@ function TranscriptIcon() {
 function CloseIcon() {
   return (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
-      <path d="m7 7 10 10M17 7 7 17" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path
+        d="m7 7 10 10M17 7 7 17"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -98,6 +103,7 @@ function CallAction({
   caption,
   pressed,
   kind = 'secondary',
+  density = 'call',
   onClick,
   children,
 }: {
@@ -105,13 +111,14 @@ function CallAction({
   caption: string;
   pressed?: boolean;
   kind?: 'mute' | 'end' | 'secondary';
+  density?: 'call' | 'dock';
   onClick?: () => void;
   children: ReactNode;
 }) {
   return (
     <button
       type="button"
-      className={`live-call-action live-call-action-${kind}`}
+      className={`live-call-action live-call-action-${kind}${density === 'dock' ? ' live-dock-action' : ''}`}
       aria-label={name}
       aria-pressed={pressed}
       onClick={onClick}
@@ -128,72 +135,102 @@ function CallAction({
 
 export function LiveCallControls({
   model,
+  density = 'call',
   onMute,
   onInterrupt,
   onEnd,
   onMode,
   onTranscript,
   onClose,
+  children,
 }: {
   model: LiveCallControlModel;
+  density?: 'call' | 'dock';
   onMute?: () => void;
   onInterrupt?: () => void;
   onEnd?: () => void;
   onMode?: () => void;
   onTranscript?: () => void;
   onClose?: () => void;
+  children?: ReactNode;
 }) {
+  const mute = model.canMute ? (
+    <CallAction
+      name={model.muted ? 'Unmute microphone' : 'Mute microphone'}
+      caption={model.muted ? 'Unmute' : 'Mute'}
+      pressed={model.muted}
+      kind="mute"
+      density={density}
+      onClick={onMute}
+    >
+      <MicIcon off={model.muted} />
+    </CallAction>
+  ) : null;
+  const stop = model.canStopPlayback ? (
+    <CallAction name="Stop playback" caption="Stop" density={density} onClick={onInterrupt}>
+      <StopIcon />
+    </CallAction>
+  ) : null;
+  const end = model.canEnd ? (
+    <CallAction
+      name={model.cleanupPending ? 'Retry end session' : 'End session'}
+      caption={model.cleanupPending ? 'Retry' : 'End'}
+      kind="end"
+      density={density}
+      onClick={onEnd}
+    >
+      <EndIcon />
+    </CallAction>
+  ) : null;
+  const mode = (
+    <CallAction
+      name={model.mode === 'immersive' ? 'Minimize voice' : 'Expand voice'}
+      caption={model.mode === 'immersive' ? 'Minimize' : 'Expand'}
+      density={density}
+      onClick={onMode}
+    >
+      <ModeIcon compact={model.mode === 'compact'} />
+    </CallAction>
+  );
+  const transcript = (
+    <CallAction
+      name="Open conversation transcript"
+      caption="Transcript"
+      density={density}
+      onClick={onTranscript}
+    >
+      <TranscriptIcon />
+    </CallAction>
+  );
+  const close = model.canClose ? (
+    <CallAction name="Close" caption="Close" density={density} onClick={onClose}>
+      <CloseIcon />
+    </CallAction>
+  ) : null;
+  if (density === 'dock') {
+    return (
+      <div className="live-dock-actions" role="group" aria-label="Call session">
+        {mute}
+        {stop}
+        {end}
+        {mode}
+        {transcript}
+        {close}
+        {children}
+      </div>
+    );
+  }
   return (
     <div className="live-controls live-controls-compact live-call-controls">
       <div className="live-control-session" role="group" aria-label="Call session">
-        {model.canMute && (
-          <CallAction
-            name={model.muted ? 'Unmute microphone' : 'Mute microphone'}
-            caption={model.muted ? 'Unmute' : 'Mute'}
-            pressed={model.muted}
-            kind="mute"
-            onClick={onMute}
-          >
-            <MicIcon off={model.muted} />
-          </CallAction>
-        )}
-        {model.canStopPlayback && (
-          <CallAction name="Stop playback" caption="Stop" onClick={onInterrupt}>
-            <StopIcon />
-          </CallAction>
-        )}
-        {model.canEnd && (
-          <CallAction
-            name={model.cleanupPending ? 'Retry end session' : 'End session'}
-            caption={model.cleanupPending ? 'Retry' : 'End'}
-            kind="end"
-            onClick={onEnd}
-          >
-            <EndIcon />
-          </CallAction>
-        )}
+        {mute}
+        {stop}
+        {end}
       </div>
       <div className="live-control-layout" role="group" aria-label="Call layout">
-        <CallAction
-          name={model.mode === 'immersive' ? 'Compact' : 'Expand'}
-          caption={model.mode === 'immersive' ? 'Compact' : 'Expand'}
-          onClick={onMode}
-        >
-          <ModeIcon compact={model.mode === 'compact'} />
-        </CallAction>
-        <CallAction
-          name="Transcript"
-          caption="Transcript"
-          pressed={model.transcript}
-          onClick={onTranscript}
-        >
-          <TranscriptIcon />
-        </CallAction>
-        {model.canClose && (
-          <CallAction name="Close" caption="Close" onClick={onClose}>
-            <CloseIcon />
-          </CallAction>
-        )}
+        {mode}
+        {transcript}
+        {close}
       </div>
     </div>
   );

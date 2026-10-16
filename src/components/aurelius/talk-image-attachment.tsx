@@ -135,6 +135,7 @@ export function TalkImageAttachment({
         <button
           type="button"
           className="text-button"
+          aria-label="Add image"
           title="PNG, JPEG or WebP up to 10 MiB; videos and general files unsupported"
           disabled={disabled}
           onClick={() => input.current?.click()}
@@ -222,7 +223,8 @@ export function TalkImageAttachment({
         {value && (
           <button
             type="button"
-            className="text-button"
+            className="text-button talk-image-studio"
+            aria-label="Use in Studio"
             disabled={Boolean(progress) || disabled}
             onClick={() => void handoff()}
           >

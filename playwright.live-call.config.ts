@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: 'tests/browser',
-  testMatch: ['live-call-globe.spec.ts', 'live-voice.spec.ts'],
+  testMatch: ['live-call-globe.spec.ts', 'live-voice.spec.ts', 'talk-voice-dock.spec.ts'],
   fullyParallel: true,
   timeout: 90000,
   expect: { timeout: 15000 },

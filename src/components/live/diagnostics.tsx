@@ -26,8 +26,8 @@ export function LiveDiagnostics({ controller }: { controller: LiveController }) 
     }
   }
   return (
-    <details className="live-job">
-      <summary>Voice diagnostics</summary>
+    <section className="live-job" aria-labelledby="live-voice-diagnostics-heading">
+      <h3 id="live-voice-diagnostics-heading">Voice diagnostics</h3>
       <p>
         Download timing and connection statistics for testing. Contains no transcript, audio,
         account identifiers or network addresses. Event timings are not measurements of audible
@@ -43,6 +43,6 @@ export function LiveDiagnostics({ controller }: { controller: LiveController }) 
         {busy ? 'Preparing diagnostics…' : 'Download voice diagnostics'}
       </button>
       {message && <p role="status">{message}</p>}
-    </details>
+    </section>
   );
 }

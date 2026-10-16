@@ -147,14 +147,14 @@ html[data-motion='still']
   opacity: 1;
   box-shadow: none;
 }
-.app-shell.imperial-workspace [data-bplus='talk'] .aurelius-composer:has(> textarea:disabled) {
+.app-shell.imperial-workspace [data-bplus='talk'] .aurelius-composer:has(textarea:disabled) {
   background: var(--io-navigation);
   border-color: var(--io-secondary);
   box-shadow: none;
 }
 .app-shell.imperial-workspace
   [data-bplus='talk']
-  .aurelius-composer:has(> textarea:disabled)
+  .aurelius-composer:has(textarea:disabled)
   > .bplus-optics {
   display: none;
 }
@@ -163,8 +163,8 @@ html[data-motion='still']
     [data-bplus='talk']
       :is(
         .composer-controls > button,
-        .aurelius-composer > textarea,
-        .aurelius-composer > .talk-expand,
+        .aurelius-composer textarea,
+        .aurelius-composer .talk-expand,
         .bplus-tools > button
       ),
     .navigation a[data-bplus-surface='navigation']
@@ -173,7 +173,7 @@ html[data-motion='still']
   outline-offset: 2px;
   box-shadow: 0 0 0 2px var(--aether-obsidian);
 }
-.app-shell.imperial-workspace [data-bplus='talk'] .aurelius-composer > textarea:focus-visible {
+.app-shell.imperial-workspace [data-bplus='talk'] .aurelius-composer textarea:focus-visible {
   /* Keep the editor's ring inside its own perimeter, clear of the Expand control. */
   outline-offset: -2px;
 }
@@ -245,8 +245,8 @@ html[data-material='solid'] [data-bplus-surface] > .bplus-optics {
       [data-bplus='talk']
         :is(
           .composer-controls > button,
-          .aurelius-composer > textarea,
-          .aurelius-composer > .talk-expand,
+          .aurelius-composer textarea,
+          .aurelius-composer .talk-expand,
           .bplus-tools > button
         ),
       .navigation a[data-bplus-surface='navigation']

@@ -108,7 +108,9 @@ export function LiveCallGlobeFixture() {
   const params = new URLSearchParams(location.search);
   const tour = params.get('tour') === '1';
   const initial = tour ? 'connecting' : (params.get('scene') ?? 'listening');
-  const [sceneId, setSceneId] = useState(scenes.some((scene) => scene.id === initial) ? initial : 'listening');
+  const [sceneId, setSceneId] = useState(
+    scenes.some((scene) => scene.id === initial) ? initial : 'listening',
+  );
   const [transcript, setTranscript] = useState(true);
   const scene = scenes.find((item) => item.id === sceneId) ?? scenes[1]!;
   useEffect(() => {
@@ -143,12 +145,7 @@ export function LiveCallGlobeFixture() {
         >
           {compact && (
             <div className="live-compact-presence">
-              <LiveCallGlobe
-                state={scene.state}
-                moving
-                size="compact"
-                readSample={() => sample}
-              />
+              <LiveCallGlobe state={scene.state} moving size="compact" readSample={() => sample} />
               <div className="live-call-identity">
                 <p className="live-brand">AETHELIOS LIVE</p>
                 <p className="im-status" role="status">
@@ -187,10 +184,16 @@ export function LiveCallGlobeFixture() {
                 transcript,
                 canClose: !active,
               }}
-              onTranscript={() => setTranscript((value) => !value)}
+              density={compact ? 'dock' : 'call'}
+              onMode={() => setSceneId(compact ? 'listening' : 'compact')}
+              onTranscript={() => setTranscript(true)}
             />
             {!compact && transcript && (
-              <div className="live-transcript" role="log" aria-label="Live transcript; mocked demonstration">
+              <div
+                className="live-transcript"
+                role="log"
+                aria-label="Live transcript; mocked demonstration"
+              >
                 <p>
                   <strong>You</strong> Mocked listening sample.
                 </p>

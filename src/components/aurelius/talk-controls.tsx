@@ -130,45 +130,47 @@ export function TalkInput({
       <label className="sr-only" htmlFor={id}>
         {label || placeholder}
       </label>
-      <textarea
-        className="talk-input"
-        id={id}
-        ref={inputRef}
-        rows={1}
-        value={value}
-        disabled={disabled}
-        maxLength={maxLength}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => {
-          if (
-            e.key === 'Enter' &&
-            !e.nativeEvent.isComposing &&
-            !e.shiftKey &&
-            (e.metaKey || e.ctrlKey || window.matchMedia('(pointer:fine)').matches)
-          ) {
-            e.preventDefault();
-            e.currentTarget.form?.requestSubmit();
-          }
-        }}
-      />
-      <button
-        type="button"
-        className="talk-expand"
-        disabled={disabled}
-        aria-label="Expand writing space"
-        onClick={() => {
-          caret.current = {
-            start: inputRef.current?.selectionStart ?? value.length,
-            end: inputRef.current?.selectionEnd ?? value.length,
-          };
-          editor.current?.showModal();
-          expanded.current?.focus();
-          expanded.current?.setSelectionRange(caret.current.start, caret.current.end);
-        }}
-      >
-        <Icon name="expand" className="action-icon" />
-      </button>
+      <div className="talk-text-entry">
+        <textarea
+          className="talk-input"
+          id={id}
+          ref={inputRef}
+          rows={1}
+          value={value}
+          disabled={disabled}
+          maxLength={maxLength}
+          placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (
+              e.key === 'Enter' &&
+              !e.nativeEvent.isComposing &&
+              !e.shiftKey &&
+              (e.metaKey || e.ctrlKey || window.matchMedia('(pointer:fine)').matches)
+            ) {
+              e.preventDefault();
+              e.currentTarget.form?.requestSubmit();
+            }
+          }}
+        />
+        <button
+          type="button"
+          className="talk-expand"
+          disabled={disabled}
+          aria-label="Expand writing space"
+          onClick={() => {
+            caret.current = {
+              start: inputRef.current?.selectionStart ?? value.length,
+              end: inputRef.current?.selectionEnd ?? value.length,
+            };
+            editor.current?.showModal();
+            expanded.current?.focus();
+            expanded.current?.setSelectionRange(caret.current.start, caret.current.end);
+          }}
+        >
+          <Icon name="expand" className="action-icon" />
+        </button>
+      </div>
       <dialog
         ref={editor}
         className="talk-drawer talk-editor"
