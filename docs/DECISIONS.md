@@ -1,6 +1,10 @@
-# Talk release verification — 2026-10-17
+# Talk Next 16.3.8 and branch-scoped preview — 2026-10-17
 
-Keep PR #158 `5d86a816` independent of PR #154. Preview unblocks by removing the Preview-scoped publishable key (shell) or pairing it with a matching non-production URL — never by copying Production URL. Next 16.3.8 is the compatible LTS advisory patch and is a follow-up SHA, not this Talk candidate. Evidence: [TALK_RELEASE_VERIFICATION.md](TALK_RELEASE_VERIFICATION.md).
+Pin Next 16.3.8 / eslint-config-next 16.3.8 for GHSA-cjq9-62q9-8jv4. Do not strip shared Preview env scope. Authenticated preview requires Git-branch overrides on `cursor/talk-voice-dock-compact-42b1` for a matching non-production URL and publishable key; none is approved yet. PR #154 stays out. Remaining Next 16.4.1 advisories (Server Actions DoS; unused Cache Components RCE) were not applied. Evidence: [TALK_RELEASE_VERIFICATION.md](TALK_RELEASE_VERIFICATION.md).
+
+# Talk release verification — 2026-10-17 (superseded)
+
+Superseded by the branch-scoped preview decision above. Do **not** remove shared Preview-scope keys. Talk implementation remains `5d86a816`. PR #154 stays independent. Evidence: [TALK_RELEASE_VERIFICATION.md](TALK_RELEASE_VERIFICATION.md).
 
 # Talk conversation isolation and unfinished work — 2026-10-16
 
