@@ -39,6 +39,7 @@ jobs:
           npx playwright test
           tests/browser/live-voice.spec.ts
           tests/browser/talk-live.spec.ts
+          tests/browser/talk-voice-dock.spec.ts
           tests/browser/live-artifacts.spec.ts
           tests/browser/live-visuals.spec.ts
           tests/browser/live-evidence.spec.ts

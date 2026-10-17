@@ -19,7 +19,12 @@ import { ArtifactSurface } from './artifacts';
 import { LiveAvailabilityContext, LiveContext, LiveAcknowledgementUserContext } from './context';
 import { hasLiveAcknowledgement, saveLiveAcknowledgement } from '@/domains/live/acknowledgement';
 import { LiveDiagnostics } from './diagnostics';
-import { getTalkVoiceDock, getTalkVoiceDockSnapshot, subscribeTalkVoiceDock } from './voice-dock';
+import {
+  getTalkVoiceDock,
+  getTalkVoiceDockSnapshot,
+  requestTalkTranscriptFocus,
+  subscribeTalkVoiceDock,
+} from './voice-dock';
 export function LiveConversationProvider({
   children,
   enabled = false,
@@ -284,16 +289,20 @@ function LiveSurface({ controller }: { controller: LiveController }) {
     controller.getSnapshot,
   );
   const dialog = useRef<HTMLDialogElement>(null);
+  const compact = useRef<HTMLElement>(null);
+  const wasImmersive = useRef(false);
   const { moving } = useAppearance();
   const operation = liveMotionOperation(state);
-  const compact = useRef<HTMLElement>(null);
   const [levels, setLevels] = useState<LiveCallLevels>({
     input: 0,
     output: 0,
     source: 'unavailable',
   });
   const [transcript, setTranscript] = useState(true);
+  const [dockDetailsOpen, setDockDetailsOpen] = useState(false);
+  const [callDetailsOpen, setCallDetailsOpen] = useState(false);
   const [draft, setDraft] = useState('');
+  const transcriptLog = useRef<HTMLDivElement>(null);
   const dock = useSyncExternalStore(
     subscribeTalkVoiceDock,
     getTalkVoiceDock,
@@ -311,10 +320,14 @@ function LiveSurface({ controller }: { controller: LiveController }) {
     else if (node.open) node.close();
   }, [visible, state.mode]);
   useEffect(() => {
-    if (!visible || state.mode !== 'compact' || docked) return;
-    const frame = requestAnimationFrame(() => compact.current?.querySelector('button')?.focus());
+    const leaving = wasImmersive.current && visible && state.mode === 'compact';
+    wasImmersive.current = visible && state.mode === 'immersive';
+    if (!leaving) return;
+    const frame = requestAnimationFrame(() => {
+      compact.current?.querySelector<HTMLButtonElement>('[aria-label="Expand voice"]')?.focus();
+    });
     return () => cancelAnimationFrame(frame);
-  }, [visible, state.mode, docked]);
+  }, [visible, state.mode]);
   useEffect(() => {
     if (!active) return;
     const poller = createLiveLevelPoller({
@@ -346,28 +359,42 @@ function LiveSurface({ controller }: { controller: LiveController }) {
   const canMute = active && state.phase !== 'connecting';
   const canStopPlayback = state.phase === 'speaking' && !state.playbackBlocked;
   const canEnd = active || state.cleanupPending;
-  const controls = (
-    <LiveCallControls
-      model={{
-        muted: state.muted,
-        canMute,
-        canStopPlayback,
-        canEnd,
-        cleanupPending: state.cleanupPending,
-        mode: state.mode,
-        transcript,
-        canClose: !active && !state.cleanupPending,
-      }}
-      onMute={() => controller.mute()}
-      onInterrupt={() => controller.interrupt()}
-      onEnd={() => {
-        void controller.end();
-      }}
-      onMode={() => controller.mode(state.mode === 'immersive' ? 'compact' : 'immersive')}
-      onTranscript={() => setTranscript((value) => !value)}
-      onClose={() => controller.dismiss()}
-    />
-  );
+  const controlModel = {
+    muted: state.muted,
+    canMute,
+    canStopPlayback,
+    canEnd,
+    cleanupPending: state.cleanupPending,
+    mode: state.mode,
+    transcript,
+    canClose: !active && !state.cleanupPending,
+    docked,
+  };
+  const openTranscript = () => {
+    setTranscript(true);
+    if (state.mode === 'immersive') {
+      requestAnimationFrame(() => {
+        transcriptLog.current?.focus();
+        transcriptLog.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      });
+      return;
+    }
+    if (docked && requestTalkTranscriptFocus()) return;
+    requestAnimationFrame(() => {
+      transcriptLog.current?.focus();
+      transcriptLog.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    });
+  };
+  const controlHandlers = {
+    onMute: () => controller.mute(),
+    onInterrupt: () => controller.interrupt(),
+    onEnd: () => {
+      void controller.end();
+    },
+    onMode: () => controller.mode(state.mode === 'immersive' ? 'compact' : 'immersive'),
+    onTranscript: openTranscript,
+    onClose: () => controller.dismiss(),
+  };
   const identity = (
     <div className="live-call-identity">
       <p className="live-brand">AETHELIOS LIVE</p>
@@ -375,7 +402,7 @@ function LiveSurface({ controller }: { controller: LiveController }) {
       <IntelligenceStatus operation={operation} announce={false} />
     </div>
   );
-  const content = (
+  const alerts = (
     <>
       {state.error && <p role="alert">{state.error}</p>}
       {state.playbackBlocked && (
@@ -388,33 +415,39 @@ function LiveSurface({ controller }: { controller: LiveController }) {
           Enable voice playback
         </button>
       )}
-      {controls}
+      {!active && state.error && (
+        <button type="button" onClick={() => controller.dismiss()}>
+          Stay in Talk
+        </button>
+      )}
+    </>
+  );
+  const approvalJobs = state.jobs.filter((job) => job.status === 'approval');
+  const liveLog = (
+    <div
+      ref={transcriptLog}
+      className="live-transcript"
+      role="log"
+      tabIndex={-1}
+      aria-live="off"
+      aria-label="Live transcript; saving is confirmed in Talk"
+    >
+      {state.transcript.map((line) => (
+        <p key={line.id}>
+          <strong>{line.role === 'user' ? 'You' : 'Aethelios'}</strong> {line.text}
+        </p>
+      ))}
+      {!state.transcript.length && <p>Your live transcript appears here.</p>}
+    </div>
+  );
+  const sessionDetails = (includeCreation: boolean) => (
+    <>
       <LiveDiagnostics controller={controller} />
-      {active && (
+      {includeCreation && active && (
         <details className="live-creation">
           <summary>Creation and background work</summary>
           <ArtifactSurface controller={controller} />
         </details>
-      )}
-      {transcript && docked && (
-        <p className="live-privacy">
-          Provisional speech stays in the Talk timeline. Saving is confirmed there.
-        </p>
-      )}
-      {transcript && !docked && (
-        <div
-          className="live-transcript"
-          role="log"
-          aria-live="off"
-          aria-label="Live transcript; saving is confirmed in Talk"
-        >
-          {state.transcript.map((line) => (
-            <p key={line.id}>
-              <strong>{line.role === 'user' ? 'You' : 'Aethelios'}</strong> {line.text}
-            </p>
-          ))}
-          {!state.transcript.length && <p>Your live transcript appears here.</p>}
-        </div>
       )}
       {state.jobs.map((job) => (
         <section className="live-job" key={job.id} aria-label="Background work">
@@ -423,7 +456,7 @@ function LiveSurface({ controller }: { controller: LiveController }) {
           </h3>
           <IntelligenceActivity operation={liveJobMotionOperation(job)} />
           <p>{job.task}</p>
-          {job.status === 'approval' && active && (
+          {job.status === 'approval' && active && includeCreation && (
             <>
               <button
                 type="button"
@@ -469,35 +502,32 @@ function LiveSurface({ controller }: { controller: LiveController }) {
           {job.status === 'failed' && <p>The task did not complete. No result is claimed.</p>}
         </section>
       ))}
-      {active && state.mode === 'immersive' && (
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            const sent = controller.text(draft);
-            if (sent.accepted) setDraft('');
-          }}
-        >
-          <label>
-            Type in this voice session
-            <input
-              value={draft}
-              maxLength={4000}
-              onChange={(event) => setDraft(event.target.value)}
-            />
-          </label>
-          <button disabled={state.phase === 'connecting' || !draft.trim()}>Send</button>
-        </form>
-      )}
       <p className="live-privacy">
         Mute keeps the microphone connected. End releases it. Transcript text is provisional until
         it appears in saved Talk history.
       </p>
-      {!active && state.error && (
-        <button type="button" onClick={() => controller.dismiss()}>
-          Stay in Talk
-        </button>
+      {docked && (
+        <p className="live-privacy">
+          Spoken lines appear in the Talk timeline. Saving is confirmed there.
+        </p>
       )}
     </>
+  );
+  const detailsPanel = (
+    open: boolean,
+    setOpen: (value: boolean) => void,
+    includeCreation: boolean,
+  ) => (
+    <details
+      className="live-dock-details"
+      open={open}
+      onToggle={(event) => setOpen((event.currentTarget as HTMLDetailsElement).open)}
+    >
+      <summary>Details</summary>
+      <div className="live-dock-details-body" hidden={!open} inert={!open || undefined}>
+        {open ? sessionDetails(includeCreation) : null}
+      </div>
+    </details>
   );
   return (
     <>
@@ -513,14 +543,33 @@ function LiveSurface({ controller }: { controller: LiveController }) {
         <div className="live-call">
           {identity}
           <div className="live-orb">
-            <LiveCallGlobe
-              state={state}
-              moving={moving}
-              size="immersive"
-              readSample={readSample}
-            />
+            <LiveCallGlobe state={state} moving={moving} size="immersive" readSample={readSample} />
           </div>
-          <div className="live-content">{content}</div>
+          <div className="live-content">
+            {alerts}
+            <LiveCallControls model={controlModel} {...controlHandlers} />
+            {transcript ? liveLog : null}
+            {active && (
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const sent = controller.text(draft);
+                  if (sent.accepted) setDraft('');
+                }}
+              >
+                <label>
+                  Type in this voice session
+                  <input
+                    value={draft}
+                    maxLength={4000}
+                    onChange={(event) => setDraft(event.target.value)}
+                  />
+                </label>
+                <button disabled={state.phase === 'connecting' || !draft.trim()}>Send</button>
+              </form>
+            )}
+            {detailsPanel(callDetailsOpen, setCallDetailsOpen, true)}
+          </div>
         </div>
       </dialog>
       {visible &&
@@ -533,16 +582,50 @@ function LiveSurface({ controller }: { controller: LiveController }) {
               className={`live-compact live-call-compact${docked ? ' is-docked' : ''}`}
               aria-label="Persistent Aethelios voice controls"
             >
-              <div className="live-compact-presence">
-                <LiveCallGlobe
-                  state={state}
-                  moving={moving}
-                  size="compact"
-                  readSample={readSample}
-                />
-                {identity}
+              <div className="live-dock-chrome">
+                <div className="live-compact-presence">
+                  <LiveCallGlobe
+                    state={state}
+                    moving={moving}
+                    size="compact"
+                    readSample={readSample}
+                  />
+                  {identity}
+                </div>
+                <LiveCallControls model={controlModel} density="dock" {...controlHandlers} />
               </div>
-              {content}
+              <div className="live-dock-recovery">
+                {alerts}
+                {approvalJobs.length > 0 && active && (
+                  <div className="live-dock-approvals" role="status">
+                    {approvalJobs.map((job) => (
+                      <div key={job.id}>
+                        <p className="live-dock-approval-task">{job.task}</p>
+                        <div className="live-dock-approval-actions">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void controller.reviewJob(job.id, true);
+                            }}
+                          >
+                            Approve this task
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void controller.reviewJob(job.id, false);
+                            }}
+                          >
+                            Decline
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {detailsPanel(dockDetailsOpen, setDockDetailsOpen, false)}
+              {!docked && transcript ? liveLog : null}
             </section>
           );
           return dock ? createPortal(compactChrome, dock) : compactChrome;

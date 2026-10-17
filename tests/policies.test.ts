@@ -27,6 +27,61 @@ describe('Supabase project selection', () => {
   it('keeps local test Auth isolated from the hosted founder account', () => {
     expect(supabaseConnection(local)?.url).toBe('http://127.0.0.1:54321');
   });
+  it('treats hosted preview without APP_ENV as preview, not the production pin', () => {
+    const preview = {
+      NODE_ENV: 'production',
+      VERCEL: '1',
+      VERCEL_ENV: 'preview',
+      NEXT_PUBLIC_SUPABASE_URL: 'https://abcdefghijklmnopqrst.supabase.co',
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'preview-publishable-key',
+    };
+    expect(parseEnvironment(preview).mode).toBe('preview');
+    expect(supabaseConnection(preview)?.url).toBe('https://abcdefghijklmnopqrst.supabase.co');
+  });
+  it('uses the matching preview pair when APP_ENV=preview', () => {
+    const preview = {
+      APP_ENV: 'preview',
+      NODE_ENV: 'production',
+      VERCEL: '1',
+      VERCEL_ENV: 'preview',
+      AURELIUS_DEV_HARNESS: 'false',
+      NEXT_PUBLIC_SUPABASE_URL: 'https://abcdefghijklmnopqrst.supabase.co',
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'preview-publishable-key',
+    };
+    expect(parseEnvironment(preview).mode).toBe('preview');
+    expect(parseEnvironment(preview).harnessEnabled).toBe(false);
+    expect(supabaseConnection(preview)?.url).toBe('https://abcdefghijklmnopqrst.supabase.co');
+  });
+  it('refuses APP_ENV=production on a Vercel preview deployment', () => {
+    expect(() =>
+      parseEnvironment({
+        APP_ENV: 'production',
+        NODE_ENV: 'production',
+        VERCEL: '1',
+        VERCEL_ENV: 'preview',
+        NEXT_PUBLIC_SUPABASE_URL: 'https://abcdefghijklmnopqrst.supabase.co',
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'preview-publishable-key',
+      }),
+    ).toThrow('Preview deployment cannot use APP_ENV=production');
+  });
+  it('does not resolve preview Talk to the pinned production or founder hosts', () => {
+    const preview = {
+      APP_ENV: 'preview',
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'preview-publishable-key',
+    };
+    expect(
+      supabaseConnection({
+        ...preview,
+        NEXT_PUBLIC_SUPABASE_URL: 'https://volpzkfsnmtztrovexcw.supabase.co',
+      }),
+    ).toBeNull();
+    expect(
+      supabaseConnection({
+        ...preview,
+        NEXT_PUBLIC_SUPABASE_URL: 'https://tybjocxecilkmozkvuns.supabase.co',
+      }),
+    ).toBeNull();
+  });
 });
 describe('capabilities', () => {
   it('keeps profile and basic goals available without payment', () => {
@@ -76,13 +131,20 @@ describe('capabilities', () => {
     expect(c.has('health.navigation')).toBe(false);
   });
   it('grants a trusted founder all implemented nonclinical capabilities without a subscription', () => {
-    const c = calculateCapabilities({ tier: 'free', billing: 'none', beta: false, founder: true }, now);
+    const c = calculateCapabilities(
+      { tier: 'free', billing: 'none', beta: false, founder: true },
+      now,
+    );
     expect(c.has('aurelius.context')).toBe(true);
     expect(c.has('progress.read')).toBe(true);
     expect(c.has('health.navigation')).toBe(true);
     expect(c.has('clinical.care')).toBe(false);
     expect(c.has('profile.write')).toBe(true);
-    expect(calculateCapabilities({ tier: 'free', billing: 'none', beta: false }, now).has('aurelius.context')).toBe(false);
+    expect(
+      calculateCapabilities({ tier: 'free', billing: 'none', beta: false }, now).has(
+        'aurelius.context',
+      ),
+    ).toBe(false);
   });
 });
 describe('environment isolation', () => {

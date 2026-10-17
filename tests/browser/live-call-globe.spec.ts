@@ -7,7 +7,8 @@ async function canvasDigest(canvas: Locator) {
     if (!context) return '';
     const image = context.getImageData(0, 0, canvasNode.width, canvasNode.height);
     let total = 0;
-    for (let i = 0; i < image.data.length; i += 17) total = (total + (image.data[i] ?? 0)) % 1_000_003;
+    for (let i = 0; i < image.data.length; i += 17)
+      total = (total + (image.data[i] ?? 0)) % 1_000_003;
     return `${canvasNode.width}x${canvasNode.height}:${image.data.length}:${total}`;
   });
 }
@@ -38,9 +39,12 @@ test('mocked globe scenes stay labeled and keep controls on screen', async ({ pa
   await page.getByRole('button', { name: 'Muted', exact: true }).click();
   await expect(globe).toHaveAttribute('data-kind', 'muted');
   await expect(page.getByRole('button', { name: 'Unmute microphone', exact: true })).toBeVisible();
-  await page.getByRole('navigation', { name: 'Mocked live-call scenes' }).getByRole('button', { name: 'Compact mode', exact: true }).click();
+  await page
+    .getByRole('navigation', { name: 'Mocked live-call scenes' })
+    .getByRole('button', { name: 'Compact mode', exact: true })
+    .click();
   await expect(page.locator('.live-call-globe-compact')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Expand', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Expand voice', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Ended', exact: true }).click();
   await expect(page.locator('.live-call-globe')).toHaveAttribute('data-kind', 'ended');
   await page.getByRole('button', { name: 'Error', exact: true }).click();
@@ -50,12 +54,19 @@ test('mocked globe scenes stay labeled and keep controls on screen', async ({ pa
 test('keyboard users can move through mocked call controls', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('http://127.0.0.1:3102/?mode=live-call-globe&scene=listening');
-  await page.getByRole('region', { name: 'Aethelios Live' }).getByRole('button', { name: 'Mute microphone', exact: true }).focus();
+  await page
+    .getByRole('region', { name: 'Aethelios Live' })
+    .getByRole('button', { name: 'Mute microphone', exact: true })
+    .focus();
   await expect(page.getByRole('button', { name: 'Mute microphone', exact: true })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(page.getByRole('button', { name: 'End session', exact: true })).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('region', { name: 'Aethelios Live' }).getByRole('button', { name: 'Compact', exact: true })).toBeFocused();
+  await expect(
+    page
+      .getByRole('region', { name: 'Aethelios Live' })
+      .getByRole('button', { name: 'Minimize voice', exact: true }),
+  ).toBeFocused();
 });
 
 test('reduced motion keeps the official emblem upright and still', async ({ page }) => {
@@ -87,9 +98,9 @@ for (const viewport of viewports)
     expect(Math.abs((globeBox?.width ?? 0) - (globeBox?.height ?? 1))).toBeLessThan(2);
     expect(Math.abs((canvasBox?.width ?? 0) - (canvasBox?.height ?? 1))).toBeLessThan(2);
     expect(controlBox?.y ?? 0).toBeLessThan(viewport.height - 20);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(
-      true,
-    );
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
+    ).toBe(true);
   });
 
 test('mounting the globe does not acquire a second microphone or session', async ({ page }) => {
@@ -159,10 +170,10 @@ test('mounting the globe does not acquire a second microphone or session', async
   await page.getByRole('button', { name: 'Start voice', exact: true }).click();
   const compact = page.getByRole('region', { name: 'Persistent Aethelios voice controls' });
   await expect(compact.locator('.live-call-globe')).toBeVisible();
-  await expect.poll(() => page.evaluate(() => (window as unknown as { micCalls: number }).micCalls)).toBe(
-    1,
-  );
-  await compact.getByRole('button', { name: 'Expand', exact: true }).click();
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { micCalls: number }).micCalls))
+    .toBe(1);
+  await compact.getByRole('button', { name: 'Expand voice', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
   await expect(dialog.locator('.live-call-globe')).toBeVisible();
   expect(starts).toBe(1);
@@ -246,7 +257,7 @@ test('Still and reduced motion apply on the production Live surface without remo
   await expect(globe).toHaveAttribute('data-motion', 'ambient');
   await expect.poll(async () => canvasDigest(canvas), { timeout: 1500 }).not.toBe(still);
   await expect(canvas).toHaveAttribute('data-keep', '1');
-  await compact.getByRole('button', { name: 'Expand', exact: true }).click();
+  await compact.getByRole('button', { name: 'Expand voice', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
   const immersive = dialog.locator('.live-call-globe');
   await expect(immersive).toBeVisible();
@@ -318,7 +329,7 @@ test('canvas stays circular in compact and expanded production layouts', async (
     await page.setViewportSize(viewport);
     const compactBox = await compact.locator('.live-call-globe').boundingBox();
     expect(Math.abs((compactBox?.width ?? 0) - (compactBox?.height ?? 1))).toBeLessThan(3);
-    await compact.getByRole('button', { name: 'Expand', exact: true }).click();
+    await compact.getByRole('button', { name: 'Expand voice', exact: true }).click();
     const immersiveBox = await page
       .getByRole('dialog', { name: 'Aethelios Live', exact: true })
       .locator('.live-call-globe')
@@ -385,12 +396,16 @@ test('Still resize updates canvas bitmap and displayed size without restarting m
   await page.getByRole('checkbox', { name: /I consent/ }).check();
   await page.getByRole('button', { name: 'Start voice', exact: true }).click();
   const compact = page.getByRole('region', { name: 'Persistent Aethelios voice controls' });
-  await expect(compact.locator('.live-call-globe')).toHaveAttribute('data-earth', /ready|fallback/, {
-    timeout: 15000,
-  });
+  await expect(compact.locator('.live-call-globe')).toHaveAttribute(
+    'data-earth',
+    /ready|fallback/,
+    {
+      timeout: 15000,
+    },
+  );
   await page.getByRole('button', { name: 'Pause ambient motion', exact: true }).click();
   await expect(compact.locator('.live-call-globe')).toHaveAttribute('data-motion', 'still');
-  await compact.getByRole('button', { name: 'Expand', exact: true }).click();
+  await compact.getByRole('button', { name: 'Expand voice', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
   const globe = dialog.locator('.live-call-globe');
   const canvas = globe.locator('.live-globe-canvas');

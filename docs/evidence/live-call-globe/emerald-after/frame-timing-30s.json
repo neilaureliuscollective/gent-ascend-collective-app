@@ -1,0 +1,67 @@
+{
+  "capturedAt": "2026-10-16T22:45:59.835Z",
+  "hardware": {
+    "platform": "linux 6.12.94+ x64",
+    "cpus": "Intel(R) Xeon(R) Processor",
+    "cpuCount": 4,
+    "totalMemMb": 16003,
+    "note": "headless Chromium in the cloud agent VM; not a physical phone or Fold"
+  },
+  "targetFps": 30,
+  "proposed": {
+    "renderedFps": 28,
+    "p95PaintMs": 12
+  },
+  "sustained": [
+    {
+      "viewport": "phone-390x844",
+      "label": "30s ambient phone-390x844",
+      "elapsedMs": 30029,
+      "paints": 901,
+      "fps": 30.00432914848979,
+      "p50PaintMs": 6.300000000745058,
+      "p95PaintMs": 6.700000001117587,
+      "maxPaintMs": 9.800000000745058,
+      "bufferWidth": 300,
+      "cssWidth": "300px",
+      "sampleCount": 1024,
+      "looping": true
+    },
+    {
+      "viewport": "fold-emulated-884x690",
+      "label": "30s ambient fold-emulated-884x690",
+      "elapsedMs": 30017,
+      "paints": 900,
+      "fps": 29.983009627877536,
+      "p50PaintMs": 4.800000000745058,
+      "p95PaintMs": 5.800000000745058,
+      "maxPaintMs": 8.599999999627471,
+      "bufferWidth": 262,
+      "cssWidth": "262.188px",
+      "sampleCount": 1024,
+      "looping": true
+    }
+  ],
+  "exercised": {
+    "paintsDuringTypingAndControls": 27,
+    "interruptedPaintsDelta": 5,
+    "resizeBufferWidth": 160,
+    "stillLooping": false,
+    "hidden": {
+      "grew": 3,
+      "looping": false
+    },
+    "compactAfterEscapeLooping": true,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36"
+  },
+  "priorRenderer": {
+    "comparedInThisRun": false,
+    "reason": "84e694aa was not remounted for a 30s same-environment baseline. That renderer allocated ImageData and computed liveGlobeSphereCoords(rotation) plus lighting every pixel. Current reuses ImageData and caches lighting. Earlier 2.5s current sample at 300px was 29.99fps / p95 6.4ms and is not a 30s phone proof."
+  },
+  "limitations": [
+    "Headless Chromium on a cloud Linux VM, not a physical phone or unfolded Fold.",
+    "884×690 is an emulated viewport.",
+    "No 30s baseline from the prior renderer in this same run.",
+    "30fps is the rAF cadence (stamp-last >= 33), not a forced vsync."
+  ]
+}

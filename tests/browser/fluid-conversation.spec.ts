@@ -283,3 +283,45 @@ test('a confirmed answer cannot become interrupted while its saved list refreshe
   await expect(input(page)).toHaveValue('Next draft during saved-list refresh');
   await expect(page.locator('.conversation-turn')).toHaveCount(1);
 });
+
+for (const viewport of [
+  { width: 344, height: 844, label: 'phone-emulated' },
+  { width: 884, height: 690, label: 'fold-unfolded-emulated' },
+]) {
+  test(`streamed lists, links and code stay contained at ${viewport.label}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.goto(`${fixture}?markdownReply=1`);
+    await input(page).fill('Ask for a structured sample');
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
+    await expect(input(page)).toHaveValue('');
+    await page.getByRole('button', { name: 'Emit response text' }).click();
+    await expect(page.locator('.message-markdown')).toContainText('const session = 1;');
+    const stop = page.getByRole('button', { name: 'Stop reply', exact: true });
+    await expect(stop).toBeVisible();
+    const talkBox = await page.locator('.aethelios-page').boundingBox();
+    const stopBox = await stop.boundingBox();
+    expect(talkBox).toBeTruthy();
+    expect(stopBox).toBeTruthy();
+    expect(stopBox!.y).toBeGreaterThanOrEqual(talkBox!.y - 1);
+    expect(stopBox!.y + stopBox!.height).toBeLessThanOrEqual(talkBox!.y + talkBox!.height + 1);
+    await page.getByRole('button', { name: 'Emit response text' }).click();
+    await expect(page.locator('.message-markdown ol li')).toHaveCount(2);
+    await expect(page.locator('.message-markdown ul li')).toHaveCount(2);
+    const link = page.locator('.message-markdown a', { hasText: 'Aethelios' });
+    await expect(link).toHaveAttribute('href', 'https://example.com/aethelios');
+    await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    await expect(page.locator('.message-markdown pre')).toContainText('const session = 1;');
+    await page.getByRole('button', { name: 'Confirm synthetic save' }).click();
+    await expect(page.locator('.aurelius-notice')).toHaveText('Reply saved.');
+    await expect(page.locator('.message-markdown ol li')).toHaveCount(2);
+    await expect(page.locator('.message-markdown pre')).toContainText('const session = 1;');
+    expect(errors).toEqual([]);
+    await page.screenshot({
+      path: `test-results/talk-markdown-${viewport.label}.png`,
+      fullPage: true,
+    });
+  });
+}

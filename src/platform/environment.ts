@@ -25,6 +25,8 @@ export function parseEnvironment(input: Record<string, string | undefined>) {
   const enabled = env.AURELIUS_DEV_HARNESS === 'true';
   if (env.VERCEL_ENV === 'production' && mode !== 'production')
     throw new Error('Production deployment requires APP_ENV=production');
+  if (env.VERCEL_ENV === 'preview' && mode === 'production')
+    throw new Error('Preview deployment cannot use APP_ENV=production');
   if ((env.VERCEL || env.VERCEL_ENV) && mode === 'local')
     throw new Error('Local mode is forbidden on hosted deployments');
   if (Boolean(env.NEXT_PUBLIC_SUPABASE_URL) !== Boolean(env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY))

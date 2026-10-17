@@ -1,7 +1,11 @@
-import { test, expect } from './fixtures';
+import { test, expect, type Page } from './fixtures';
 import type { WorkspaceData, Turn } from '../../src/domains/intelligence/types';
 import type { TalkCreationWorkspace } from '../../src/domains/talk-creation/schema';
 import { lifestyleLaunchBoard, selectDesignDirection } from '../../src/domains/talk-creation/design-board';
+
+function selectedChip(page: Page, text: string | RegExp) {
+  return page.locator('.talk-selection-summary-text').filter({ hasText: text });
+}
 
 const conversation = '30000000-0000-4000-8000-000000000441';
 const turn: Turn = {
@@ -89,7 +93,9 @@ test('Talk elevation names the selected Lifestyle direction above the shared com
   });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(`/app/aethelios?conversation=${conversation}`);
-  await expect(page.getByText(/Changing this: Aethelios Lifestyle launch directions · v4 · Emerald Glass/)).toBeVisible();
+  await expect(
+    selectedChip(page, /Changing this: Aethelios Lifestyle launch directions · v4 · Emerald Glass/),
+  ).toBeVisible();
   await expect(page.getByLabel('Message Aethelios', { exact: true })).toBeVisible();
   await expect(page.locator('#talk-voice-dock')).toHaveCount(1);
   await expect(page.getByText('Legacy Reserve')).toHaveCount(0);
@@ -99,7 +105,9 @@ test('Talk elevation names the selected Lifestyle direction above the shared com
     ['desktop', { width: 1440, height: 900 }],
   ] as const) {
     await page.setViewportSize(size);
-    await expect(page.getByText(/Changing this: Aethelios Lifestyle launch directions · v4 · Emerald Glass/)).toBeVisible();
+    await expect(
+    selectedChip(page, /Changing this: Aethelios Lifestyle launch directions · v4 · Emerald Glass/),
+  ).toBeVisible();
     await page.screenshot({
       path: testInfo.outputPath(`talk-elevation-${name}.png`),
       animations: 'disabled',
@@ -164,7 +172,7 @@ test('Talk elevation opens a Lifestyle brief as an editable document with honest
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`/app/aethelios?conversation=${conversation}`);
-  await expect(page.getByText(/Changing this: Aethelios Lifestyle launch · v2/)).toBeVisible();
+  await expect(selectedChip(page, /Changing this: Aethelios Lifestyle launch · v2/)).toBeVisible();
   await page.getByRole('button', { name: 'Open', exact: true }).click();
   await expect(page.getByRole('group', { name: 'Document view' })).toBeVisible();
   await page.getByRole('button', { name: 'Preview', exact: true }).click();
@@ -173,7 +181,9 @@ test('Talk elevation opens a Lifestyle brief as an editable document with honest
   );
   await page.getByRole('button', { name: 'Edit', exact: true }).click();
   await page.getByRole('button', { name: 'Change Purpose' }).click();
-  await expect(page.getByText('Changing this: Aethelios Lifestyle launch · v2 · Purpose')).toBeVisible();
+  await expect(
+    selectedChip(page, 'Changing this: Aethelios Lifestyle launch · v2 · Purpose'),
+  ).toBeVisible();
   await page.getByText('Saved versions').click();
   await page.getByLabel('Compare with').selectOption(previous.id);
   await expect(page.getByText(/Purpose: “Introduce the line.” →/)).toBeVisible();
@@ -246,7 +256,9 @@ test('Talk keeps a brief Purpose target when a design board is also selected', a
   await page.goto(`/app/aethelios?conversation=${conversation}`);
   await page.locator('.talk-creation-card[data-kind="brief"]').getByRole('button', { name: 'Open' }).click();
   await page.getByRole('button', { name: 'Change Purpose' }).click();
-  await expect(page.getByText('Changing this: Aethelios Lifestyle launch · v2 · Purpose')).toBeVisible();
+  await expect(
+    selectedChip(page, 'Changing this: Aethelios Lifestyle launch · v2 · Purpose'),
+  ).toBeVisible();
   await expect(page.getByText('Changing this: Aethelios Lifestyle launch directions · v4 · Emerald Glass')).toHaveCount(0);
   await page.getByRole('button', { name: 'New', exact: true }).click();
   await expect(page.getByText('Changing this: Aethelios Lifestyle launch · v2 · Purpose')).toHaveCount(0);
@@ -343,7 +355,9 @@ test('Talk drops a brief field target when the opened conversation changes', asy
   await page.goto(`/app/aethelios?conversation=${conversation}`);
   await page.getByRole('button', { name: 'Open', exact: true }).click();
   await page.getByRole('button', { name: 'Change Purpose' }).click();
-  await expect(page.getByText('Changing this: Aethelios Lifestyle launch · v2 · Purpose')).toBeVisible();
+  await expect(
+    selectedChip(page, 'Changing this: Aethelios Lifestyle launch · v2 · Purpose'),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Conversations', exact: true }).click();
   await page.locator('.conversation-list > li > button').filter({ hasText: 'Other work' }).click();
   await expect(page.getByText('Changing this: Aethelios Lifestyle launch · v2 · Purpose')).toHaveCount(0);

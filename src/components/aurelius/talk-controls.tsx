@@ -117,58 +117,80 @@ export function TalkInput({
     // The viewport owner sets the CSS cap; do not independently subtract keyboard geometry.
     const limit = Math.max(44, parseFloat(getComputedStyle(field).maxHeight) || 200);
     field.style.height = '0px';
+    const previousScroll = field.scrollTop;
     field.style.height = `${Math.max(44, Math.min(field.scrollHeight, limit))}px`;
+    field.scrollTop = !field.value
+      ? 0
+      : document.activeElement === field && field.selectionEnd === field.value.length
+        ? field.scrollHeight
+        : previousScroll;
   }, [inputRef]);
   useLayoutEffect(resize, [value, resize]);
   useEffect(() => {
-    const root = inputRef.current?.closest('.talk-page, .company-room-focused');
-    root?.addEventListener('talk-viewport', resize);
-    return () => root?.removeEventListener('talk-viewport', resize);
+    const field = inputRef.current;
+    const root = field?.closest('.talk-page, .company-room-focused');
+    const composer = field?.closest('.aurelius-composer, .talk-composer');
+    let nested = false;
+    const bounded = () => {
+      if (nested) return;
+      nested = true;
+      resize();
+      nested = false;
+    };
+    root?.addEventListener('talk-viewport', bounded);
+    const observer = composer ? new ResizeObserver(bounded) : null;
+    if (composer) observer?.observe(composer);
+    return () => {
+      root?.removeEventListener('talk-viewport', bounded);
+      observer?.disconnect();
+    };
   }, [resize, inputRef]);
   return (
     <>
       <label className="sr-only" htmlFor={id}>
         {label || placeholder}
       </label>
-      <textarea
-        className="talk-input"
-        id={id}
-        ref={inputRef}
-        rows={1}
-        value={value}
-        disabled={disabled}
-        maxLength={maxLength}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => {
-          if (
-            e.key === 'Enter' &&
-            !e.nativeEvent.isComposing &&
-            !e.shiftKey &&
-            (e.metaKey || e.ctrlKey || window.matchMedia('(pointer:fine)').matches)
-          ) {
-            e.preventDefault();
-            e.currentTarget.form?.requestSubmit();
-          }
-        }}
-      />
-      <button
-        type="button"
-        className="talk-expand"
-        disabled={disabled}
-        aria-label="Expand writing space"
-        onClick={() => {
-          caret.current = {
-            start: inputRef.current?.selectionStart ?? value.length,
-            end: inputRef.current?.selectionEnd ?? value.length,
-          };
-          editor.current?.showModal();
-          expanded.current?.focus();
-          expanded.current?.setSelectionRange(caret.current.start, caret.current.end);
-        }}
-      >
-        <Icon name="expand" className="action-icon" />
-      </button>
+      <div className="talk-text-entry">
+        <textarea
+          className="talk-input"
+          id={id}
+          ref={inputRef}
+          rows={1}
+          value={value}
+          disabled={disabled}
+          maxLength={maxLength}
+          placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (
+              e.key === 'Enter' &&
+              !e.nativeEvent.isComposing &&
+              !e.shiftKey &&
+              (e.metaKey || e.ctrlKey || window.matchMedia('(pointer:fine)').matches)
+            ) {
+              e.preventDefault();
+              e.currentTarget.form?.requestSubmit();
+            }
+          }}
+        />
+        <button
+          type="button"
+          className="talk-expand"
+          disabled={disabled}
+          aria-label="Expand writing space"
+          onClick={() => {
+            caret.current = {
+              start: inputRef.current?.selectionStart ?? value.length,
+              end: inputRef.current?.selectionEnd ?? value.length,
+            };
+            editor.current?.showModal();
+            expanded.current?.focus();
+            expanded.current?.setSelectionRange(caret.current.start, caret.current.end);
+          }}
+        >
+          <Icon name="expand" className="action-icon" />
+        </button>
+      </div>
       <dialog
         ref={editor}
         className="talk-drawer talk-editor"

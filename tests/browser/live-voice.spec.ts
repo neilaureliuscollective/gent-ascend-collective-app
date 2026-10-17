@@ -118,12 +118,13 @@ for (const width of [390, 1440])
     );
     await expect(compact.getByRole('status')).toHaveText('Speaking');
     await expect(compact.locator('.im-presence')).toHaveAttribute('data-phase', 'speaking');
-    await compact.getByRole('button', { name: 'Expand', exact: true }).click();
+    await compact.getByRole('button', { name: 'Expand voice', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
     await expect(dialog).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(compact).toBeVisible();
     expect(starts).toBe(1);
+    expect(await compact.evaluate((node) => node.scrollHeight - node.clientHeight <= 1)).toBe(true);
     await compact.getByRole('button', { name: 'End session', exact: true }).click();
     await expect(compact.getByRole('status')).toHaveText('Session ended');
     await expect(compact.locator('.im-presence')).toHaveAttribute('data-phase', 'cancelled');
@@ -175,7 +176,10 @@ test('voice diagnostic download excludes transcript and record IDs', async ({ pa
       }),
     });
   });
-  await dialog.getByText('Voice diagnostics', { exact: true }).click();
+  await dialog.getByText('Details', { exact: true }).click();
+  await expect(
+    dialog.getByRole('heading', { name: 'Voice diagnostics', exact: true }),
+  ).toBeVisible();
   const downloaded = page.waitForEvent('download');
   await dialog.getByRole('button', { name: 'Download voice diagnostics', exact: true }).click();
   const download = await downloaded;

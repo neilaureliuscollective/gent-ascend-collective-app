@@ -25,6 +25,21 @@ import { useReadingAnchor } from './reading-anchor';
 import { readConversationStream } from '@/platform/conversation/read-stream';
 import { conversationTiming } from '@/platform/conversation/timing';
 import { readTalkDraft, writeTalkDraft, clearTalkDrafts } from '@/platform/conversation/drafts';
+import {
+  mergeOlderTurns,
+  olderTurnsBelongToConversation,
+  shouldApplyOlderHistory,
+  shouldClearOlderLoading,
+  shouldMergeOlderHistory,
+} from '@/platform/conversation/history';
+import {
+  beginTalkEditSnapshot,
+  hasUnfinishedTalkWork,
+  revisionAllowedForConversation,
+  snapshotBelongsToConversation,
+  unfinishedTalkWorkPrompt,
+  type TalkEditSnapshot,
+} from '@/platform/conversation/unfinished';
 import { TalkDrawer, TalkInput, retainComposerFocus } from './talk-controls';
 import { BplusMaterial, BplusTalkTools } from '../visual/bplus-material';
 import { observedOperation } from '@/platform/visual/operation-adapters';
@@ -58,7 +73,7 @@ import {
   selectionChipLabel,
   workTargetVoicePrefix,
 } from '@/domains/work-items';
-import { attachTalkVoiceDock } from '@/components/live/voice-dock';
+import { attachTalkTranscriptFocus, attachTalkVoiceDock } from '@/components/live/voice-dock';
 import {
   bindTalkSave,
   clearTalkSave,
@@ -181,13 +196,20 @@ export function AureliusWorkspace({
   const [orchestrating, setOrchestrating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
+  const olderGeneration = useRef(0);
+  const olderRequest = useRef<AbortController | null>(null);
   const [revision, setRevision] = useState<{ sourceTurnId: string; revisionKind: 'edit' } | null>(
     null,
   );
+  const editSnapshot = useRef<TalkEditSnapshot<
+    TalkAttachment,
+    { creationId: string; field: string }
+  > | null>(null);
   const generation = useRef<AbortController | null>(null);
   const cancelReply = useRef<(() => void) | null>(null);
   const reading = useRef<AbortController | null>(null);
   const scroll = useRef<HTMLDivElement>(null);
+  const olderScroll = useRef<{ height: number; top: number; generation: number } | null>(null);
   const follow = useRef(true);
   const rememberReadingPosition = useReadingAnchor(scroll, follow, data !== null);
   const [awayFromLatest, setAwayFromLatest] = useState(false);
@@ -219,6 +241,61 @@ export function AureliusWorkspace({
     setAttachment(null);
     setAttachmentEpoch((value) => value + 1);
   }, []);
+  const invalidateOlderHistory = useCallback(() => {
+    olderGeneration.current += 1;
+    olderRequest.current?.abort();
+    olderRequest.current = null;
+    olderScroll.current = null;
+    setLoadingOlder(false);
+  }, []);
+  const confirmLeaveUnfinished = useCallback(
+    (intent: 'switch' | 'new') => {
+      const field = composer.current;
+      const liveDraft = field?.value ?? draft;
+      if (
+        !hasUnfinishedTalkWork({
+          draft: liveDraft,
+          attachment,
+          attachmentBusy,
+          revision,
+        })
+      )
+        return true;
+      const caret = {
+        start: field?.selectionStart ?? liveDraft.length,
+        end: field?.selectionEnd ?? liveDraft.length,
+      };
+      if (confirm(unfinishedTalkWorkPrompt(intent))) return true;
+      requestAnimationFrame(() => {
+        const input = composer.current;
+        if (!input) return;
+        input.setSelectionRange(caret.start, caret.end);
+        const modal = input.ownerDocument.querySelector('dialog[open]');
+        if (!modal) input.focus();
+      });
+      return false;
+    },
+    [draft, attachment, attachmentBusy, revision],
+  );
+  const discardUnfinishedComposer = useCallback(() => {
+    editSnapshot.current = null;
+    memoryOnlyDraft.current = false;
+    const ownerId = data?.ownerId ?? '';
+    if (!compact && ownerId) writeTalkDraft(ownerId, selected, '');
+    setDraft('');
+    setRevision(null);
+    setWorkTarget(null);
+    setOpenWorkId(null);
+    setAttachmentBusy(false);
+    clearAttachment();
+  }, [compact, data, selected, clearAttachment]);
+  const acceptAttachment = useCallback(
+    (value: TalkAttachment | null) => {
+      if (selectedRef.current !== selected) return;
+      setAttachment(value);
+    },
+    [selected],
+  );
   const detailDialog = useRef<HTMLDialogElement>(null);
   const creationRead = useRef<AbortController | null>(null);
   const creationGeneration = useRef(0);
@@ -420,6 +497,7 @@ export function AureliusWorkspace({
   const load = useCallback(
     async (id: string | null = null) => {
       recoverGeneration.current += 1;
+      invalidateOlderHistory();
       reading.current?.abort();
       const controller = new AbortController();
       reading.current = controller;
@@ -462,16 +540,19 @@ export function AureliusWorkspace({
           memoryOnlyDraft.current = false;
           setDraft(readTalkDraft(owner, id));
         }
+        if (id !== selectedRef.current) {
+          clearAttachment();
+          setAttachmentBusy(false);
+          setWorkTarget(null);
+          setOpenWorkId(null);
+          editSnapshot.current = null;
+          setRevision(null);
+        }
+        selectedRef.current = id;
         setData(result as WorkspaceData);
         setCouncilSelection(
           councilFromVersion((result as WorkspaceData).turns.at(-1)?.prompt_version ?? ''),
         );
-        if (id !== selectedRef.current) {
-          clearAttachment();
-          setWorkTarget(null);
-          setOpenWorkId(null);
-        }
-        selectedRef.current = id;
         setSelected(id);
         const boundRecover = recoverGeneration.current;
         void loadCreations(id).then(() => {
@@ -507,7 +588,14 @@ export function AureliusWorkspace({
         if (!controller.signal.aborted) setLoading(false);
       }
     },
-    [compact, homeDraft, loadCreations, recoverPendingSaves, clearAttachment],
+    [
+      compact,
+      homeDraft,
+      loadCreations,
+      recoverPendingSaves,
+      clearAttachment,
+      invalidateOlderHistory,
+    ],
   );
   useEffect(() => {
     const media = window.matchMedia('(min-width: 900px)');
@@ -524,6 +612,14 @@ export function AureliusWorkspace({
     if (!detailDialog.current?.open) detailDialog.current?.showModal();
   }, [openWorkId, widePanel]);
   useEffect(() => () => stopImageWatch(), [stopImageWatch]);
+  useEffect(
+    () => () => {
+      olderGeneration.current += 1;
+      olderRequest.current?.abort();
+      olderRequest.current = null;
+    },
+    [],
+  );
   async function refreshMetadata(id: string) {
     reading.current?.abort();
     const controller = new AbortController();
@@ -571,44 +667,77 @@ export function AureliusWorkspace({
       throw e;
     }
   }
-  const olderScroll = useRef<{ height: number; top: number } | null>(null);
   useEffect(() => {
     const el = scroll.current,
       before = olderScroll.current;
-    if (el && before) {
+    if (!before || before.generation !== olderGeneration.current) {
+      olderScroll.current = null;
+      return;
+    }
+    if (el) {
       el.scrollTop = before.top + el.scrollHeight - before.height;
       olderScroll.current = null;
     }
   }, [data?.turns, busy, operation.id]);
   async function loadOlder() {
     const first = data?.turns[0];
-    if (!selected || !first || loadingOlder) return;
+    const conversationId = selectedRef.current;
+    const ownerId = data?.ownerId ?? '';
+    if (!conversationId || !first || !ownerId || loadingOlder) return;
+    const generation = ++olderGeneration.current;
+    olderRequest.current?.abort();
+    const controller = new AbortController();
+    olderRequest.current = controller;
+    const current = () => ({
+      generation: olderGeneration.current,
+      ownerId: verifiedDraftOwner.current,
+      conversationId: selectedRef.current,
+    });
+    const request = { generation, ownerId, conversationId };
     setLoadingOlder(true);
     try {
       const response = await fetch(
-        `/api/aurelius?conversationId=${selected}&before=${encodeURIComponent(first.created_at)}`,
-        { cache: 'no-store' },
+        `/api/aurelius?conversationId=${conversationId}&before=${encodeURIComponent(first.created_at)}`,
+        { cache: 'no-store', signal: controller.signal },
       );
       const older = (await response.json()) as WorkspaceData;
+      if (!shouldApplyOlderHistory(request, current())) return;
       if (!response.ok) throw new Error('Older messages could not be loaded.');
+      if (older.ownerId && older.ownerId !== ownerId) return;
+      if (!olderTurnsBelongToConversation(older.turns, conversationId, ownerId)) return;
       if (scroll.current)
         olderScroll.current = {
           height: scroll.current.scrollHeight,
           top: scroll.current.scrollTop,
+          generation,
         };
-      setData((previous) =>
-        previous
-          ? {
-              ...previous,
-              turns: [...older.turns, ...previous.turns],
-              hasOlderTurns: older.hasOlderTurns,
-            }
-          : previous,
-      );
-      follow.current = false;
+      setData((previous) => {
+        if (
+          !previous ||
+          !shouldMergeOlderHistory(
+            request,
+            {
+              generation: olderGeneration.current,
+              ownerId: previous.ownerId ?? verifiedDraftOwner.current,
+              conversationId: selectedRef.current,
+            },
+            previous,
+          )
+        )
+          return previous;
+        return {
+          ...previous,
+          turns: mergeOlderTurns(previous.turns, older.turns),
+          hasOlderTurns: older.hasOlderTurns,
+        };
+      });
+      if (shouldApplyOlderHistory(request, current())) follow.current = false;
     } catch (e) {
+      if (controller.signal.aborted || !shouldApplyOlderHistory(request, current())) return;
       setError(e instanceof Error ? e.message : 'Older messages could not be loaded.');
     } finally {
+      if (!shouldClearOlderLoading(generation, olderGeneration.current)) return;
+      if (olderRequest.current === controller) olderRequest.current = null;
       setLoadingOlder(false);
     }
   }
@@ -717,9 +846,18 @@ export function AureliusWorkspace({
     stopImageWatch,
   ]);
   useEffect(() => {
-    if (follow.current && scroll.current)
-      scroll.current.scrollTop = data?.turns.length ? scroll.current.scrollHeight : 0;
-  }, [data?.turns, busy, operation.id]);
+    if (follow.current && scroll.current) scroll.current.scrollTop = scroll.current.scrollHeight;
+  }, [data?.turns, busy, operation.id, liveState.transcript]);
+  useEffect(() => {
+    return attachTalkTranscriptFocus(() => {
+      const node = scroll.current;
+      if (!node) return;
+      follow.current = true;
+      setAwayFromLatest(false);
+      node.focus({ preventScroll: true });
+      node.scrollTo({ top: node.scrollHeight, behavior: 'instant' });
+    });
+  }, []);
   async function sendMessage(
     messageText: string,
     replace?: { sourceTurnId: string; revisionKind: 'retry' | 'regenerate' | 'edit' } | null,
@@ -828,7 +966,9 @@ export function AureliusWorkspace({
           includeContext,
           ...replace,
           ...(requestedCouncil ? { council: requestedCouncil } : {}),
-          ...(attachment && attachment.analysisPending !== false ? { attachmentId: attachment.id } : {}),
+          ...(attachment && attachment.analysisPending !== false
+            ? { attachmentId: attachment.id }
+            : {}),
           ...(() => {
             const resolved = resolveWorkTarget(
               creationWorkspace,
@@ -925,9 +1065,13 @@ export function AureliusWorkspace({
         } else if (item.type === 'error') throw new Error(item.message);
       }
       if (!saved) throw new Error('The connection ended before the save was confirmed.');
+      editSnapshot.current = null;
       setRevision(null);
       setNotice('Reply saved.');
-      if (attachment) setAttachment(current => current?.id === attachment.id ? { ...current, analysisPending: false } : current);
+      if (attachment)
+        setAttachment((current) =>
+          current?.id === attachment.id ? { ...current, analysisPending: false } : current,
+        );
       void loadCreations(id);
       // The saved receipt owns completion. Metadata refresh cannot hold the next request.
       void refreshMetadata(id);
@@ -1042,11 +1186,14 @@ export function AureliusWorkspace({
     if (owner) liveOwner.current = owner;
     if (previous && owner && previous !== owner) {
       voiceReconcile.current += 1;
+      invalidateOlderHistory();
+      editSnapshot.current = null;
+      setRevision(null);
       if (liveBusy) void liveController?.end('Voice ended because the signed-in account changed.');
       liveController?.invalidateTranscript();
       clearAttachment();
     }
-  }, [data?.ownerId, liveBusy, liveController, clearAttachment]);
+  }, [data?.ownerId, liveBusy, liveController, clearAttachment, invalidateOlderHistory]);
   useEffect(() => {
     if (compact) return;
     const onPop = () => {
@@ -1058,13 +1205,30 @@ export function AureliusWorkspace({
           ? raw
           : null;
       if (next === selected) return;
+      if (!confirmLeaveUnfinished('switch')) {
+        const url = new URL(window.location.href);
+        if (selected) url.searchParams.set('conversation', selected);
+        else url.searchParams.delete('conversation');
+        window.history.replaceState(window.history.state, '', url);
+        return;
+      }
       if (liveBusy && liveState.conversationId && liveState.conversationId !== next)
         void liveController?.end('Voice ended because you opened another conversation.');
+      discardUnfinishedComposer();
       void load(next).catch(() => {});
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
-  }, [compact, selected, liveBusy, liveState.conversationId, liveController, load]);
+  }, [
+    compact,
+    selected,
+    liveBusy,
+    liveState.conversationId,
+    liveController,
+    load,
+    confirmLeaveUnfinished,
+    discardUnfinishedComposer,
+  ]);
   const previousLivePhase = useRef(liveState.phase);
   const ownerId = data?.ownerId;
   useEffect(() => {
@@ -1199,6 +1363,7 @@ export function AureliusWorkspace({
     if (liveBusy) void liveController?.end('Voice ended because you started a new conversation.');
     liveController?.invalidateTranscript();
     recoverGeneration.current += 1;
+    invalidateOlderHistory();
     creationGeneration.current += 1;
     creationRead.current?.abort();
     stopImageWatch();
@@ -1222,10 +1387,12 @@ export function AureliusWorkspace({
     setError('');
     setNotice('');
     setTab('conversation');
+    editSnapshot.current = null;
     setRevision(null);
     void loadCreations(null);
     setOpenWorkId(null);
     setWorkTarget(null);
+    setAttachmentBusy(false);
     clearAttachment();
     follow.current = true;
     composer.current?.focus();
@@ -1601,6 +1768,7 @@ export function AureliusWorkspace({
           />
           <TalkPresence
             operation={loading ? observedOperation('talk-load', 'loading') : operation}
+            microphone={liveBusy ? (liveState.muted ? 'muted' : 'active') : 'off'}
             state={
               busy
                 ? 'working'
@@ -1621,27 +1789,19 @@ export function AureliusWorkspace({
                     disabled={blocked}
                     preview={preview}
                     onSelect={(id) => {
-                      setTab('conversation');
-                      if (
-                        draft.trim() &&
-                        !confirm('Discard the unsent draft and switch conversations?')
-                      )
+                      if (id === selected) {
+                        close();
                         return;
+                      }
+                      if (!confirmLeaveUnfinished('switch')) return;
+                      setTab('conversation');
                       close();
-                      memoryOnlyDraft.current = false;
-                      if (data.ownerId) writeTalkDraft(data.ownerId, selected, '');
-                      setDraft('');
-                      setWorkTarget(null);
-                      setOpenWorkId(null);
+                      discardUnfinishedComposer();
                       follow.current = true;
                       void reload(id).catch(() => {});
                     }}
                     onNew={() => {
-                      if (
-                        draft.trim() &&
-                        !confirm('Discard the unsent draft and start a new conversation?')
-                      )
-                        return;
+                      if (!confirmLeaveUnfinished('new')) return;
                       newConversation();
                       close();
                     }}
@@ -1666,11 +1826,7 @@ export function AureliusWorkspace({
               className="talk-tool talk-new-tool"
               disabled={blocked}
               onClick={() => {
-                if (
-                  !draft.trim() ||
-                  confirm('Discard the unsent draft and start a new conversation?')
-                )
-                  newConversation();
+                if (confirmLeaveUnfinished('new')) newConversation();
               }}
             >
               New
@@ -1684,11 +1840,7 @@ export function AureliusWorkspace({
                 className="text-button talk-new-in-menu"
                 disabled={blocked}
                 onClick={() => {
-                  if (
-                    !draft.trim() ||
-                    confirm('Discard the unsent draft and start a new conversation?')
-                  )
-                    newConversation();
+                  if (confirmLeaveUnfinished('new')) newConversation();
                 }}
               >
                 New conversation
@@ -1794,8 +1946,23 @@ export function AureliusWorkspace({
                           value={selected ?? ''}
                           disabled={blocked}
                           onChange={(e) => {
-                            follow.current = true;
-                            void reload(e.target.value || null).catch(() => {});
+                            const next = e.target.value || null;
+                            if (next === selected) return;
+                            if (next) {
+                              if (!confirmLeaveUnfinished('switch')) {
+                                e.currentTarget.value = selected ?? '';
+                                return;
+                              }
+                              discardUnfinishedComposer();
+                              follow.current = true;
+                              void reload(next).catch(() => {});
+                              return;
+                            }
+                            if (!confirmLeaveUnfinished('new')) {
+                              e.currentTarget.value = selected ?? '';
+                              return;
+                            }
+                            newConversation();
                           }}
                         >
                           <option value="">New conversation</option>
@@ -1811,7 +1978,9 @@ export function AureliusWorkspace({
                         <button
                           className="secondary-button"
                           disabled={blocked}
-                          onClick={newConversation}
+                          onClick={() => {
+                            if (confirmLeaveUnfinished('new')) newConversation();
+                          }}
                         >
                           New
                         </button>
@@ -1918,6 +2087,7 @@ export function AureliusWorkspace({
             includeContext={includeContext}
             onSelect={setCouncilSelection}
             onFocused={(id) => {
+              if (!confirmLeaveUnfinished('new')) return;
               newConversation();
               setCouncilSelection({ kind: 'specialist', specialists: [id] });
               setDraft(specialistStarters[id]);
@@ -1925,7 +2095,18 @@ export function AureliusWorkspace({
             }}
             onAssemble={(question, selection) => {
               setCouncilSelection(selection);
-              void sendMessage(question, revision, selection);
+              void sendMessage(
+                question,
+                revisionAllowedForConversation(
+                  revision,
+                  editSnapshot.current,
+                  data.ownerId ?? '',
+                  selected,
+                ) && revision
+                  ? revision
+                  : null,
+                selection,
+              );
             }}
           />
         )}
@@ -1949,241 +2130,262 @@ export function AureliusWorkspace({
         )}
         <>
           <div className="talk-creation-stage">
-          <div
-            className="conversation-scroll"
-            ref={scroll}
-            onScroll={() => {
-              const el = scroll.current;
-              if (el) {
-                follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-                setAwayFromLatest(!follow.current);
-                rememberReadingPosition();
-              }
-            }}
-            aria-label="Conversation messages"
-            aria-busy={busy}
-          >
-            {data.hasOlderTurns && (
-              <button
-                type="button"
-                className="secondary-button older-messages"
-                disabled={loadingOlder}
-                onClick={() => void loadOlder()}
-              >
-                {loadingOlder ? 'Loading…' : 'Load older messages'}
-              </button>
-            )}
-            {!data.turns.length && !busy ? (
-              <div className="aurelius-welcome">
-                <div className="welcome-heading">
-                  {compact ? (
-                    <AureliusPresence
-                      state={
-                        busy ? 'working' : preview || !data.configured ? 'disconnected' : 'ready'
-                      }
-                    />
-                  ) : (
-                    <div
-                      className="talk-welcome-presence"
-                      data-state={preview || !data.configured ? 'disconnected' : 'ready'}
-                      aria-hidden="true"
-                    >
-                      <IntelligencePresence
-                        variant="signal"
-                        size="conversation"
-                        operation={observedOperation('talk-welcome', 'ready')}
+            <div
+              className="conversation-scroll"
+              id="talk-conversation-transcript"
+              ref={scroll}
+              tabIndex={-1}
+              onScroll={() => {
+                const el = scroll.current;
+                if (el) {
+                  follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+                  setAwayFromLatest(!follow.current);
+                  rememberReadingPosition();
+                }
+              }}
+              aria-label="Conversation messages"
+              aria-busy={busy}
+            >
+              {data.hasOlderTurns && (
+                <button
+                  type="button"
+                  className="secondary-button older-messages"
+                  disabled={loadingOlder}
+                  onClick={() => void loadOlder()}
+                >
+                  {loadingOlder ? 'Loading…' : 'Load older messages'}
+                </button>
+              )}
+              {!data.turns.length && !busy ? (
+                <div className="aurelius-welcome">
+                  <div className="welcome-heading">
+                    {compact ? (
+                      <AureliusPresence
+                        state={
+                          busy ? 'working' : preview || !data.configured ? 'disconnected' : 'ready'
+                        }
                       />
-                    </div>
-                  )}
+                    ) : (
+                      <div
+                        className="talk-welcome-presence"
+                        data-state={preview || !data.configured ? 'disconnected' : 'ready'}
+                        aria-hidden="true"
+                      >
+                        <IntelligencePresence
+                          variant="signal"
+                          size="conversation"
+                          operation={observedOperation('talk-welcome', 'ready')}
+                        />
+                      </div>
+                    )}
 
-                  <div>
-                    <p className="eyebrow">Aethelios · Your central intelligence</p>
-                    <h2>What would you like to move forward?</h2>
-                    <Link
-                      className="text-link aethelios-meet-link"
-                      href="/app/aethelios/meet"
-                      onClick={(event) => {
-                        if (compact) event.currentTarget.closest('dialog')?.close();
-                      }}
-                    >
-                      Meet Aethelios →
-                    </Link>
+                    <div>
+                      <p className="eyebrow">Aethelios · Your central intelligence</p>
+                      <h2>What would you like to move forward?</h2>
+                      <Link
+                        className="text-link aethelios-meet-link"
+                        href="/app/aethelios/meet"
+                        onClick={(event) => {
+                          if (compact) event.currentTarget.closest('dialog')?.close();
+                        }}
+                      >
+                        Meet Aethelios →
+                      </Link>
+                    </div>
                   </div>
-                </div>
                   <p>
                     Share an idea, a question or the work ahead. We’ll find the next useful step.
                   </p>
-                <div className="conversation-starters">
-                  {[
-                    {
-                      label: 'Pressure-test an idea',
-                      draft:
-                        'I have an idea to pressure-test. Help me turn it into a clear decision.',
-                    },
-                    {
-                      label: 'Shape a creative brief',
-                      draft:
-                        'I need to create something. Help me shape the brief and a useful first draft.',
-                    },
-                    {
-                      label: 'Move a project forward',
-                      draft:
-                        'I have a project to move forward. Help me identify the next concrete action.',
-                    },
-                    {
-                      label: 'Develop a brand',
-                      draft: 'Help me develop a premium brand and website.',
-                    },
-                  ].map((suggestion) => (
-                    <button
-                      key={suggestion.label}
-                      onClick={() => {
-                        setDraft(suggestion.draft);
-                        composer.current?.focus();
-                      }}
-                      disabled={blocked}
-                    >
-                      {suggestion.label}
-                      <span aria-hidden="true">
-                        <Icon name="arrow-up-right" className="action-icon" />
-                      </span>
-                    </button>
-                  ))}
+                  <div className="conversation-starters">
+                    {[
+                      {
+                        label: 'Pressure-test an idea',
+                        draft:
+                          'I have an idea to pressure-test. Help me turn it into a clear decision.',
+                      },
+                      {
+                        label: 'Shape a creative brief',
+                        draft:
+                          'I need to create something. Help me shape the brief and a useful first draft.',
+                      },
+                      {
+                        label: 'Move a project forward',
+                        draft:
+                          'I have a project to move forward. Help me identify the next concrete action.',
+                      },
+                      {
+                        label: 'Develop a brand',
+                        draft: 'Help me develop a premium brand and website.',
+                      },
+                    ].map((suggestion) => (
+                      <button
+                        key={suggestion.label}
+                        onClick={() => {
+                          setDraft(suggestion.draft);
+                          composer.current?.focus();
+                        }}
+                        disabled={blocked}
+                      >
+                        {suggestion.label}
+                        <span aria-hidden="true">
+                          <Icon name="arrow-up-right" className="action-icon" />
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              data.turns
-                .filter((turn) => !data.turns.some((newer) => newer.parent_turn_id === turn.id))
-                .map((turn) => (
-                  <ConversationTurn
-                    key={turn.id}
-                    turn={turn}
-                    operation={turn.id === operation.id ? operation : undefined}
-                    artifacts={turn.id === operation.id ? streamArtifacts : undefined}
-                    onFeedback={(id, value) => void feedback(id, value)}
-                    disabled={blocked}
-                    versions={priorVersions(turn, data.turns)}
-                    onCopy={() => void navigator.clipboard.writeText(turn.assistant_text)}
-                    onRevise={
-                      turn.id === data.turns.at(-1)?.id && !data.currentConversation?.archived_at
-                        ? (kind) => {
-                            if (kind === 'edit') {
-                              setDraft(turn.user_text);
-                              setRevision({ sourceTurnId: turn.id, revisionKind: 'edit' });
-                              composer.current?.focus();
-                            } else
-                              void sendMessage(
-                                turn.user_text,
-                                { sourceTurnId: turn.id, revisionKind: kind },
-                                councilFromVersion(turn.prompt_version),
-                              );
-                          }
-                        : undefined
-                    }
-                    action={
-                      turn.id ===
-                        data.turns.filter((item) => item.status === 'complete').at(-1)?.id &&
-                      data.canChat
-                        ? {
-                            proposal: data.actionProposals?.find(
-                              (item) => item.source_turn_id === turn.id,
-                            ),
-                            onChanged: () => reload(selected),
-                          }
-                        : undefined
-                    }
-                    creations={creationsOnTurn(
-                      turn.id,
-                      data.turns
+              ) : (
+                data.turns
+                  .filter((turn) => !data.turns.some((newer) => newer.parent_turn_id === turn.id))
+                  .map((turn) => (
+                    <ConversationTurn
+                      key={turn.id}
+                      turn={turn}
+                      operation={turn.id === operation.id ? operation : undefined}
+                      artifacts={turn.id === operation.id ? streamArtifacts : undefined}
+                      onFeedback={(id, value) => void feedback(id, value)}
+                      disabled={blocked}
+                      versions={priorVersions(turn, data.turns)}
+                      onCopy={() => void navigator.clipboard.writeText(turn.assistant_text)}
+                      onRevise={
+                        turn.id === data.turns.at(-1)?.id && !data.currentConversation?.archived_at
+                          ? (kind) => {
+                              if (kind === 'edit') {
+                                const field = composer.current;
+                                const liveDraft = field?.value ?? draft;
+                                editSnapshot.current = beginTalkEditSnapshot({
+                                  ownerId: data.ownerId ?? '',
+                                  conversationId: selectedRef.current,
+                                  draft: liveDraft,
+                                  caret: {
+                                    start: field?.selectionStart ?? liveDraft.length,
+                                    end: field?.selectionEnd ?? liveDraft.length,
+                                  },
+                                  attachment,
+                                  workTarget,
+                                });
+                                setDraft(turn.user_text);
+                                setRevision({ sourceTurnId: turn.id, revisionKind: 'edit' });
+                                requestAnimationFrame(() => {
+                                  composer.current?.focus();
+                                  composer.current?.setSelectionRange(
+                                    turn.user_text.length,
+                                    turn.user_text.length,
+                                  );
+                                });
+                              } else
+                                void sendMessage(
+                                  turn.user_text,
+                                  { sourceTurnId: turn.id, revisionKind: kind },
+                                  councilFromVersion(turn.prompt_version),
+                                );
+                            }
+                          : undefined
+                      }
+                      action={
+                        turn.id ===
+                          data.turns.filter((item) => item.status === 'complete').at(-1)?.id &&
+                        data.canChat
+                          ? {
+                              proposal: data.actionProposals?.find(
+                                (item) => item.source_turn_id === turn.id,
+                              ),
+                              onChanged: () => reload(selected),
+                            }
+                          : undefined
+                      }
+                      creations={creationsOnTurn(
+                        turn.id,
+                        data.turns
                           .filter(
                             (item) => !data.turns.some((newer) => newer.parent_turn_id === item.id),
                           )
-                        .at(-1)?.id,
-                      creationWorkspace?.creations,
-                      data.turns.map((item) => item.id),
-                    )}
-                    images={
-                      turn.id ===
+                          .at(-1)?.id,
+                        creationWorkspace?.creations,
+                        data.turns.map((item) => item.id),
+                      )}
+                      images={
+                        turn.id ===
                         data.turns
                           .filter(
                             (item) => !data.turns.some((newer) => newer.parent_turn_id === item.id),
                           )
                           .at(-1)?.id
-                        ? creationWorkspace?.images
-                        : undefined
-                    }
-                    selectedCreationId={
-                      creationWorkspace?.selected.brief ||
-                      creationWorkspace?.selected.plan ||
-                      creationWorkspace?.selected.palette ||
-                      creationWorkspace?.selected.board
-                    }
-                    onBoardCommit={(id, board) => void commitInlineBoard(id, board)}
-                    boardStatus={inlineBoardStatus ?? undefined}
-                    selectedImageId={creationWorkspace?.selectedImageId}
-                    canApproveImages={creationWorkspace?.canCreateImages}
-                    onOpenCreation={(id) => void openWork(id)}
-                    onApproveImage={(id, approve) => void approveTalkImage(id, approve)}
-                    onSelectImage={(id) => void selectOpenCreation(id)}
-                  />
-                ))
-            )}
-            {liveState.conversationId === selected
-              ? liveState.transcript
-                  .filter(
-                    (line) =>
-                      line.text &&
-                      !liveState.savedItemIds.includes(line.id) &&
-                      !data.turns.some((turn) => turn.id === line.id),
-                  )
-                  .map((line) => (
-                    <p
-                      key={line.id}
-                      className="live-provisional"
-                      data-live-status="provisional"
-                      data-conversation={liveState.conversationId ?? undefined}
-                    >
-                      <strong>{line.role === 'user' ? 'You' : 'Aethelios'}</strong> {line.text}
-                    </p>
+                          ? creationWorkspace?.images
+                          : undefined
+                      }
+                      selectedCreationId={
+                        creationWorkspace?.selected.brief ||
+                        creationWorkspace?.selected.plan ||
+                        creationWorkspace?.selected.palette ||
+                        creationWorkspace?.selected.board
+                      }
+                      onBoardCommit={(id, board) => void commitInlineBoard(id, board)}
+                      boardStatus={inlineBoardStatus ?? undefined}
+                      selectedImageId={creationWorkspace?.selectedImageId}
+                      canApproveImages={creationWorkspace?.canCreateImages}
+                      onOpenCreation={(id) => void openWork(id)}
+                      onApproveImage={(id, approve) => void approveTalkImage(id, approve)}
+                      onSelectImage={(id) => void selectOpenCreation(id)}
+                    />
                   ))
-              : null}
-            {busy && !data.turns.some((turn) => turn.id === operation.id) && (
-              <IntelligenceResponse operation={operation} name={councilLabel(councilSelection)} />
-            )}
-          </div>
-          {widePanel && openWorkId && (openCreation || openImage) && (
-            <aside className="talk-creation-panel" aria-label="Reviewed work">
-              <CreationDetail
-                key={openWorkId ?? 'panel'}
-                creation={openCreation}
-                image={openImage}
-                images={creationWorkspace?.images ?? []}
-                canEdit={!preview && data.canChat}
-                busy={creationBusy}
-                error={creationError}
-                notice={creationNotice}
-                onClose={() => setOpenWorkId(null)}
-                onSave={(kind, content) => void saveOpenCreation(kind, content)}
-                onCopy={(text) => void navigator.clipboard.writeText(text)}
-                onSelect={() => void selectOpenCreation()}
-                onKeepProposal={() => void keepProposal()}
-                onHandoff={(input) => void prepareArchitectPackage(input)}
-                onImport={(id) => void importArchitectPackage(id)}
-                onOpenVersion={(id) => setOpenWorkId(id)}
-                onHistory={rememberHistory}
-                targetField={
+              )}
+              {liveState.conversationId === selected
+                ? liveState.transcript
+                    .filter(
+                      (line) =>
+                        line.text &&
+                        !liveState.savedItemIds.includes(line.id) &&
+                        !data.turns.some((turn) => turn.id === line.id),
+                    )
+                    .map((line) => (
+                      <p
+                        key={line.id}
+                        className="live-provisional"
+                        data-live-status="provisional"
+                        data-conversation={liveState.conversationId ?? undefined}
+                      >
+                        <strong>{line.role === 'user' ? 'You' : 'Aethelios'}</strong> {line.text}
+                      </p>
+                    ))
+                : null}
+              {busy && !data.turns.some((turn) => turn.id === operation.id) && (
+                <IntelligenceResponse operation={operation} name={councilLabel(councilSelection)} />
+              )}
+            </div>
+            {widePanel && openWorkId && (openCreation || openImage) && (
+              <aside className="talk-creation-panel" aria-label="Reviewed work">
+                <CreationDetail
+                  key={openWorkId ?? 'panel'}
+                  creation={openCreation}
+                  image={openImage}
+                  images={creationWorkspace?.images ?? []}
+                  canEdit={!preview && data.canChat}
+                  busy={creationBusy}
+                  error={creationError}
+                  notice={creationNotice}
+                  onClose={() => setOpenWorkId(null)}
+                  onSave={(kind, content) => void saveOpenCreation(kind, content)}
+                  onCopy={(text) => void navigator.clipboard.writeText(text)}
+                  onSelect={() => void selectOpenCreation()}
+                  onKeepProposal={() => void keepProposal()}
+                  onHandoff={(input) => void prepareArchitectPackage(input)}
+                  onImport={(id) => void importArchitectPackage(id)}
+                  onOpenVersion={(id) => setOpenWorkId(id)}
+                  onHistory={rememberHistory}
+                  targetField={
                     workTarget && workTarget.creationId === openCreation?.id
                       ? workTarget.field
                       : null
-                }
-                onTargetField={(field) =>
+                  }
+                  onTargetField={(field) =>
                     setWorkTarget(
                       openCreation && field ? { creationId: openCreation.id, field } : null,
                     )
-                }
-              />
-            </aside>
-          )}
+                  }
+                />
+              </aside>
+            )}
           </div>
           {!preview && (!data.configured || !data.canChat) && (
             <p className="connection-note">
@@ -2226,6 +2428,7 @@ export function AureliusWorkspace({
                 Latest message ↓
               </button>
             )}
+            <div id="talk-voice-dock" className="talk-voice-dock" ref={attachTalkVoiceDock} />
             <form
               className="aurelius-composer"
               data-bplus-surface={compact ? undefined : 'composer'}
@@ -2235,7 +2438,17 @@ export function AureliusWorkspace({
                   tableReview.current?.open();
                   return;
                 }
-                void sendMessage(draft, revision);
+                void sendMessage(
+                  draft,
+                  revisionAllowedForConversation(
+                    revision,
+                    editSnapshot.current,
+                    data.ownerId ?? '',
+                    selected,
+                  ) && revision
+                    ? revision
+                    : null,
+                );
               }}
             >
               {!compact && <BplusMaterial radius={19} />}
@@ -2285,8 +2498,30 @@ export function AureliusWorkspace({
                   <button
                     type="button"
                     onClick={() => {
+                      const snapshot = editSnapshot.current;
+                      const owner = data.ownerId ?? '';
+                      const conversationId = selectedRef.current;
                       setRevision(null);
-                      setDraft('');
+                      if (
+                        snapshotBelongsToConversation(snapshot, owner, conversationId) &&
+                        snapshot
+                      ) {
+                        setDraft(snapshot.draft);
+                        setAttachment(snapshot.attachment);
+                        setWorkTarget(snapshot.workTarget);
+                        if (!compact && owner)
+                          writeTalkDraft(owner, conversationId, snapshot.draft);
+                        requestAnimationFrame(() => {
+                          composer.current?.focus();
+                          composer.current?.setSelectionRange(
+                            snapshot.caret.start,
+                            snapshot.caret.end,
+                          );
+                        });
+                      } else {
+                        setDraft('');
+                      }
+                      editSnapshot.current = null;
                     }}
                   >
                     Cancel
@@ -2301,17 +2536,20 @@ export function AureliusWorkspace({
                   selected,
                 );
                 const selectedWork = resolved.item;
-                return selectedWork || resolved.reason ? (
-                  <p className="talk-selection-chip" aria-live="polite">
-                    {resolved.reason
-                      ? resolved.reason
-                      : selectedWork
-                        ? `Changing this: ${selectionChipLabel(selectedWork)}`
-                        : null}
-                  </p>
+                const chip = resolved.reason
+                  ? resolved.reason
+                  : selectedWork
+                    ? `Changing this: ${selectionChipLabel(selectedWork)}`
+                    : '';
+                return chip ? (
+                  <details className="talk-selection-chip">
+                    <summary aria-live="polite">
+                      <span className="talk-selection-summary-text">{chip}</span>
+                    </summary>
+                    <p className="talk-selection-full">{chip}</p>
+                  </details>
                 ) : null;
               })()}
-              <div id="talk-voice-dock" className="talk-voice-dock" ref={attachTalkVoiceDock} />
               <TalkInput
                 id="aurelius-message"
                 label="Message Aethelios"
@@ -2331,7 +2569,7 @@ export function AureliusWorkspace({
                   key={`${data.ownerId ?? 'anonymous'}:${selected ?? 'new'}:${attachmentEpoch}`}
                   value={attachment}
                   disabled={blocked || preview || !data.canChat || liveBusy}
-                  onChange={setAttachment}
+                  onChange={acceptAttachment}
                   onRemove={clearAttachment}
                   onBusyChange={setAttachmentBusy}
                 />

@@ -187,10 +187,14 @@
   color: var(--aether-text);
   overflow-y: auto;
 }
+.talk-text-entry {
+  position: relative;
+  min-width: 0;
+}
 .talk-expand {
   position: absolute;
-  right: 8px;
-  top: 6px;
+  right: 0;
+  top: 0;
   width: 44px;
   min-height: 44px;
   border: 0;
@@ -206,10 +210,12 @@
   gap: 6px;
   min-height: 44px;
 }
+.aethelios-page.talk-page .composer-controls .button,
 .talk-page .composer-controls .button,
 .company-room .talk-composer-actions .button {
   margin: 0;
   min-height: 44px;
+  min-width: 44px;
   padding: 6px 14px;
 }
 .talk-page .aurelius-notice {
@@ -222,26 +228,114 @@
   display: contents;
 }
 .talk-page .aurelius-compose-region {
-  display: block;
+  display: flex;
+  flex-direction: column;
   position: relative;
   flex: none;
+  min-width: 0;
   width: min(100%, 840px);
   align-self: center;
+  max-height: calc(var(--conversation-height, 100dvh) * 0.6);
+  overflow: visible;
+}
+.talk-page:not(:has(.talk-voice-dock:not(:empty))) .aurelius-compose-region {
+  max-height: min(
+    calc(var(--conversation-height, 100dvh) * 0.6),
+    calc(var(--conversation-height, 100dvh) - 15rem)
+  );
+}
+.talk-page[data-keyboard='open']:has(.talk-voice-dock:not(:empty)) .aurelius-compose-region {
+  max-height: calc(var(--conversation-height, 100dvh) * 0.54);
 }
 .talk-selection-chip {
-  margin: 0 0 8px;
-  padding: 8px 12px;
+  margin: 0 0 6px;
+  padding: 0;
   font-size: 13px;
   color: var(--io-text, #f4efe6);
   background: color-mix(in srgb, var(--aether-emerald, #0b3b32) 55%, #080d0d);
   border: 1px solid color-mix(in srgb, var(--aether-gold, #c4912f) 35%, transparent);
   border-radius: 12px;
 }
+.talk-selection-chip > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  list-style: none;
+  min-height: 32px;
+  padding: 6px 10px;
+}
+.talk-selection-chip > summary::-webkit-details-marker {
+  display: none;
+}
+.talk-selection-summary-text {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.talk-selection-chip > summary::after {
+  content: '▾';
+  flex: none;
+}
+.talk-selection-full {
+  margin: 0;
+  padding: 0 10px 8px;
+  overflow-wrap: anywhere;
+}
 .talk-voice-dock:empty {
   display: none;
 }
 .talk-voice-dock:not(:empty) {
+  flex: 0 0 auto;
+  max-height: calc(var(--conversation-height, 100dvh) * 0.42);
   margin: 0 0 8px;
+  overflow: visible;
+}
+.talk-page:has(.talk-voice-dock:not(:empty)) .aurelius-composer textarea.talk-input {
+  max-height: max(44px, min(120px, calc(var(--conversation-height, 100dvh) * 0.16)));
+}
+.talk-page[data-keyboard='open']:has(.talk-voice-dock:not(:empty))
+  .aurelius-composer
+  textarea.talk-input {
+  max-height: 44px;
+}
+.talk-page[data-keyboard='open']:has(.talk-voice-dock:not(:empty)) .talk-selection-chip {
+  display: none;
+}
+.talk-page[data-keyboard='open'] .talk-voice-dock:not(:empty) {
+  margin-bottom: 2px;
+  max-height: calc(var(--conversation-height, 100dvh) * 0.48);
+}
+.talk-page[data-keyboard='open'] .composer-controls > .quiet-label {
+  display: none;
+}
+.talk-page[data-keyboard='open'] .composer-controls:has(> .talk-image-attachment) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+.talk-page[data-keyboard='open'] .composer-controls > .talk-image-attachment {
+  grid-column: 1;
+  min-width: 0;
+}
+.talk-page[data-keyboard='open'] .composer-controls > .button {
+  grid-column: 2;
+}
+.talk-page[data-keyboard='open'] .talk-image-details {
+  flex: 1 1 0;
+  min-width: 2.5rem;
+}
+.talk-page[data-keyboard='open'] .talk-image-preview span {
+  min-width: 0;
+  flex-basis: 0;
+}
+.talk-page[data-keyboard='open'] .live-compact.live-call-compact {
+  padding: 0.3rem 0.55rem;
+}
+.talk-page[data-keyboard='open'] .live-compact-presence .live-brand {
+  display: none;
 }
 .talk-page .latest-message {
   position: absolute;
@@ -269,7 +363,7 @@
   border: 1px solid #c4912f40;
   padding: 12px;
 }
-.talk-page :where(button, textarea, a):focus-visible,
+.talk-page :where(button, textarea, a, .conversation-scroll):focus-visible,
 .talk-drawer :where(button, textarea, a, input, select):focus-visible {
   outline: 2px solid #e0bb6a;
   outline-offset: 2px;
@@ -598,9 +692,18 @@ html[data-material='solid'] .talk-page .talk-composer:focus-within {
 .talk-page[data-keyboard='open'] .talk-welcome-presence {
   display: none;
 }
+.talk-page[data-keyboard='open'] .aurelius-notice {
+  max-height: 0;
+  margin: 0;
+  overflow: hidden;
+}
+.talk-page[data-keyboard='open'] .aurelius-composer {
+  padding-block: 4px;
+}
 
 .app-shell.imperial-workspace
-  .talk-page [data-bplus='talk']
+  .talk-page
+  [data-bplus='talk']
   .aurelius-composer
   textarea:focus-visible {
   outline: none;

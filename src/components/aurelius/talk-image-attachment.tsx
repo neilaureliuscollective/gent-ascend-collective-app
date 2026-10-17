@@ -135,6 +135,7 @@ export function TalkImageAttachment({
         <button
           type="button"
           className="text-button"
+          aria-label="Add image"
           title="PNG, JPEG or WebP up to 10 MiB; videos and general files unsupported"
           disabled={disabled}
           onClick={() => input.current?.click()}
@@ -142,16 +143,23 @@ export function TalkImageAttachment({
           Add image
         </button>
         {preview && !value && (
-          <div className="talk-image-preview">
-            <Image
-              unoptimized
-              width={32}
-              height={32}
-              src={preview}
-              alt={`Image attachment: ${file?.name || 'selected image'}`}
-            />
-            <span title={file?.name}>{file?.name}</span>
-          </div>
+          <details className="talk-image-details">
+            <summary aria-label={`Image attachment: ${file?.name || 'selected image'}`}>
+              <span className="talk-image-preview">
+                <Image
+                  unoptimized
+                  width={32}
+                  height={32}
+                  src={preview}
+                  alt={`Image attachment: ${file?.name || 'selected image'}`}
+                />
+                <span title={file?.name}>{file?.name}</span>
+              </span>
+            </summary>
+            <div className="talk-image-explanation">
+              <p className="talk-image-filename">{file?.name}</p>
+            </div>
+          </details>
         )}
         {value && (
           <details className="talk-image-details">
@@ -174,6 +182,7 @@ export function TalkImageAttachment({
               </span>
             </summary>
             <div className="talk-image-explanation">
+              <p className="talk-image-filename">{value.name}</p>
               <p>
                 {value.analysisPending === false
                   ? 'Saved for Studio; not attached to your next message.'
@@ -222,7 +231,8 @@ export function TalkImageAttachment({
         {value && (
           <button
             type="button"
-            className="text-button"
+            className="text-button talk-image-studio"
+            aria-label="Use in Studio"
             disabled={Boolean(progress) || disabled}
             onClick={() => void handoff()}
           >

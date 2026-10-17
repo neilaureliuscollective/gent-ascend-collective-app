@@ -76,6 +76,27 @@ const studio = {
 let stream: ReadableStreamDefaultController<Uint8Array> | null = null;
 let imageReply: ((value: Response) => void) | null = null;
 let turn: Turn | null = null;
+let markdownEmits = 0;
+const markdownOpen = 'A paragraph before the sample.\n\n```ts\nconst session = 1;';
+const markdownRest =
+  '\n```\n\n1. Confirm the brief\n2. Keep the draft\n\n- Stay on A\n- Do not leak B\n\nSee [Aethelios](https://example.com/aethelios) for the house.\n';
+function fixtureReplyText() {
+  const params = new URLSearchParams(location.search);
+  if (params.get('longReply') === '1')
+    return 'Synthetic long response with useful text.\n\n'.repeat(80);
+  if (params.get('markdownReply') === '1') return markdownOpen + markdownRest;
+  return 'Synthetic response for motion verification.';
+}
+function fixtureDeltaText() {
+  const params = new URLSearchParams(location.search);
+  if (params.get('longReply') === '1')
+    return 'Synthetic long response with useful text.\n\n'.repeat(80);
+  if (params.get('markdownReply') === '1') {
+    markdownEmits += 1;
+    return markdownEmits === 1 ? markdownOpen : markdownRest;
+  }
+  return 'Synthetic response for motion verification.';
+}
 const json = (value: unknown) =>
   new Response(JSON.stringify(value), { headers: { 'content-type': 'application/json' } });
 function emit(event: StreamEvent) {
@@ -97,15 +118,13 @@ window.fetch = async (input, init) => {
         headers: { 'content-type': 'application/json' },
       });
     const body = JSON.parse(String(init?.body));
+    markdownEmits = 0;
     turn = {
       id: body.requestId,
       person_id: 'synthetic-owner',
       conversation_id: body.conversationId,
       user_text: body.text,
-      assistant_text:
-        new URLSearchParams(location.search).get('longReply') === '1'
-          ? 'Synthetic long response with useful text.\n\n'.repeat(80)
-          : 'Synthetic response for motion verification.',
+      assistant_text: fixtureReplyText(),
       status: 'complete',
       model: 'synthetic-fixture',
       context_included: false,
@@ -286,10 +305,7 @@ function Review() {
             onClick={() =>
               emit({
                 type: 'delta',
-                text:
-                  new URLSearchParams(location.search).get('longReply') === '1'
-                    ? 'Synthetic long response with useful text.\n\n'.repeat(80)
-                    : 'Synthetic response for motion verification.',
+                text: fixtureDeltaText(),
               })
             }
           >

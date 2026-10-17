@@ -1,3 +1,23 @@
+# Talk preview cannot pin Gent — 2026-10-17
+
+Vercel preview with `APP_ENV=production` used the production `supabaseConnection` pin regardless of URL/key. Preview now fails closed unless `APP_ENV=preview`. Non-production connections refuse Gent and founder hosts. Isolated Talk preview still needs a third matching URL/key pair. Evidence: [TALK_RELEASE_VERIFICATION.md](TALK_RELEASE_VERIFICATION.md).
+
+# Talk Next 16.4.1 Server Actions patch — 2026-10-17
+
+Pin Next 16.4.1 / eslint-config-next 16.4.1 for GHSA-p3m5-59mp-jv5r. The app uses App Router Server Actions including auth. Next 16.4.1 also resolves sharp to 0.35.5. Do not strip shared Preview env scope. Authenticated preview still requires Git-branch overrides on `cursor/talk-voice-dock-compact-42b1` for a matching non-production URL and publishable key; none is approved yet. PR #154 stays out. Evidence: [TALK_RELEASE_VERIFICATION.md](TALK_RELEASE_VERIFICATION.md).
+
+# Talk Next 16.3.8 and branch-scoped preview — 2026-10-17 (superseded for Next line)
+
+Superseded for the Next pin by 16.4.1 above. The branch-scoped preview rule stands: do not strip shared Preview env scope. PR #154 stays out. Evidence: [TALK_RELEASE_VERIFICATION.md](TALK_RELEASE_VERIFICATION.md).
+
+# Talk release verification — 2026-10-17 (superseded)
+
+Superseded by the branch-scoped preview decision above. Do **not** remove shared Preview-scope keys. Talk implementation remains `5d86a816`. PR #154 stays independent. Evidence: [TALK_RELEASE_VERIFICATION.md](TALK_RELEASE_VERIFICATION.md).
+
+# Talk conversation isolation and unfinished work — 2026-10-16
+
+Older Talk history is applied only when owner, conversation and request generation still match the initiating load. Stale completions, errors and scroll restores are ignored; a later request keeps its own loading state. Switch and New confirm unfinished text, attachments, in-flight uploads and edits; cancelled leave keeps the current composer. Edit last message uses an in-memory conversation-scoped snapshot so Cancel restores the previous draft. Revision identity cannot follow another conversation. No new persistent storage. Evidence: Talk isolation tests.
+
 # Lifestyle product world production — 2026-10-16
 
 Founder authorized merge of PR #156 onto main and deploy through the existing Vercel Git production pipeline. Merge `715a2d9d` (parents `4a7d909a` Live globe + `571babfd` Lifestyle). Production `dpl_HyKuNtX5emzqUCUceisFmdsMbQQu` is READY on https://www.gentascend.com. No hosted SQL, credential, flag, Shopify Admin write or purchase. Talk/Architect/Studio source was not changed. Evidence: [LIFESTYLE_PRODUCT_WORLD.md](LIFESTYLE_PRODUCT_WORLD.md).
@@ -5,6 +25,10 @@ Founder authorized merge of PR #156 onto main and deploy through the existing Ve
 # Lifestyle merchandising and vendor presentation — 2026-10-16
 
 House packshots are not SKUs. Bind them to published Shopify products only by exact handle. Do not sort the catalog to force `vitalis` first. Shopify’s default store name (`My Store` and close aliases) is presentation, not a supplier: show Aethelios Lifestyle. Real vendor strings stay visible. Do not rewrite Shopify vendor data. Evidence: [LIFESTYLE_PRODUCT_WORLD.md](LIFESTYLE_PRODUCT_WORLD.md).
+
+# Aethelios Live emerald-gold globe — 2026-10-16
+
+Keep the Canvas 2D NASA globe and original transparent A/star. Replace the `gradeEarth` ice snap (`luma > 196 && |R-G| < 24` → `[90,102,100]`) with a continuous emerald grade so bright deserts keep relief instead of painting digital gray. Add only restrained gold specular and rim lighting; do not add particles, circuitry, rings or a replacement emblem. Cache sphere lighting, reuse ImageData, measure layout on resize, and keep the 480 buffer cap with timestamp ~30fps. Interruptions zero speaking energy on the same `setVisual`. Evidence: [AETHELIOS_LIVE_CALL.md](AETHELIOS_LIVE_CALL.md).
 
 # Aethelios Live original emblem — 2026-10-16
 

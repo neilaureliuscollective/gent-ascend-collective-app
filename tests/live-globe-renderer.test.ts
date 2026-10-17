@@ -13,6 +13,7 @@ function fakeCanvas() {
     className: '',
     width: 8,
     height: 8,
+    dataset: {} as Record<string, string>,
     style: { width: '', height: '', aspectRatio: '' },
     setAttribute: vi.fn(),
     getContext() {
@@ -41,11 +42,11 @@ function fakeCanvas() {
     globalAlpha: 1,
     createLinearGradient: () => ({ addColorStop: vi.fn() }),
     createRadialGradient: () => ({ addColorStop: vi.fn() }),
-    createImageData: (width = canvas.width, height = canvas.height) => ({
+    createImageData: vi.fn((width = canvas.width, height = canvas.height) => ({
       data: new Uint8ClampedArray(width * height * 4),
       width,
       height,
-    }),
+    })),
     putImageData: vi.fn(),
     getImageData: (...args: number[]) => {
       const sw = args[2] ?? canvas.width;
@@ -430,6 +431,116 @@ describe('live globe renderer', () => {
     expect(globe.metrics().bufferWidth).toBe(globe.metrics().bufferHeight);
     expect(display.canvas.width).toBe(display.canvas.height);
     expect(raf).not.toHaveBeenCalled();
+    globe.dispose();
+  });
+
+  it('reuses one ImageData buffer and does not measure layout every paint', () => {
+    const display = fakeCanvas();
+    stubDocument(display);
+    const frames: FrameRequestCallback[] = [];
+    const box = vi.fn(() => ({ width: 160, height: 160 }));
+    vi.stubGlobal('devicePixelRatio', 1);
+    vi.stubGlobal('matchMedia', () => ({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+    const globe = mountLiveGlobe(
+      {
+        append: vi.fn(),
+        getBoundingClientRect: box,
+      } as unknown as HTMLElement,
+      liveCallVisual({
+        sessionId: 'session-1',
+        phase: 'listening',
+        muted: false,
+        playbackBlocked: false,
+      }),
+      { moving: true },
+    );
+    const measured = box.mock.calls.length;
+    const created = display.context.createImageData.mock.calls.length;
+    const origin = typeof performance !== 'undefined' ? performance.now() : 0;
+    frames.at(-1)?.(origin + 40);
+    frames.at(-1)?.(origin + 80);
+    frames.at(-1)?.(origin + 120);
+    expect(box.mock.calls.length).toBe(measured);
+    expect(display.context.createImageData.mock.calls.length).toBe(created);
+    expect(globe.metrics().paints).toBeGreaterThan(1);
+    expect(globe.metrics().paintSamples.length).toBe(globe.metrics().paints);
+    expect(globe.metrics().bufferWidth).toBeLessThanOrEqual(480);
+    globe.dispose();
+  });
+
+  it('snaps speaking energy off on the same setVisual when interrupted', () => {
+    const display = fakeCanvas();
+    stubDocument(display);
+    vi.stubGlobal('devicePixelRatio', 1);
+    vi.stubGlobal('matchMedia', () => ({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    vi.stubGlobal('requestAnimationFrame', vi.fn());
+    const globe = mountLiveGlobe(
+      {
+        append: vi.fn(),
+        getBoundingClientRect: () => ({ width: 160, height: 160 }),
+      } as unknown as HTMLElement,
+      liveCallVisual({
+        sessionId: 'session-1',
+        phase: 'speaking',
+        muted: false,
+        playbackBlocked: false,
+      }),
+      { moving: false },
+    );
+    const speaking = frameDigest(display.context);
+    globe.setVisual(
+      liveCallVisual({
+        sessionId: 'session-1',
+        phase: 'listening',
+        muted: false,
+        playbackBlocked: false,
+      }),
+    );
+    const interrupted = frameDigest(display.context);
+    expect(interrupted).not.toBe(speaking);
+    expect(globe.metrics().paints).toBeGreaterThan(1);
+    globe.dispose();
+  });
+
+  it('keeps paint sample history bounded', () => {
+    const display = fakeCanvas();
+    stubDocument(display);
+    vi.stubGlobal('devicePixelRatio', 1);
+    vi.stubGlobal('matchMedia', () => ({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    vi.stubGlobal('requestAnimationFrame', vi.fn());
+    const globe = mountLiveGlobe(
+      {
+        append: vi.fn(),
+        getBoundingClientRect: () => ({ width: 160, height: 160 }),
+      } as unknown as HTMLElement,
+      liveCallVisual({
+        sessionId: 'session-1',
+        phase: 'listening',
+        muted: false,
+        playbackBlocked: false,
+      }),
+      { moving: false },
+    );
+    for (let i = 0; i < 1100; i += 1) globe.paintStatic();
+    expect(globe.metrics().paintSamples.length).toBeLessThanOrEqual(1024);
+    expect(globe.metrics().paints).toBeGreaterThan(1024);
     globe.dispose();
   });
 

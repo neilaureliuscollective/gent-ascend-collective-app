@@ -1,5 +1,5 @@
 import { liveContinents } from './live-continents';
-import type { LiveCallVisual } from './live-call-presentation';
+import type { LiveCallVisual, LiveCallVisualKind } from './live-call-presentation';
 import { liveGlobeMapUv, liveGlobeSphereCoords } from './live-globe-projection';
 import {
   liveGlobeAssetSources,
@@ -19,6 +19,9 @@ export type LiveGlobeHandle = {
     cssHeight: string;
     looping: boolean;
     rotation: number;
+    lastPaintMs: number;
+    paints: number;
+    paintSamples: number[];
   };
   pause: () => void;
   resume: () => void;
@@ -163,17 +166,53 @@ function sample(data: ImageData, lon: number, lat: number) {
   ] as const;
 }
 
-function gradeEarth(red: number, green: number, blue: number) {
+/** Bright-neutral ice snap used through 84e694aa. Bright deserts share luma>|R-G| and flatten to gray. */
+export function legacyIcePixel(red: number, green: number, blue: number) {
+  const luma = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+  const ocean = blue > green + 6 && blue > red + 10 && luma < 104;
+  return !ocean && luma > 196 && Math.abs(red - green) < 24;
+}
+
+/** Emerald land/ocean grade. Relief stays in luma; deserts keep warmth instead of ice gray. */
+export function gradeEarth(red: number, green: number, blue: number) {
   const luma = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
   const ocean = blue > green + 6 && blue > red + 10 && luma < 104;
   if (ocean) {
     const depth = luma / 104;
     return [4 + depth * 6, 7 + depth * 11, 8 + depth * 9] as const;
   }
-  const ice = luma > 196 && Math.abs(red - green) < 24;
-  if (ice) return [90, 102, 100] as const;
   const relief = luma / 255;
-  return [42 + relief * 76, 80 + relief * 112, 56 + relief * 52] as const;
+  const warmth = Math.max(0, (red - blue) / 255);
+  const chroma = (Math.max(red, green, blue) - Math.min(red, green, blue)) / 255;
+  const polar = Math.max(0, 1 - chroma * 4) * Math.max(0, (luma - 180) / 75);
+  return [
+    Math.min(255, 34 + relief * 96 + warmth * 22 - polar * 8),
+    Math.min(255, 70 + relief * 124 - warmth * 8 + polar * 16),
+    Math.min(255, 46 + relief * 52 - warmth * 10 + polar * 36),
+  ] as const;
+}
+
+/** ~160ms audio lerp. Leaving speaking zeros outward immediately so interruption does not linger. */
+export function settleGlobeEnergy(
+  kind: LiveCallVisualKind,
+  previousKind: LiveCallVisualKind,
+  shownIn: number,
+  shownOut: number,
+  inward: number,
+  outward: number,
+  dt: number,
+  animate = true,
+) {
+  let nextOut = shownOut;
+  if (previousKind === 'speaking' && kind !== 'speaking') nextOut = 0;
+  const follow =
+    animate && (kind === 'listening' || kind === 'speaking')
+      ? 1 - Math.exp(-Math.max(0, dt) / 160)
+      : 1;
+  return {
+    shownIn: shownIn + (inward - shownIn) * follow,
+    shownOut: nextOut + (outward - nextOut) * follow,
+  };
 }
 
 function prepareEarth(image: CanvasImageSource, width: number, height: number) {
@@ -237,9 +276,14 @@ export function mountLiveGlobe(
   let visual = initial;
   let inward = initial.inward;
   let outward = initial.outward;
+  let shownIn = initial.inward;
+  let shownOut = initial.outward;
+  let paintedKind = initial.kind;
   let rotation = 0.35;
   let frame = 0;
   let last = 0;
+  let lastPaintMs = 0;
+  let paints = 0;
   let disposed = false;
   let paused = false;
   let visible = true;
@@ -247,6 +291,25 @@ export function mountLiveGlobe(
   let allowMotion = options?.moving !== false;
   let earth: ImageData | null = null;
   let emblem: HTMLCanvasElement | null = null;
+  let frameBuffer: ImageData | null = null;
+  const paintTimes = new Float64Array(1024);
+  let paintTimeIndex = 0;
+  let paintTimeCount = 0;
+  let sphere: {
+    size: number;
+    count: number;
+    nz: Float32Array;
+    lon0: Float32Array;
+    lat: Float32Array;
+    wrap: Float32Array;
+    terminator: Float32Array;
+    spec: Float32Array;
+    fresnel: Float32Array;
+    index: Uint32Array;
+  } | null = null;
+  const lightX = -0.38;
+  const lightY = 0.28;
+  const lightZ = 0.88;
   const assetState: LiveGlobeAssetState = { earth: 'loading', emblem: 'loading' };
   const media =
     typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
@@ -271,7 +334,7 @@ export function mountLiveGlobe(
     return { css, pixels: pixelBudget(css) };
   };
 
-  const resize = () => {
+  const applySize = () => {
     const { css, pixels } = measure();
     canvas.style.width = `${css}px`;
     canvas.style.height = `${css}px`;
@@ -279,61 +342,108 @@ export function mountLiveGlobe(
     if (canvas.width !== pixels || canvas.height !== pixels) {
       canvas.width = pixels;
       canvas.height = pixels;
+      frameBuffer = null;
+      sphere = null;
       return true;
     }
     return false;
   };
 
+  const buildSphere = (width: number) => {
+    const radius = width * 0.46;
+    const cx = width / 2;
+    const cy = width / 2;
+    const max = width * width;
+    const nz = new Float32Array(max);
+    const lon0 = new Float32Array(max);
+    const lat = new Float32Array(max);
+    const wrap = new Float32Array(max);
+    const terminator = new Float32Array(max);
+    const spec = new Float32Array(max);
+    const fresnel = new Float32Array(max);
+    const index = new Uint32Array(max);
+    let count = 0;
+    for (let y = 0; y < width; y++) {
+      const ndy = (y - cy) / radius;
+      for (let x = 0; x < width; x++) {
+        const ndx = (x - cx) / radius;
+        const coords = liveGlobeSphereCoords(ndx, ndy, 0);
+        if (!coords) continue;
+        const diffuse = Math.max(0, ndx * lightX + -ndy * lightY + coords.facing * lightZ);
+        nz[count] = coords.facing;
+        lon0[count] = coords.lon;
+        lat[count] = coords.lat;
+        wrap[count] = diffuse * 0.5 + 0.48;
+        terminator[count] = 0.58 + 0.42 * clamp01((diffuse + 0.2) / 0.6);
+        spec[count] = Math.pow(diffuse, 28);
+        fresnel[count] = Math.pow(1 - coords.facing, 2.8);
+        index[count] = (y * width + x) * 4;
+        count += 1;
+      }
+    }
+    return { size: width, count, nz, lon0, lat, wrap, terminator, spec, fresnel, index };
+  };
+
   const paint = (stamp: number) => {
     if (!context || disposed) return;
-    resize();
+    const started = typeof performance !== 'undefined' ? performance.now() : stamp;
     const width = canvas.width;
     const radius = width * 0.46;
     const cx = width / 2;
     const cy = width / 2;
-    const image = context.createImageData(width, width);
-    const pixels = image.data;
-    const lightX = -0.38;
-    const lightY = 0.28;
-    const lightZ = 0.88;
+    if (!frameBuffer || frameBuffer.width !== width)
+      frameBuffer = context.createImageData(width, width);
+    if (!sphere || sphere.size !== width) sphere = buildSphere(width);
+    const dt = Math.max(0, Math.min(48, stamp - last || 16));
+    const settled = settleGlobeEnergy(
+      visual.kind,
+      paintedKind,
+      shownIn,
+      shownOut,
+      inward,
+      outward,
+      dt,
+      shouldAnimate(),
+    );
+    shownIn = settled.shownIn;
+    shownOut = settled.shownOut;
+    paintedKind = visual.kind;
+    const pixels = frameBuffer.data;
     const kind = visual.kind;
     const dim =
       kind === 'ended' || kind === 'error' ? 0.78 : kind === 'muted' || kind === 'blocked' ? 0.86 : 1;
-    for (let y = 0; y < width; y++) {
-      const ny = (y - cy) / radius;
-      for (let x = 0; x < width; x++) {
-        const nx = (x - cx) / radius;
-        const sphere = liveGlobeSphereCoords(nx, ny, rotation);
-        if (!sphere) continue;
-        const [red, green, blue] = earth
-          ? sample(earth, sphere.lon, sphere.lat)
-          : ([24, 38, 32] as const);
-        const nz = sphere.facing;
-        const diffuse = Math.max(0, nx * lightX + -ny * lightY + nz * lightZ);
-        const wrap = diffuse * 0.5 + 0.48;
-        const terminator = 0.58 + 0.42 * clamp01((diffuse + 0.2) / 0.6);
-        const spec = Math.pow(diffuse, 30) * (0.045 + outward * 0.035);
-        const fresnel = Math.pow(1 - nz, 3.4);
-        const inhale = kind === 'listening' ? inward * 0.06 * (1 - nz) : 0;
-        const glow = fresnel * (8 + outward * 14);
-        const index = (y * width + x) * 4;
-        pixels[index] = Math.min(
-          255,
-          (red * wrap + spec * 170 + glow * 0.16) * dim * terminator - inhale * 12,
-        );
-        pixels[index + 1] = Math.min(
-          255,
-          (green * wrap + spec * 130 + glow * 0.4) * dim * terminator - inhale * 6,
-        );
-        pixels[index + 2] = Math.min(
-          255,
-          (blue * wrap + spec * 70 + glow * 0.22) * dim * terminator,
-        );
-        pixels[index + 3] = 255;
-      }
+    const tau = Math.PI * 2;
+    const cache = sphere;
+    for (let i = 0; i < cache.count; i++) {
+      // Packed 0..count-1 are written in buildSphere. Skip rather than invent a meridian.
+      const lon0 = cache.lon0[i];
+      if (lon0 === undefined) continue;
+      let lon = lon0 + rotation;
+      lon = ((((lon + Math.PI) % tau) + tau) % tau) - Math.PI;
+      const [red, green, blue] = earth ? sample(earth, lon, cache.lat[i] ?? 0) : ([24, 38, 32] as const);
+      const nz = cache.nz[i] ?? 0;
+      const wrap = cache.wrap[i] ?? 0.7;
+      const terminator = cache.terminator[i] ?? 1;
+      const gold = (cache.spec[i] ?? 0) * (0.04 + shownOut * 0.03);
+      const rim = (cache.fresnel[i] ?? 0) * (0.06 + shownOut * 0.04);
+      const inhale = kind === 'listening' ? shownIn * 0.05 * (1 - nz) : 0;
+      const glow = (cache.fresnel[i] ?? 0) * (7 + shownOut * 12);
+      const index = cache.index[i] ?? 0;
+      pixels[index] = Math.min(
+        255,
+        (red * wrap + gold * 196 + glow * 0.12 + rim * 48) * dim * terminator - inhale * 12,
+      );
+      pixels[index + 1] = Math.min(
+        255,
+        (green * wrap + gold * 145 + glow * 0.38 + rim * 28) * dim * terminator - inhale * 6,
+      );
+      pixels[index + 2] = Math.min(
+        255,
+        (blue * wrap + gold * 47 + glow * 0.18 + rim * 12) * dim * terminator,
+      );
+      pixels[index + 3] = 255;
     }
-    context.clearRect(0, 0, width, width);
-    context.putImageData(image, 0, 0);
+    context.putImageData(frameBuffer, 0, 0);
     context.save();
     context.beginPath();
     context.arc(cx, cy, radius, 0, Math.PI * 2);
@@ -361,7 +471,7 @@ export function mountLiveGlobe(
       }
       context.fill();
       context.save();
-      context.globalAlpha = 0.1 + outward * 0.04;
+      context.globalAlpha = 0.1 + shownOut * 0.04;
       context.translate(cx, cy + radius * 0.12);
       context.scale(0.9, -0.26);
       if (typeof context.filter === 'string') context.filter = 'blur(1.6px)';
@@ -378,9 +488,9 @@ export function mountLiveGlobe(
         cy,
         radius,
       );
-      wash.addColorStop(0, `rgba(232,233,226,${0.035 + outward * 0.025})`);
-      wash.addColorStop(0.5, `rgba(46,110,86,${0.04 + outward * 0.025})`);
-      wash.addColorStop(1, 'rgba(196,145,47,0.025)');
+      wash.addColorStop(0, `rgba(232,233,226,${0.03 + shownOut * 0.02})`);
+      wash.addColorStop(0.5, `rgba(46,110,86,${0.04 + shownOut * 0.02})`);
+      wash.addColorStop(1, 'rgba(196,145,47,0.04)');
       context.globalCompositeOperation = 'soft-light';
       context.globalAlpha = 1;
       context.fillStyle = wash;
@@ -390,7 +500,13 @@ export function mountLiveGlobe(
     context.restore();
     const rim = context.createRadialGradient(cx, cy, radius * 0.96, cx, cy, radius * 1.06);
     const rimAlpha =
-      kind === 'error' ? 0.1 : kind === 'ended' ? 0.07 : kind === 'muted' ? 0.09 : 0.16 + outward * 0.08;
+      kind === 'error'
+        ? 0.1
+        : kind === 'ended'
+          ? 0.07
+          : kind === 'muted'
+            ? 0.09
+            : 0.16 + shownOut * 0.08;
     rim.addColorStop(0, 'rgba(36,91,72,0)');
     rim.addColorStop(0.7, `rgba(46,110,86,${rimAlpha})`);
     rim.addColorStop(1, 'rgba(7,11,10,0)');
@@ -399,6 +515,15 @@ export function mountLiveGlobe(
     context.arc(cx, cy, radius * 1.06, 0, Math.PI * 2);
     context.fill();
     last = stamp;
+    paints += 1;
+    lastPaintMs = (typeof performance !== 'undefined' ? performance.now() : stamp) - started;
+    paintTimes[paintTimeIndex] = lastPaintMs;
+    paintTimeIndex = (paintTimeIndex + 1) % paintTimes.length;
+    paintTimeCount = Math.min(paintTimes.length, paintTimeCount + 1);
+    if (canvas.dataset) {
+      canvas.dataset.paintMs = lastPaintMs.toFixed(2);
+      canvas.dataset.paints = String(paints);
+    }
   };
 
   const stopLoop = () => {
@@ -450,16 +575,9 @@ export function mountLiveGlobe(
   const sizeObserver =
     typeof ResizeObserver === 'function'
       ? new ResizeObserver(() => {
-          if (disposed || shouldAnimate()) return;
-          const { css, pixels } = measure();
-          if (
-            canvas.style.width === `${css}px` &&
-            canvas.style.height === `${css}px` &&
-            canvas.width === pixels &&
-            canvas.height === pixels
-          ) {
-            return;
-          }
+          if (disposed) return;
+          const changed = applySize();
+          if (!changed || shouldAnimate()) return;
           paint(typeof performance !== 'undefined' ? performance.now() : 0);
         })
       : null;
@@ -521,14 +639,30 @@ export function mountLiveGlobe(
       paint(typeof performance !== 'undefined' ? performance.now() : 0);
     });
 
+  const metrics = () => ({
+    bufferWidth: canvas.width,
+    bufferHeight: canvas.height,
+    cssWidth: canvas.style.width,
+    cssHeight: canvas.style.height,
+    looping: frame !== 0,
+    rotation,
+    lastPaintMs,
+    paints,
+    paintSamples: Array.from(paintTimes.subarray(0, paintTimeCount)),
+  });
+  Object.assign(canvas, { __liveGlobeMetrics: metrics });
+
+  applySize();
   paint(typeof performance !== 'undefined' ? performance.now() : 0);
   ensureLoop();
 
   return {
     setVisual: (next) => {
+      const interrupted = visual.kind === 'speaking' && next.kind !== 'speaking';
       visual = next;
       inward = next.inward;
       outward = next.outward;
+      if (interrupted) paint(typeof performance !== 'undefined' ? performance.now() : 0);
       ensureLoop();
     },
     setEnergy: (nextInward, nextOutward) => {
@@ -540,14 +674,7 @@ export function mountLiveGlobe(
       ensureLoop();
     },
     assets: () => ({ ...assetState }),
-    metrics: () => ({
-      bufferWidth: canvas.width,
-      bufferHeight: canvas.height,
-      cssWidth: canvas.style.width,
-      cssHeight: canvas.style.height,
-      looping: frame !== 0,
-      rotation,
-    }),
+    metrics,
     pause: () => {
       paused = true;
       ensureLoop();

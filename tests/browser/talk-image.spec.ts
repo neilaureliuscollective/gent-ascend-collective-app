@@ -345,12 +345,39 @@ test('starting a new conversation fences the previous pending image upload', asy
     .getByLabel('Choose image for Talk')
     .setInputFiles({ name: 'old-context.png', mimeType: 'image/png', buffer: original });
   await expect(page.getByLabel('Image upload and verification')).toBeVisible();
+  page.once('dialog', (dialog) => dialog.accept());
   await page.getByRole('button', { name: 'New', exact: true }).click();
   release();
   await expect(page.getByLabel('Image upload and verification')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Use in Studio', exact: true })).toHaveCount(0);
   expect(state.uploads).toBe(0);
   expect(state.complete).toBe(0);
+});
+test('cancelling New keeps an in-flight attachment on the current conversation', async ({
+  page,
+}) => {
+  const { state, original, release } = await setup(page, { holdPrepare: true });
+  await page
+    .getByLabel('Choose image for Talk')
+    .setInputFiles({ name: 'keep-context.png', mimeType: 'image/png', buffer: original });
+  await expect(page.getByLabel('Image upload and verification')).toBeVisible();
+  page.once('dialog', (dialog) => dialog.dismiss());
+  await page.getByRole('button', { name: 'New', exact: true }).click();
+  await expect(page.getByLabel('Image upload and verification')).toBeVisible();
+  release();
+  await expect(page.getByRole('button', { name: 'Use in Studio', exact: true })).toBeEnabled();
+  expect(state.uploads).toBe(1);
+});
+test('attachment-only New is confirmed and cancelling keeps the image', async ({ page }) => {
+  const { original } = await setup(page);
+  await page
+    .getByLabel('Choose image for Talk')
+    .setInputFiles({ name: 'keep-only.png', mimeType: 'image/png', buffer: original });
+  await expect(page.getByRole('button', { name: 'Use in Studio', exact: true })).toBeEnabled();
+  page.once('dialog', (dialog) => dialog.dismiss());
+  await page.getByRole('button', { name: 'New', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Use in Studio', exact: true })).toBeVisible();
+  await expect(page.getByAltText('Image attachment: keep-only.png')).toBeVisible();
 });
 test('a stale Studio handoff never silently selects another reference or starts generation', async ({
   page,
