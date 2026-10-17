@@ -1,6 +1,10 @@
-# Talk Next 16.3.8 and branch-scoped preview — 2026-10-17
+# Talk Next 16.4.1 Server Actions patch — 2026-10-17
 
-Pin Next 16.3.8 / eslint-config-next 16.3.8 for GHSA-cjq9-62q9-8jv4. Do not strip shared Preview env scope. Authenticated preview requires Git-branch overrides on `cursor/talk-voice-dock-compact-42b1` for a matching non-production URL and publishable key; none is approved yet. PR #154 stays out. Remaining Next 16.4.1 advisories (Server Actions DoS; unused Cache Components RCE) were not applied. Evidence: [TALK_RELEASE_VERIFICATION.md](TALK_RELEASE_VERIFICATION.md).
+Pin Next 16.4.1 / eslint-config-next 16.4.1 for GHSA-p3m5-59mp-jv5r. The app uses App Router Server Actions including auth. Next 16.4.1 also resolves sharp to 0.35.5. Do not strip shared Preview env scope. Authenticated preview still requires Git-branch overrides on `cursor/talk-voice-dock-compact-42b1` for a matching non-production URL and publishable key; none is approved yet. PR #154 stays out. Evidence: [TALK_RELEASE_VERIFICATION.md](TALK_RELEASE_VERIFICATION.md).
+
+# Talk Next 16.3.8 and branch-scoped preview — 2026-10-17 (superseded for Next line)
+
+Superseded for the Next pin by 16.4.1 above. The branch-scoped preview rule stands: do not strip shared Preview env scope. PR #154 stays out. Evidence: [TALK_RELEASE_VERIFICATION.md](TALK_RELEASE_VERIFICATION.md).
 
 # Talk release verification — 2026-10-17 (superseded)
 
