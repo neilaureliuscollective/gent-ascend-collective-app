@@ -103,7 +103,7 @@ for (const viewport of viewports)
     ).toBe(true);
   });
 
-test('mounting the globe does not acquire a second microphone or session', async ({ page }) => {
+test('fullscreen call animates through repeated expand and minimize with one microphone and session', async ({ page }) => {
   let starts = 0;
   await page.addInitScript(() => {
     let calls = 0;
@@ -173,22 +173,51 @@ test('mounting the globe does not acquire a second microphone or session', async
   await expect
     .poll(() => page.evaluate(() => (window as unknown as { micCalls: number }).micCalls))
     .toBe(1);
-  await compact.getByRole('button', { name: 'Expand voice', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
-  await expect(dialog.locator('.live-call-globe')).toBeVisible();
-  expect(starts).toBe(1);
-  expect(await page.evaluate(() => (window as unknown as { micCalls: number }).micCalls)).toBe(1);
-  await page.keyboard.press('Escape');
-  await expect(compact).toBeVisible();
-  expect(starts).toBe(1);
+  const assertAnimating = async (globe: Locator) => {
+    await expect(globe).toHaveAttribute('data-motion', 'ambient');
+    await expect(globe).toHaveAttribute('data-earth', /ready|fallback/, { timeout: 15000 });
+    await expect(globe).toHaveAttribute('data-emblem', /ready|fallback/, { timeout: 15000 });
+    const canvas = globe.locator('.live-globe-canvas');
+    const first = await canvasDigest(canvas);
+    await expect.poll(async () => canvasDigest(canvas), { timeout: 2500 }).not.toBe(first);
+    expect(await canvas.evaluate((node) => (node as HTMLCanvasElement).width)).toBeLessThanOrEqual(480);
+  };
+  await assertAnimating(compact.locator('.live-call-globe'));
+  // The immersive renderer mounts while its dialog is closed. Opening and reopening
+  // must resume real frames, not merely expose a correctly labeled static canvas.
+  for (let cycle = 0; cycle < 3; cycle += 1) {
+    await compact.getByRole('button', { name: 'Expand voice', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
+    const globe = dialog.locator('.live-call-globe');
+    await expect(globe).toBeVisible();
+    await assertAnimating(globe);
+    if (cycle === 1) {
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await expect(globe).toHaveAttribute('data-motion', 'still');
+      await page.waitForTimeout(80);
+      const still = await canvasDigest(globe.locator('canvas'));
+      await page.waitForTimeout(240);
+      expect(await canvasDigest(globe.locator('canvas'))).toBe(still);
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await assertAnimating(globe);
+    }
+    if (cycle === 0)
+      await dialog.getByRole('button', { name: 'Minimize voice', exact: true }).click();
+    else await page.keyboard.press('Escape');
+    await expect(compact).toBeVisible();
+    await assertAnimating(compact.locator('.live-call-globe'));
+    expect(starts).toBe(1);
+    expect(await page.evaluate(() => (window as unknown as { micCalls: number }).micCalls)).toBe(1);
+  }
   await compact.getByRole('button', { name: 'End session', exact: true }).click();
   await expect(compact.getByRole('status')).toHaveText('Session ended');
 });
 
-test('Still and reduced motion apply on the production Live surface without remounting', async ({
+test('legacy page Still does not freeze a call; OS reduced motion applies without remounting', async ({
   page,
 }) => {
   await page.addInitScript(() => {
+    localStorage.setItem('aurelius-motion', 'still');
     const tracks = [{ enabled: true, readyState: 'live', stop() {}, addEventListener() {} }];
     Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
       value: async () => ({ getTracks: () => tracks, getAudioTracks: () => tracks }),
@@ -247,13 +276,16 @@ test('Still and reduced motion apply on the production Live surface without remo
   await canvas.evaluate((node) => node.setAttribute('data-keep', '1'));
   const first = await canvasDigest(canvas);
   await expect.poll(async () => canvasDigest(canvas), { timeout: 1500 }).not.toBe(first);
-  await page.getByRole('button', { name: 'Pause ambient motion', exact: true }).click();
+  // The old page setting stays Still, but call feedback remains automatic.
+  await expect(page.getByRole('button', { name: 'Enable ambient motion', exact: true })).toBeVisible();
+  await expect(globe).toHaveAttribute('data-motion', 'ambient');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(globe).toHaveAttribute('data-motion', 'still');
   await page.waitForTimeout(80);
   const still = await canvasDigest(canvas);
   await page.waitForTimeout(240);
   expect(await canvasDigest(canvas)).toBe(still);
-  await page.getByRole('button', { name: 'Enable ambient motion', exact: true }).click();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   await expect(globe).toHaveAttribute('data-motion', 'ambient');
   await expect.poll(async () => canvasDigest(canvas), { timeout: 1500 }).not.toBe(still);
   await expect(canvas).toHaveAttribute('data-keep', '1');
@@ -341,7 +373,7 @@ test('canvas stays circular in compact and expanded production layouts', async (
   await compact.getByRole('button', { name: 'End session', exact: true }).click();
 });
 
-test('Still resize updates canvas bitmap and displayed size without restarting motion', async ({
+test('OS reduced-motion resize updates canvas bitmap and displayed size without restarting motion', async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -403,7 +435,7 @@ test('Still resize updates canvas bitmap and displayed size without restarting m
       timeout: 15000,
     },
   );
-  await page.getByRole('button', { name: 'Pause ambient motion', exact: true }).click();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(compact.locator('.live-call-globe')).toHaveAttribute('data-motion', 'still');
   await compact.getByRole('button', { name: 'Expand voice', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Aethelios Live', exact: true });
@@ -535,3 +567,4 @@ test('transparent emblem leaves surrounding globe visible without a rectangular 
   expect(sample!.earth[0]).toBeLessThan(140);
   expect(new Set(sample!.field.map((pixel) => pixel.join(','))).size).toBeGreaterThan(1);
 });
+
