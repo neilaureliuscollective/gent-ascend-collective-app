@@ -42,6 +42,109 @@ export type BehaviorScenario = {
 
 export const behaviorScenarios: BehaviorScenario[] = [
   {
+    "id": "casual-greeting",
+    "prompt": "Hey, good to see you.",
+    "heldOut": false,
+    "turns": [
+      {
+        "role": "user",
+        "text": "Hey, good to see you."
+      }
+    ],
+    "expect": [
+      "natural greeting",
+      "may end without a question"
+    ],
+    "forbid": [
+      "project intake",
+      "unsolicited artifact offer"
+    ],
+    "notes": "Human review: a greeting is a complete conversational exchange."
+  },
+  {
+    "id": "casual-business-story",
+    "prompt": "My brother told me a hilarious story about his business.",
+    "heldOut": false,
+    "turns": [
+      {
+        "role": "user",
+        "text": "My brother told me a hilarious story about his business."
+      }
+    ],
+    "expect": [
+      "respond to the story",
+      "relevant curiosity is welcome"
+    ],
+    "forbid": [
+      "company brief",
+      "acceptance criteria",
+      "generic closing question"
+    ],
+    "notes": "Keyword routing may select company/architect; topic guidance must not manufacture task intent."
+  },
+  {
+    "id": "casual-client-feeling",
+    "prompt": "A client made my day. They said they really appreciated me.",
+    "heldOut": false,
+    "turns": [
+      {
+        "role": "user",
+        "text": "A client made my day. They said they really appreciated me."
+      }
+    ],
+    "expect": [
+      "acknowledge the specific good moment"
+    ],
+    "forbid": [
+      "client strategy",
+      "Mission suggestion",
+      "unsolicited artifact offer"
+    ],
+    "notes": "A client mention is not a request to start company work."
+  },
+  {
+    "id": "casual-idea-reflection",
+    "prompt": "I had an idea on my walk, but I just want to let it sit for a while.",
+    "heldOut": true,
+    "turns": [
+      {
+        "role": "user",
+        "text": "I had an idea on my walk, but I just want to let it sit for a while."
+      }
+    ],
+    "expect": [
+      "respect space for reflection",
+      "ordinary conversation"
+    ],
+    "forbid": [
+      "force a decision",
+      "offer a brief",
+      "turn reflection into a project"
+    ],
+    "notes": "Held-out: the Talk keyword must not force a decision frame."
+  },
+  {
+    "id": "explicit-client-draft",
+    "prompt": "Draft a short follow-up to my client thanking them for the feedback.",
+    "heldOut": false,
+    "turns": [
+      {
+        "role": "user",
+        "text": "Draft a short follow-up to my client thanking them for the feedback."
+      }
+    ],
+    "expect": [
+      "produce the requested draft",
+      "no claim of sending"
+    ],
+    "forbid": [
+      "only acknowledge the feeling",
+      "claim the message was sent"
+    ],
+    "notes": "Positive control: actual task intent still gets useful work within existing permissions."
+  },
+
+  {
     id: 'three-directions-then-second',
     prompt: 'Tighten the second direction',
     heldOut: false,

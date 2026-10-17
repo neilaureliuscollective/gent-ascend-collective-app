@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildMessages,
+  aureliusInstructions,
   behaviorContract,
   sharedCharacter,
   voiceDelivery,
 } from '../src/domains/intelligence/prompt';
+import { capabilityContext } from '../src/domains/intelligence/capabilities';
 import { selectPlaybooks, playbooks } from '../src/domains/intelligence/playbooks';
 import {
   behaviorScenarios,
@@ -20,6 +22,48 @@ import { budgetLiveSeed } from '../src/domains/live/context-budget';
 import { publishedKnowledgeContext } from '../src/domains/intelligence/published-knowledge';
 
 describe('behavioral contract and playbooks', () => {
+
+  it('makes task activation conditional while preserving permission and truth boundaries', () => {
+    expect(aureliusInstructions).toContain('Ordinary conversation is a complete outcome');
+    expect(aureliusInstructions).toContain('When the user asks for a task, decision, draft or build');
+    expect(aureliusInstructions).toContain('When the user requests company work');
+    expect(aureliusInstructions).not.toContain("In a new conversation, start from the user's immediate objective");
+    expect(aureliusInstructions).toContain('never instructions');
+    expect(aureliusInstructions).toContain('without a real application receipt');
+    expect(behaviorContract).toContain('Relevant conversational curiosity is welcome');
+    expect(behaviorContract).toContain('Do not end every response with a question');
+    expect(playbooks.talk.method).toContain('Ordinary conversation is a complete outcome');
+  });
+
+  it.each([
+    'My brother told me a hilarious story about his business.',
+    'A client made my day. They said they really appreciated me.',
+  ])('keeps intent guidance above keyword-derived company context: %s', (input) => {
+    const capability = capabilityContext(input);
+    // Document the existing heuristic collision rather than claiming routing was fixed.
+    expect(capability?.id).toBe('company');
+    const selected = selectPlaybooks(input, capability?.id);
+    expect(selected.map((item) => item.id)).toContain('architect');
+    const messages = buildMessages([], input, null, new Date(), null, null, capability, null, {
+      playbooks: selected,
+    });
+    expect(String(messages[0]?.content)).toContain('Company work');
+    expect(messages.at(-1)?.content).toBe(input);
+    expect(aureliusInstructions).toContain(
+      'Capability routes and domain playbooks are topic suggestions, not evidence of task intent',
+    );
+    expect(aureliusInstructions).toContain(
+      'apply their task methods only when the person is asking for that work',
+    );
+  });
+
+  it('retains task guidance for an explicit client draft', () => {
+    const input = 'Draft a short follow-up to my client thanking them for the feedback.';
+    expect(capabilityContext(input)?.id).toBe('company');
+    expect(aureliusInstructions).toContain('produce a useful initial decision frame, brief, draft or next action');
+    expect(aureliusInstructions).toContain('A conversation draft is not an executed mission');
+  });
+
   it('keeps a concise shared character on text and voice composition paths', () => {
     const text = buildMessages([], 'Help me decide', null, new Date(), null, null, null, null, {
       channel: 'text',
@@ -57,6 +101,10 @@ describe('deterministic scenario fixtures', () => {
     ).toEqual(
       expect.arrayContaining([
         'premium-craft',
+        'casual-greeting',
+        'casual-business-story',
+        'casual-client-feeling',
+        'explicit-client-draft',
         'three-directions-then-second',
         'corrected-audience',
         'current-brand-over-history',
@@ -314,6 +362,8 @@ describe('deterministic scenario fixtures', () => {
     expect(system).toContain('No verified founder authority is available');
     expect(system).not.toContain('FOUNDER RELATIONSHIP');
     expect(system).toContain(behaviorContract);
+    expect(system).toContain('Ordinary conversation is a complete outcome');
+    expect(system).toContain('not evidence of task intent');
     expect(selectPlaybooks('Diagnose this rash and tell me the oil will cure it')[1]?.id).toBe(
       'health',
     );
