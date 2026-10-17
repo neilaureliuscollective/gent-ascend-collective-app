@@ -12,7 +12,7 @@ import {
 import { liveMotionOperation, liveJobMotionOperation } from '@/platform/visual/operation-adapters';
 import type { LiveCallLevels } from '@/platform/visual/live-call-presentation';
 import { createLiveLevelPoller } from '@/platform/visual/live-level-poller';
-import { useAppearance } from '@/components/visual/appearance';
+import { useCallMotion } from './use-call-motion';
 import { LiveCallControls } from './call-controls';
 import { LiveCallGlobe } from './call-globe';
 import { ArtifactSurface } from './artifacts';
@@ -291,7 +291,7 @@ function LiveSurface({ controller }: { controller: LiveController }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const compact = useRef<HTMLElement>(null);
   const wasImmersive = useRef(false);
-  const { moving } = useAppearance();
+  const moving = useCallMotion();
   const operation = liveMotionOperation(state);
   const [levels, setLevels] = useState<LiveCallLevels>({
     input: 0,
@@ -633,3 +633,4 @@ function LiveSurface({ controller }: { controller: LiveController }) {
     </>
   );
 }
+

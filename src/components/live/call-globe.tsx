@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { useAppearance } from '@/components/visual/appearance';
+import { useCallMotion } from './use-call-motion';
 import { motionPresentationPhase } from '@/platform/visual/motion-presentation';
 import {
   liveCallVisual,
@@ -23,7 +23,7 @@ export function LiveCallGlobe({
   size?: 'immersive' | 'compact';
   readSample?: () => LiveCallLevels;
 }) {
-  const { moving: prefersMotion } = useAppearance();
+  const prefersMotion = useCallMotion();
   const allowedMotion = moving && prefersMotion;
   const host = useRef<HTMLSpanElement>(null);
   const handle = useRef<LiveGlobeHandle | null>(null);
@@ -85,3 +85,4 @@ export function LiveCallGlobe({
     </span>
   );
 }
+
