@@ -25,6 +25,21 @@ import { useReadingAnchor } from './reading-anchor';
 import { readConversationStream } from '@/platform/conversation/read-stream';
 import { conversationTiming } from '@/platform/conversation/timing';
 import { readTalkDraft, writeTalkDraft, clearTalkDrafts } from '@/platform/conversation/drafts';
+import {
+  mergeOlderTurns,
+  olderTurnsBelongToConversation,
+  shouldApplyOlderHistory,
+  shouldClearOlderLoading,
+  shouldMergeOlderHistory,
+} from '@/platform/conversation/history';
+import {
+  beginTalkEditSnapshot,
+  hasUnfinishedTalkWork,
+  revisionAllowedForConversation,
+  snapshotBelongsToConversation,
+  unfinishedTalkWorkPrompt,
+  type TalkEditSnapshot,
+} from '@/platform/conversation/unfinished';
 import { TalkDrawer, TalkInput, retainComposerFocus } from './talk-controls';
 import { BplusMaterial, BplusTalkTools } from '../visual/bplus-material';
 import { observedOperation } from '@/platform/visual/operation-adapters';
@@ -181,13 +196,20 @@ export function AureliusWorkspace({
   const [orchestrating, setOrchestrating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
+  const olderGeneration = useRef(0);
+  const olderRequest = useRef<AbortController | null>(null);
   const [revision, setRevision] = useState<{ sourceTurnId: string; revisionKind: 'edit' } | null>(
     null,
   );
+  const editSnapshot = useRef<TalkEditSnapshot<
+    TalkAttachment,
+    { creationId: string; field: string }
+  > | null>(null);
   const generation = useRef<AbortController | null>(null);
   const cancelReply = useRef<(() => void) | null>(null);
   const reading = useRef<AbortController | null>(null);
   const scroll = useRef<HTMLDivElement>(null);
+  const olderScroll = useRef<{ height: number; top: number; generation: number } | null>(null);
   const follow = useRef(true);
   const rememberReadingPosition = useReadingAnchor(scroll, follow, data !== null);
   const [awayFromLatest, setAwayFromLatest] = useState(false);
@@ -219,6 +241,61 @@ export function AureliusWorkspace({
     setAttachment(null);
     setAttachmentEpoch((value) => value + 1);
   }, []);
+  const invalidateOlderHistory = useCallback(() => {
+    olderGeneration.current += 1;
+    olderRequest.current?.abort();
+    olderRequest.current = null;
+    olderScroll.current = null;
+    setLoadingOlder(false);
+  }, []);
+  const confirmLeaveUnfinished = useCallback(
+    (intent: 'switch' | 'new') => {
+      const field = composer.current;
+      const liveDraft = field?.value ?? draft;
+      if (
+        !hasUnfinishedTalkWork({
+          draft: liveDraft,
+          attachment,
+          attachmentBusy,
+          revision,
+        })
+      )
+        return true;
+      const caret = {
+        start: field?.selectionStart ?? liveDraft.length,
+        end: field?.selectionEnd ?? liveDraft.length,
+      };
+      if (confirm(unfinishedTalkWorkPrompt(intent))) return true;
+      requestAnimationFrame(() => {
+        const input = composer.current;
+        if (!input) return;
+        input.setSelectionRange(caret.start, caret.end);
+        const modal = input.ownerDocument.querySelector('dialog[open]');
+        if (!modal) input.focus();
+      });
+      return false;
+    },
+    [draft, attachment, attachmentBusy, revision],
+  );
+  const discardUnfinishedComposer = useCallback(() => {
+    editSnapshot.current = null;
+    memoryOnlyDraft.current = false;
+    const ownerId = data?.ownerId ?? '';
+    if (!compact && ownerId) writeTalkDraft(ownerId, selected, '');
+    setDraft('');
+    setRevision(null);
+    setWorkTarget(null);
+    setOpenWorkId(null);
+    setAttachmentBusy(false);
+    clearAttachment();
+  }, [compact, data, selected, clearAttachment]);
+  const acceptAttachment = useCallback(
+    (value: TalkAttachment | null) => {
+      if (selectedRef.current !== selected) return;
+      setAttachment(value);
+    },
+    [selected],
+  );
   const detailDialog = useRef<HTMLDialogElement>(null);
   const creationRead = useRef<AbortController | null>(null);
   const creationGeneration = useRef(0);
@@ -420,6 +497,7 @@ export function AureliusWorkspace({
   const load = useCallback(
     async (id: string | null = null) => {
       recoverGeneration.current += 1;
+      invalidateOlderHistory();
       reading.current?.abort();
       const controller = new AbortController();
       reading.current = controller;
@@ -462,16 +540,19 @@ export function AureliusWorkspace({
           memoryOnlyDraft.current = false;
           setDraft(readTalkDraft(owner, id));
         }
+        if (id !== selectedRef.current) {
+          clearAttachment();
+          setAttachmentBusy(false);
+          setWorkTarget(null);
+          setOpenWorkId(null);
+          editSnapshot.current = null;
+          setRevision(null);
+        }
+        selectedRef.current = id;
         setData(result as WorkspaceData);
         setCouncilSelection(
           councilFromVersion((result as WorkspaceData).turns.at(-1)?.prompt_version ?? ''),
         );
-        if (id !== selectedRef.current) {
-          clearAttachment();
-          setWorkTarget(null);
-          setOpenWorkId(null);
-        }
-        selectedRef.current = id;
         setSelected(id);
         const boundRecover = recoverGeneration.current;
         void loadCreations(id).then(() => {
@@ -507,7 +588,14 @@ export function AureliusWorkspace({
         if (!controller.signal.aborted) setLoading(false);
       }
     },
-    [compact, homeDraft, loadCreations, recoverPendingSaves, clearAttachment],
+    [
+      compact,
+      homeDraft,
+      loadCreations,
+      recoverPendingSaves,
+      clearAttachment,
+      invalidateOlderHistory,
+    ],
   );
   useEffect(() => {
     const media = window.matchMedia('(min-width: 900px)');
@@ -524,6 +612,14 @@ export function AureliusWorkspace({
     if (!detailDialog.current?.open) detailDialog.current?.showModal();
   }, [openWorkId, widePanel]);
   useEffect(() => () => stopImageWatch(), [stopImageWatch]);
+  useEffect(
+    () => () => {
+      olderGeneration.current += 1;
+      olderRequest.current?.abort();
+      olderRequest.current = null;
+    },
+    [],
+  );
   async function refreshMetadata(id: string) {
     reading.current?.abort();
     const controller = new AbortController();
@@ -571,44 +667,77 @@ export function AureliusWorkspace({
       throw e;
     }
   }
-  const olderScroll = useRef<{ height: number; top: number } | null>(null);
   useEffect(() => {
     const el = scroll.current,
       before = olderScroll.current;
-    if (el && before) {
+    if (!before || before.generation !== olderGeneration.current) {
+      olderScroll.current = null;
+      return;
+    }
+    if (el) {
       el.scrollTop = before.top + el.scrollHeight - before.height;
       olderScroll.current = null;
     }
   }, [data?.turns, busy, operation.id]);
   async function loadOlder() {
     const first = data?.turns[0];
-    if (!selected || !first || loadingOlder) return;
+    const conversationId = selectedRef.current;
+    const ownerId = data?.ownerId ?? '';
+    if (!conversationId || !first || !ownerId || loadingOlder) return;
+    const generation = ++olderGeneration.current;
+    olderRequest.current?.abort();
+    const controller = new AbortController();
+    olderRequest.current = controller;
+    const current = () => ({
+      generation: olderGeneration.current,
+      ownerId: verifiedDraftOwner.current,
+      conversationId: selectedRef.current,
+    });
+    const request = { generation, ownerId, conversationId };
     setLoadingOlder(true);
     try {
       const response = await fetch(
-        `/api/aurelius?conversationId=${selected}&before=${encodeURIComponent(first.created_at)}`,
-        { cache: 'no-store' },
+        `/api/aurelius?conversationId=${conversationId}&before=${encodeURIComponent(first.created_at)}`,
+        { cache: 'no-store', signal: controller.signal },
       );
       const older = (await response.json()) as WorkspaceData;
+      if (!shouldApplyOlderHistory(request, current())) return;
       if (!response.ok) throw new Error('Older messages could not be loaded.');
+      if (older.ownerId && older.ownerId !== ownerId) return;
+      if (!olderTurnsBelongToConversation(older.turns, conversationId, ownerId)) return;
       if (scroll.current)
         olderScroll.current = {
           height: scroll.current.scrollHeight,
           top: scroll.current.scrollTop,
+          generation,
         };
-      setData((previous) =>
-        previous
-          ? {
-              ...previous,
-              turns: [...older.turns, ...previous.turns],
-              hasOlderTurns: older.hasOlderTurns,
-            }
-          : previous,
-      );
-      follow.current = false;
+      setData((previous) => {
+        if (
+          !previous ||
+          !shouldMergeOlderHistory(
+            request,
+            {
+              generation: olderGeneration.current,
+              ownerId: previous.ownerId ?? verifiedDraftOwner.current,
+              conversationId: selectedRef.current,
+            },
+            previous,
+          )
+        )
+          return previous;
+        return {
+          ...previous,
+          turns: mergeOlderTurns(previous.turns, older.turns),
+          hasOlderTurns: older.hasOlderTurns,
+        };
+      });
+      if (shouldApplyOlderHistory(request, current())) follow.current = false;
     } catch (e) {
+      if (controller.signal.aborted || !shouldApplyOlderHistory(request, current())) return;
       setError(e instanceof Error ? e.message : 'Older messages could not be loaded.');
     } finally {
+      if (!shouldClearOlderLoading(generation, olderGeneration.current)) return;
+      if (olderRequest.current === controller) olderRequest.current = null;
       setLoadingOlder(false);
     }
   }
@@ -936,6 +1065,7 @@ export function AureliusWorkspace({
         } else if (item.type === 'error') throw new Error(item.message);
       }
       if (!saved) throw new Error('The connection ended before the save was confirmed.');
+      editSnapshot.current = null;
       setRevision(null);
       setNotice('Reply saved.');
       if (attachment)
@@ -1056,11 +1186,14 @@ export function AureliusWorkspace({
     if (owner) liveOwner.current = owner;
     if (previous && owner && previous !== owner) {
       voiceReconcile.current += 1;
+      invalidateOlderHistory();
+      editSnapshot.current = null;
+      setRevision(null);
       if (liveBusy) void liveController?.end('Voice ended because the signed-in account changed.');
       liveController?.invalidateTranscript();
       clearAttachment();
     }
-  }, [data?.ownerId, liveBusy, liveController, clearAttachment]);
+  }, [data?.ownerId, liveBusy, liveController, clearAttachment, invalidateOlderHistory]);
   useEffect(() => {
     if (compact) return;
     const onPop = () => {
@@ -1072,13 +1205,30 @@ export function AureliusWorkspace({
           ? raw
           : null;
       if (next === selected) return;
+      if (!confirmLeaveUnfinished('switch')) {
+        const url = new URL(window.location.href);
+        if (selected) url.searchParams.set('conversation', selected);
+        else url.searchParams.delete('conversation');
+        window.history.replaceState(window.history.state, '', url);
+        return;
+      }
       if (liveBusy && liveState.conversationId && liveState.conversationId !== next)
         void liveController?.end('Voice ended because you opened another conversation.');
+      discardUnfinishedComposer();
       void load(next).catch(() => {});
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
-  }, [compact, selected, liveBusy, liveState.conversationId, liveController, load]);
+  }, [
+    compact,
+    selected,
+    liveBusy,
+    liveState.conversationId,
+    liveController,
+    load,
+    confirmLeaveUnfinished,
+    discardUnfinishedComposer,
+  ]);
   const previousLivePhase = useRef(liveState.phase);
   const ownerId = data?.ownerId;
   useEffect(() => {
@@ -1213,6 +1363,7 @@ export function AureliusWorkspace({
     if (liveBusy) void liveController?.end('Voice ended because you started a new conversation.');
     liveController?.invalidateTranscript();
     recoverGeneration.current += 1;
+    invalidateOlderHistory();
     creationGeneration.current += 1;
     creationRead.current?.abort();
     stopImageWatch();
@@ -1236,10 +1387,12 @@ export function AureliusWorkspace({
     setError('');
     setNotice('');
     setTab('conversation');
+    editSnapshot.current = null;
     setRevision(null);
     void loadCreations(null);
     setOpenWorkId(null);
     setWorkTarget(null);
+    setAttachmentBusy(false);
     clearAttachment();
     follow.current = true;
     composer.current?.focus();
@@ -1636,27 +1789,19 @@ export function AureliusWorkspace({
                     disabled={blocked}
                     preview={preview}
                     onSelect={(id) => {
-                      setTab('conversation');
-                      if (
-                        draft.trim() &&
-                        !confirm('Discard the unsent draft and switch conversations?')
-                      )
+                      if (id === selected) {
+                        close();
                         return;
+                      }
+                      if (!confirmLeaveUnfinished('switch')) return;
+                      setTab('conversation');
                       close();
-                      memoryOnlyDraft.current = false;
-                      if (data.ownerId) writeTalkDraft(data.ownerId, selected, '');
-                      setDraft('');
-                      setWorkTarget(null);
-                      setOpenWorkId(null);
+                      discardUnfinishedComposer();
                       follow.current = true;
                       void reload(id).catch(() => {});
                     }}
                     onNew={() => {
-                      if (
-                        draft.trim() &&
-                        !confirm('Discard the unsent draft and start a new conversation?')
-                      )
-                        return;
+                      if (!confirmLeaveUnfinished('new')) return;
                       newConversation();
                       close();
                     }}
@@ -1681,11 +1826,7 @@ export function AureliusWorkspace({
               className="talk-tool talk-new-tool"
               disabled={blocked}
               onClick={() => {
-                if (
-                  !draft.trim() ||
-                  confirm('Discard the unsent draft and start a new conversation?')
-                )
-                  newConversation();
+                if (confirmLeaveUnfinished('new')) newConversation();
               }}
             >
               New
@@ -1699,11 +1840,7 @@ export function AureliusWorkspace({
                 className="text-button talk-new-in-menu"
                 disabled={blocked}
                 onClick={() => {
-                  if (
-                    !draft.trim() ||
-                    confirm('Discard the unsent draft and start a new conversation?')
-                  )
-                    newConversation();
+                  if (confirmLeaveUnfinished('new')) newConversation();
                 }}
               >
                 New conversation
@@ -1809,8 +1946,23 @@ export function AureliusWorkspace({
                           value={selected ?? ''}
                           disabled={blocked}
                           onChange={(e) => {
-                            follow.current = true;
-                            void reload(e.target.value || null).catch(() => {});
+                            const next = e.target.value || null;
+                            if (next === selected) return;
+                            if (next) {
+                              if (!confirmLeaveUnfinished('switch')) {
+                                e.currentTarget.value = selected ?? '';
+                                return;
+                              }
+                              discardUnfinishedComposer();
+                              follow.current = true;
+                              void reload(next).catch(() => {});
+                              return;
+                            }
+                            if (!confirmLeaveUnfinished('new')) {
+                              e.currentTarget.value = selected ?? '';
+                              return;
+                            }
+                            newConversation();
                           }}
                         >
                           <option value="">New conversation</option>
@@ -1826,7 +1978,9 @@ export function AureliusWorkspace({
                         <button
                           className="secondary-button"
                           disabled={blocked}
-                          onClick={newConversation}
+                          onClick={() => {
+                            if (confirmLeaveUnfinished('new')) newConversation();
+                          }}
                         >
                           New
                         </button>
@@ -1933,6 +2087,7 @@ export function AureliusWorkspace({
             includeContext={includeContext}
             onSelect={setCouncilSelection}
             onFocused={(id) => {
+              if (!confirmLeaveUnfinished('new')) return;
               newConversation();
               setCouncilSelection({ kind: 'specialist', specialists: [id] });
               setDraft(specialistStarters[id]);
@@ -1940,7 +2095,18 @@ export function AureliusWorkspace({
             }}
             onAssemble={(question, selection) => {
               setCouncilSelection(selection);
-              void sendMessage(question, revision, selection);
+              void sendMessage(
+                question,
+                revisionAllowedForConversation(
+                  revision,
+                  editSnapshot.current,
+                  data.ownerId ?? '',
+                  selected,
+                ) && revision
+                  ? revision
+                  : null,
+                selection,
+              );
             }}
           />
         )}
@@ -2085,9 +2251,28 @@ export function AureliusWorkspace({
                         turn.id === data.turns.at(-1)?.id && !data.currentConversation?.archived_at
                           ? (kind) => {
                               if (kind === 'edit') {
+                                const field = composer.current;
+                                const liveDraft = field?.value ?? draft;
+                                editSnapshot.current = beginTalkEditSnapshot({
+                                  ownerId: data.ownerId ?? '',
+                                  conversationId: selectedRef.current,
+                                  draft: liveDraft,
+                                  caret: {
+                                    start: field?.selectionStart ?? liveDraft.length,
+                                    end: field?.selectionEnd ?? liveDraft.length,
+                                  },
+                                  attachment,
+                                  workTarget,
+                                });
                                 setDraft(turn.user_text);
                                 setRevision({ sourceTurnId: turn.id, revisionKind: 'edit' });
-                                composer.current?.focus();
+                                requestAnimationFrame(() => {
+                                  composer.current?.focus();
+                                  composer.current?.setSelectionRange(
+                                    turn.user_text.length,
+                                    turn.user_text.length,
+                                  );
+                                });
                               } else
                                 void sendMessage(
                                   turn.user_text,
@@ -2253,7 +2438,17 @@ export function AureliusWorkspace({
                   tableReview.current?.open();
                   return;
                 }
-                void sendMessage(draft, revision);
+                void sendMessage(
+                  draft,
+                  revisionAllowedForConversation(
+                    revision,
+                    editSnapshot.current,
+                    data.ownerId ?? '',
+                    selected,
+                  ) && revision
+                    ? revision
+                    : null,
+                );
               }}
             >
               {!compact && <BplusMaterial radius={19} />}
@@ -2303,8 +2498,30 @@ export function AureliusWorkspace({
                   <button
                     type="button"
                     onClick={() => {
+                      const snapshot = editSnapshot.current;
+                      const owner = data.ownerId ?? '';
+                      const conversationId = selectedRef.current;
                       setRevision(null);
-                      setDraft('');
+                      if (
+                        snapshotBelongsToConversation(snapshot, owner, conversationId) &&
+                        snapshot
+                      ) {
+                        setDraft(snapshot.draft);
+                        setAttachment(snapshot.attachment);
+                        setWorkTarget(snapshot.workTarget);
+                        if (!compact && owner)
+                          writeTalkDraft(owner, conversationId, snapshot.draft);
+                        requestAnimationFrame(() => {
+                          composer.current?.focus();
+                          composer.current?.setSelectionRange(
+                            snapshot.caret.start,
+                            snapshot.caret.end,
+                          );
+                        });
+                      } else {
+                        setDraft('');
+                      }
+                      editSnapshot.current = null;
                     }}
                   >
                     Cancel
@@ -2352,7 +2569,7 @@ export function AureliusWorkspace({
                   key={`${data.ownerId ?? 'anonymous'}:${selected ?? 'new'}:${attachmentEpoch}`}
                   value={attachment}
                   disabled={blocked || preview || !data.canChat || liveBusy}
-                  onChange={setAttachment}
+                  onChange={acceptAttachment}
                   onRemove={clearAttachment}
                   onBusyChange={setAttachmentBusy}
                 />

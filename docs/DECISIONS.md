@@ -1,3 +1,7 @@
+# Talk conversation isolation and unfinished work — 2026-10-16
+
+Older Talk history is applied only when owner, conversation and request generation still match the initiating load. Stale completions, errors and scroll restores are ignored; a later request keeps its own loading state. Switch and New confirm unfinished text, attachments, in-flight uploads and edits; cancelled leave keeps the current composer. Edit last message uses an in-memory conversation-scoped snapshot so Cancel restores the previous draft. Revision identity cannot follow another conversation. No new persistent storage. Evidence: Talk isolation tests.
+
 # Lifestyle product world production — 2026-10-16
 
 Founder authorized merge of PR #156 onto main and deploy through the existing Vercel Git production pipeline. Merge `715a2d9d` (parents `4a7d909a` Live globe + `571babfd` Lifestyle). Production `dpl_HyKuNtX5emzqUCUceisFmdsMbQQu` is READY on https://www.gentascend.com. No hosted SQL, credential, flag, Shopify Admin write or purchase. Talk/Architect/Studio source was not changed. Evidence: [LIFESTYLE_PRODUCT_WORLD.md](LIFESTYLE_PRODUCT_WORLD.md).
