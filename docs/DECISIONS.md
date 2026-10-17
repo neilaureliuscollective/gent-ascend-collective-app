@@ -1,3 +1,7 @@
+# Talk release verification — 2026-10-17
+
+Keep PR #158 `5d86a816` independent of PR #154. Preview unblocks by removing the Preview-scoped publishable key (shell) or pairing it with a matching non-production URL — never by copying Production URL. Next 16.3.8 is the compatible LTS advisory patch and is a follow-up SHA, not this Talk candidate. Evidence: [TALK_RELEASE_VERIFICATION.md](TALK_RELEASE_VERIFICATION.md).
+
 # Talk conversation isolation and unfinished work — 2026-10-16
 
 Older Talk history is applied only when owner, conversation and request generation still match the initiating load. Stale completions, errors and scroll restores are ignored; a later request keeps its own loading state. Switch and New confirm unfinished text, attachments, in-flight uploads and edits; cancelled leave keeps the current composer. Edit last message uses an in-memory conversation-scoped snapshot so Cancel restores the previous draft. Revision identity cannot follow another conversation. No new persistent storage. Evidence: Talk isolation tests.
