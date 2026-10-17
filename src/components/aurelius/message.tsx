@@ -13,6 +13,7 @@ import type { StreamCreation } from '@/domains/intelligence/types';
 import type { TalkCreation, TalkImageJob } from '@/domains/talk-creation/schema';
 import { CreationCard, TalkImageCard, InFlightCreationCard } from './creation-card';
 import { stripCreationFences } from '@/domains/talk-creation/intent';
+import { stabilizeStreamingMarkdown } from './stream-markdown';
 
 // Stable saved answers do not reparse Markdown when the composer or active turn updates.
 const ReplyMarkdown = memo(function ReplyMarkdown({ text }: { text: string }) {
@@ -72,11 +73,21 @@ export const ConversationTurn = memo(function ConversationTurn({
   onOpenCreation?: (id: string) => void;
   onApproveImage?: (id: string, approve: boolean) => void;
   onSelectImage?: (id: string) => void;
-  onBoardCommit?: (id: string, board: import('@/domains/talk-creation/design-board').DesignBoardContent) => void;
+  onBoardCommit?: (
+    id: string,
+    board: import('@/domains/talk-creation/design-board').DesignBoardContent,
+  ) => void;
   boardStatus?: { id: string; state: 'pending' | 'saved' | 'failed' | 'stale' };
 }) {
   const ritual =
     !companyWork && turn.status === 'complete' ? parseRitualSuggestion(turn.assistant_text) : null;
+  const replySource = ritual
+    ? turn.assistant_text.replace(/```grooming-ritual\s*\n[\s\S]*?```/g, '')
+    : companyWork
+      ? turn.assistant_text.replace(/```company-work\n[\s\S]*?\n```/g, '')
+      : stripCreationFences(turn.assistant_text) || turn.assistant_text;
+  const replyText =
+    operation || turn.status !== 'complete' ? stabilizeStreamingMarkdown(replySource) : replySource;
   return (
     <article className="conversation-turn" data-turn-id={turn.id}>
       <div className="user-message">
@@ -97,15 +108,7 @@ export const ConversationTurn = memo(function ConversationTurn({
           </span>
         )}
         <div className="message-markdown">
-          <ReplyMarkdown
-            text={
-              ritual
-                ? turn.assistant_text.replace(/```grooming-ritual\s*\n[\s\S]*?```/g, '')
-                : companyWork
-                  ? turn.assistant_text.replace(/```company-work\n[\s\S]*?\n```/g, '')
-                  : stripCreationFences(turn.assistant_text) || turn.assistant_text
-            }
-          />
+          <ReplyMarkdown text={replyText} />
         </div>
         {artifacts
           ?.filter(

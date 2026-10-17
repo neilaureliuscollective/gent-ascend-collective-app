@@ -1,3 +1,7 @@
+# Talk preview cannot pin Gent — 2026-10-17
+
+Vercel preview with `APP_ENV=production` used the production `supabaseConnection` pin regardless of URL/key. Preview now fails closed unless `APP_ENV=preview`. Non-production connections refuse Gent and founder hosts. Isolated Talk preview still needs a third matching URL/key pair. Evidence: [TALK_RELEASE_VERIFICATION.md](TALK_RELEASE_VERIFICATION.md).
+
 # Talk Next 16.4.1 Server Actions patch — 2026-10-17
 
 Pin Next 16.4.1 / eslint-config-next 16.4.1 for GHSA-p3m5-59mp-jv5r. The app uses App Router Server Actions including auth. Next 16.4.1 also resolves sharp to 0.35.5. Do not strip shared Preview env scope. Authenticated preview still requires Git-branch overrides on `cursor/talk-voice-dock-compact-42b1` for a matching non-production URL and publishable key; none is approved yet. PR #154 stays out. Evidence: [TALK_RELEASE_VERIFICATION.md](TALK_RELEASE_VERIFICATION.md).

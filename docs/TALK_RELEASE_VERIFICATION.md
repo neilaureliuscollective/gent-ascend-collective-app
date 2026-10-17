@@ -35,13 +35,16 @@ No approved matching non-production Supabase project is on record (Gent `volpzkf
 
 ### Exact setup request (authorization required; not applied)
 
-On Vercel project `gent-ascend-collective-app`, add **Git-branch overrides for `cursor/talk-voice-dock-compact-42b1` only**:
+On Vercel project `gent-ascend-collective-app`, add **Git-branch overrides for `cursor/talk-voice-dock-compact-42b1` only** (`vercel env add <name> preview cursor/talk-voice-dock-compact-42b1`):
 
-1. Target project: a non-production Supabase project that is **not** Gent (`volpzkfsnmtztrovexcw`) and **not** the founder database (`tybjocxecilkmozkvuns`), with Talk schema already applied or separately authorized.
-2. Branch-scoped `NEXT_PUBLIC_SUPABASE_URL` = that project’s HTTPS origin.
-3. Branch-scoped `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = that **same** project’s publishable key (do not reuse the Production Gent key).
-4. Leave shared Preview-scope variables unchanged.
-5. Do not set `AETHELIOS_LIVE_CANONICAL_PILOT`. Do not add service-role keys to Preview.
+1. Target project: a non-production Supabase project that is **not** Gent (`volpzkfsnmtztrovexcw`) and **not** the founder database (`tybjocxecilkmozkvuns`). Apply the existing Talk migrations (including `ai_turns` / creation / Live bind files already in this repo); do not apply PR #154 SQL.
+2. Branch-scoped `APP_ENV=preview`. Production pin in `supabaseConnection` applies when mode is production; a Preview deployment with `APP_ENV=production` now fails closed instead of silently using Gent.
+3. Branch-scoped `AURELIUS_DEV_HARNESS=false`.
+4. Branch-scoped `NEXT_PUBLIC_SUPABASE_URL` = that project’s HTTPS origin (must not be Gent or the founder host).
+5. Branch-scoped `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = that **same** project’s publishable key (do not reuse the Production Gent key).
+6. Leave shared Preview-scope variables unchanged. Do not set `AETHELIOS_LIVE_CANONICAL_PILOT`. Do not add service-role keys to Preview.
+
+Effective target cannot be Gent: preview mode ignores the production pin, refuses those two hosts, and refuses `APP_ENV=production` when `VERCEL_ENV=preview`. No approved isolated project is on record.
 
 Until that pair exists, a signed-out shell cannot verify persistence or voice.
 

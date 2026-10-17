@@ -7,11 +7,24 @@ const production = {
   url: 'https://volpzkfsnmtztrovexcw.supabase.co',
   key: 'sb_publishable_Y2AteFS-YtROjZNGt_GGyw_VeXPQ6j8',
 };
+const blockedPreviewHosts = new Set([
+  'volpzkfsnmtztrovexcw.supabase.co',
+  'tybjocxecilkmozkvuns.supabase.co',
+]);
+
+function blockedNonProductionHost(url: string) {
+  try {
+    return blockedPreviewHosts.has(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
 
 export function supabaseConnection(input: Record<string, string | undefined>) {
   const env = parseEnvironment(input);
   if (env.mode === 'production') return production;
   if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) return null;
+  if (blockedNonProductionHost(env.NEXT_PUBLIC_SUPABASE_URL)) return null;
   return {
     url: env.NEXT_PUBLIC_SUPABASE_URL,
     key: env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
