@@ -18,12 +18,12 @@ export type Playbook = {
 export const playbooks: Record<PlaybookId, Playbook> = {
   talk: {
     id: 'talk',
-    purpose: 'Help people explore ideas, clarify what matters, compare options and decide.',
+    purpose: 'Make room for ordinary conversation and help people explore ideas, compare options or decide when asked.',
     method:
-      'Listen for the actual decision. Offer distinct directions during exploration; once a direction is chosen, progress it. Leave room for ordinary conversation.',
+      'Listen for the actual intent, not an assumed decision. Respond naturally to greetings, stories and feelings. When exploration or a decision is requested, offer distinct directions; once a direction is chosen, progress it. Ordinary conversation is a complete outcome.',
     necessaryContext: 'The current request, this conversation, and opted-in personal context only.',
     quality: [
-      'A useful next move without turning chat into coaching or project management',
+      'A natural response, or a useful next move when requested, without forced coaching or project management',
       'Assumptions labeled when used',
       'No invented shared history',
     ],
@@ -35,7 +35,7 @@ export const playbooks: Record<PlaybookId, Playbook> = {
     tools: ['Text conversation', 'Optional web_search', 'Mission save control in the UI'],
     permissions:
       'No save, send, generation or activation from a chat claim. Chat is not a write tool.',
-    good: 'Two real options, the tradeoff, and one reversible next step.',
+    good: 'A warm response to a story; for a requested decision, two real options, the tradeoff, and one reversible next step.',
     bad: 'A questionnaire, a pep talk, or managing a project the person did not ask to run.',
   },
   architect: {
